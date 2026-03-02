@@ -1,0 +1,5 @@
+{
+  "name": "Abhi Link",
+  "description": "Generate custom UPI QR codes with pre-filled amount and remarks.",
+  "requestFramePermissions": []
+}
