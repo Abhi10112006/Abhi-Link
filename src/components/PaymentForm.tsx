@@ -201,7 +201,34 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
               placeholder="0.00"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                let val = e.target.value.replace(/[^0-9.]/g, '');
+                
+                const parts = val.split('.');
+                if (parts.length > 2) {
+                  val = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                if (parts.length === 2 && parts[1].length > 2) {
+                  val = parts[0] + '.' + parts[1].substring(0, 2);
+                }
+
+                if (val) {
+                  const splitVal = val.split('.');
+                  let intPart = splitVal[0];
+                  intPart = intPart.replace(/^0+(?=\d)/, '');
+                  
+                  if (intPart) {
+                    intPart = new Intl.NumberFormat('en-IN').format(BigInt(intPart));
+                  } else if (val.startsWith('.')) {
+                    intPart = '0';
+                  }
+                  
+                  val = splitVal.length > 1 ? intPart + '.' + splitVal[1] : intPart;
+                }
+                
+                setAmount(val);
+              }}
               onFocus={() => setFocusedField(randomAmountId)}
               onBlur={() => setFocusedField(null)}
             />

@@ -5,11 +5,37 @@ import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 
 export default function App() {
-  const [upiId, setUpiId] = useState(() => localStorage.getItem('savedUpiId') || '');
+  const [upiId, setUpiId] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('upi') || localStorage.getItem('savedUpiId') || '';
+  });
   const [touchedUpiId, setTouchedUpiId] = useState(false);
-  const [payeeName, setPayeeName] = useState(() => localStorage.getItem('savedPayeeName') || '');
-  const [amount, setAmount] = useState('');
-  const [remarks, setRemarks] = useState('');
+  const [payeeName, setPayeeName] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('name') || localStorage.getItem('savedPayeeName') || '';
+  });
+  const [amount, setAmount] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlAmount = params.get('amount');
+    if (!urlAmount) return '';
+    
+    let val = urlAmount.replace(/[^0-9.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+    if (parts.length === 2 && parts[1].length > 2) val = parts[0] + '.' + parts[1].substring(0, 2);
+    if (val) {
+      const splitVal = val.split('.');
+      let intPart = splitVal[0].replace(/^0+(?=\d)/, '');
+      if (intPart) intPart = new Intl.NumberFormat('en-IN').format(BigInt(intPart));
+      else if (val.startsWith('.')) intPart = '0';
+      val = splitVal.length > 1 ? intPart + '.' + splitVal[1] : intPart;
+    }
+    return val;
+  });
+  const [remarks, setRemarks] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('remarks') || '';
+  });
   const [saveDetails, setSaveDetails] = useState(() => localStorage.getItem('saveDetails') === 'true');
   const qrRef = useRef<SVGSVGElement>(null);
 
@@ -38,7 +64,7 @@ export default function App() {
     const params = new URLSearchParams();
     params.append('pa', upiId);
     if (payeeName) params.append('pn', payeeName);
-    if (amount) params.append('am', amount);
+    if (amount) params.append('am', amount.replace(/,/g, ''));
     params.append('cu', 'INR');
     if (remarks) params.append('tn', remarks);
 
@@ -46,6 +72,28 @@ export default function App() {
   };
 
   const upiUrl = generateUpiUrl();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlUpi = params.get('upi');
+    if (urlUpi) {
+      const urlName = params.get('name');
+      const urlAmount = params.get('amount');
+      const urlRemarks = params.get('remarks');
+      
+      const upiParams = new URLSearchParams();
+      upiParams.append('pa', urlUpi);
+      if (urlName) upiParams.append('pn', urlName);
+      if (urlAmount) upiParams.append('am', urlAmount.replace(/,/g, ''));
+      upiParams.append('cu', 'INR');
+      if (urlRemarks) upiParams.append('tn', urlRemarks);
+
+      const intentUrl = `upi://pay?${upiParams.toString()}`;
+      
+      // Attempt to auto-open the UPI app
+      window.location.replace(intentUrl);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
@@ -72,6 +120,19 @@ export default function App() {
             Create a personalized UPI payment QR code with a pre-filled amount and custom remarks.
           </p>
         </div>
+
+        {new URLSearchParams(window.location.search).get('upi') && (
+          <div className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
+            <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
+            <a 
+              href={upiUrl}
+              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl hover:bg-black transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              Pay Now with UPI App
+            </a>
+          </div>
+        )}
 
         <div className="bg-white rounded-3xl shadow-sm border border-[#d9d3ce] overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
@@ -102,7 +163,7 @@ export default function App() {
               remarks={remarks}
               qrRef={qrRef}
               onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
-              onShare={() => handleShare(qrRef, amount, payeeName, remarks)}
+              onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
             />
             
           </div>

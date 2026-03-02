@@ -148,7 +148,8 @@ export const handleDownload = async (
   
   const pngFile = canvas.toDataURL('image/png');
   const downloadLink = document.createElement('a');
-  downloadLink.download = `abhi-link-qr-${amount ? amount + 'rs' : 'code'}.png`;
+  const cleanAmount = amount ? amount.replace(/,/g, '') : '';
+  downloadLink.download = `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`;
   downloadLink.href = pngFile;
   downloadLink.click();
 };
@@ -157,20 +158,34 @@ export const handleShare = async (
   qrRef: React.RefObject<SVGSVGElement>,
   amount: string,
   payeeName: string,
-  remarks: string
+  remarks: string,
+  upiId: string
 ) => {
   const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
   if (!canvas) return;
 
   canvas.toBlob(async (blob) => {
     if (!blob) return;
-    const file = new File([blob], `abhi-link-qr.png`, { type: 'image/png' });
+    const cleanAmount = amount ? amount.replace(/,/g, '') : '';
+    const file = new File([blob], `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`, { type: 'image/png' });
+    
+    let shareText = 'Scan this QR code to pay.';
+    if (upiId) {
+      const upiParams = new URLSearchParams();
+      upiParams.append('pa', upiId);
+      if (payeeName) upiParams.append('pn', payeeName);
+      if (cleanAmount) upiParams.append('am', cleanAmount);
+      upiParams.append('cu', 'INR');
+      if (remarks) upiParams.append('tn', remarks);
+      const shareUrl = `upi://pay?${upiParams.toString()}`;
+      shareText = `Scan this QR code or click on this Link to Pay.\n${shareUrl}`;
+    }
     
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           title: 'ABHI LINK Payment QR',
-          text: 'Scan this QR code to pay.',
+          text: shareText,
           files: [file],
         });
       } catch (error) {
