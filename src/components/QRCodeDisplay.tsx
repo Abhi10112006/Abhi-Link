@@ -29,6 +29,16 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     <div className="p-8 bg-[#faf9f8] flex flex-col items-center justify-center">
       {upiId && isValidUpi ? (
         <div className="flex flex-col items-center w-full">
+          {payeeName && (
+            <div className="flex items-baseline justify-center gap-1.5 mb-4 w-full px-4">
+              <div className="text-xl font-bold text-[#2d2d2b]/60 uppercase tracking-tight whitespace-nowrap">
+                Paying To:
+              </div>
+              <div className="text-xl font-black text-[#2d2d2b] uppercase tracking-tight truncate">
+                {payeeName}
+              </div>
+            </div>
+          )}
           <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 border-2 border-[#d9d3ce] mb-6">
             <QRCodeSVG
               id="upi-qr-code"
@@ -53,11 +63,6 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             {amount && (
               <div className="text-3xl font-black text-[#2d2d2b] mb-1">
                 ₹{amount}
-              </div>
-            )}
-            {payeeName && (
-              <div className="text-sm font-bold text-[#2d2d2b] uppercase tracking-wide">
-                Paying to: {payeeName}
               </div>
             )}
             {remarks && (

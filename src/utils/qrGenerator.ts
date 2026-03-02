@@ -29,12 +29,71 @@ export const generateCanvas = async (
   ctx.fill();
   ctx.shadowColor = 'transparent'; // reset shadow
 
-  // 3. Draw ABHI LINK Logo
-  ctx.fillStyle = '#2d2d2b';
+  // 3. Draw Header (Brand & Payee)
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.font = '900 100px "Archivo Black", sans-serif';
-  ctx.fillText('ABHI LINK', 540, 160);
+
+  if (payeeName) {
+    ctx.fillStyle = 'rgba(45, 45, 43, 0.5)';
+    ctx.font = '900 28px "Archivo Black", sans-serif';
+    ctx.fillText('ABHI LINK', 540, 140);
+
+    ctx.textBaseline = 'alphabetic';
+    const prefix = 'PAYING TO: ';
+    const nameStr = payeeName.toUpperCase();
+    
+    let fontSize = 36;
+    let prefixWidth = 0;
+    let nameWidth = 0;
+    let totalWidth = 0;
+    const maxWidth = 800;
+
+    // Calculate initial widths
+    ctx.font = `bold ${fontSize}px "Inter", sans-serif`;
+    prefixWidth = ctx.measureText(prefix).width;
+    ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
+    nameWidth = ctx.measureText(nameStr).width;
+    totalWidth = prefixWidth + nameWidth;
+
+    let finalNameStr = nameStr;
+
+    // Truncate with ellipsis if necessary
+    if (totalWidth > maxWidth) {
+      const ellipsis = '...';
+      const ellipsisWidth = ctx.measureText(ellipsis).width;
+      const availableNameWidth = maxWidth - prefixWidth - ellipsisWidth;
+      
+      let truncatedName = '';
+      for (let i = 0; i < nameStr.length; i++) {
+        const testStr = nameStr.substring(0, i + 1);
+        if (ctx.measureText(testStr).width > availableNameWidth) {
+          break;
+        }
+        truncatedName = testStr;
+      }
+      finalNameStr = truncatedName + ellipsis;
+      nameWidth = ctx.measureText(finalNameStr).width;
+      totalWidth = prefixWidth + nameWidth;
+    }
+
+    const startX = 540 - (totalWidth / 2);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(45, 45, 43, 0.6)';
+    ctx.font = `bold ${fontSize}px "Inter", sans-serif`;
+    ctx.fillText(prefix, startX, 240);
+
+    ctx.fillStyle = '#2d2d2b';
+    ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
+    ctx.fillText(finalNameStr, startX + prefixWidth, 240);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+  } else {
+    ctx.fillStyle = '#2d2d2b';
+    ctx.font = '900 80px "Archivo Black", sans-serif';
+    ctx.fillText('ABHI LINK', 540, 170);
+  }
 
   // 4. Draw QR Code
   const svgData = new XMLSerializer().serializeToString(qrRef.current);
@@ -47,27 +106,22 @@ export const generateCanvas = async (
   });
 
   const qrSize = 400;
-  ctx.drawImage(img, 540 - qrSize / 2, 280, qrSize, qrSize);
+  ctx.drawImage(img, 540 - qrSize / 2, 290, qrSize, qrSize);
 
   // 5. Draw Details
-  let currentY = 710;
+  let remarksY = 780; // Centered between QR and footer if no amount
   
   if (amount) {
-    ctx.font = '900 64px "Inter", sans-serif';
-    ctx.fillText(`₹${amount}`, 540, currentY);
-    currentY += 70;
-  }
-
-  if (payeeName) {
-    ctx.font = 'bold 32px "Inter", sans-serif';
-    ctx.fillText(`PAYING TO: ${payeeName.toUpperCase()}`, 540, currentY);
-    currentY += 50;
+    ctx.fillStyle = '#2d2d2b';
+    ctx.font = '900 80px "Inter", sans-serif';
+    ctx.fillText(`₹${amount}`, 540, 720);
+    remarksY = 835; // Centered between amount (bottom ~800) and footer (top 900)
   }
 
   if (remarks) {
-    ctx.font = 'italic 500 24px "Inter", sans-serif';
+    ctx.font = 'italic 500 28px "Inter", sans-serif';
     ctx.fillStyle = 'rgba(45, 45, 43, 0.7)';
-    ctx.fillText(`"${remarks}"`, 540, currentY);
+    ctx.fillText(`"${remarks}"`, 540, remarksY, 800);
   }
 
   // 6. Draw Footer
