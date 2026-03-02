@@ -54,10 +54,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <User className="h-5 w-5 text-[#2d2d2b]/40" />
             </div>
             <input
-              type="text"
+              type="search"
               id={randomUpiId}
               name={randomUpiId}
-              autoComplete="new-password"
+              autoComplete={`nope-${randomUpiId}`}
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
@@ -90,10 +90,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             Receiver Name
           </label>
           <input
-            type="text"
+            type="search"
             id={randomPayeeId}
             name={randomPayeeId}
-            autoComplete="new-password"
+            autoComplete={`nope-${randomPayeeId}`}
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
@@ -129,13 +129,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <IndianRupee className="h-5 w-5 text-[#2d2d2b]/40" />
             </div>
             <input
-              type="text"
+              type="search"
               inputMode="decimal"
               id={randomAmountId}
               name={randomAmountId}
               min="1"
               step="any"
-              autoComplete="new-password"
+              autoComplete={`nope-${randomAmountId}`}
               data-lpignore="true"
               data-form-type="other"
               list="autocompleteOff"
@@ -156,11 +156,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <MessageSquare className="h-5 w-5 text-[#2d2d2b]/40" />
             </div>
             <input
-              type="text"
+              type="search"
               id={randomRemarksId}
               name={randomRemarksId}
               maxLength={30}
-              autoComplete="new-password"
+              autoComplete={`nope-${randomRemarksId}`}
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
