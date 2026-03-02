@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { Download, QrCode, IndianRupee, MessageSquare, User, Share2, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { PaymentForm } from './components/PaymentForm';
+import { QRCodeDisplay } from './components/QRCodeDisplay';
+import { handleDownload, handleShare } from './utils/qrGenerator';
 
 export default function App() {
   const [upiId, setUpiId] = useState(() => localStorage.getItem('savedUpiId') || '');
+  const [touchedUpiId, setTouchedUpiId] = useState(false);
   const [payeeName, setPayeeName] = useState(() => localStorage.getItem('savedPayeeName') || '');
   const [amount, setAmount] = useState('');
   const [remarks, setRemarks] = useState('');
@@ -25,6 +28,7 @@ export default function App() {
   // Validate UPI ID format (e.g., name@bank)
   const upiRegex = /^[\w.-]+@[\w.-]+$/;
   const isValidUpi = upiId === '' || upiRegex.test(upiId);
+  const showUpiError = touchedUpiId && !isValidUpi && upiId.length > 0;
 
   // Construct UPI URL
   // Format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=INR&tn=REMARKS
@@ -43,123 +47,11 @@ export default function App() {
 
   const upiUrl = generateUpiUrl();
 
-  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (!qrRef.current) return null;
-    
-    // Wait for fonts to be ready to ensure they render on canvas
-    await document.fonts.ready;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1080;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    // 1. Draw Background
-    ctx.fillStyle = '#e6e1dc';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 2. Draw Card
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.05)';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetY = 20;
-    ctx.beginPath();
-    ctx.roundRect(100, 100, 880, 880, 40);
-    ctx.fill();
-    ctx.shadowColor = 'transparent'; // reset shadow
-
-    // 3. Draw ABHI LINK Logo
-    ctx.fillStyle = '#2d2d2b';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.font = '900 100px "Archivo Black", sans-serif';
-    ctx.fillText('ABHI LINK', 540, 160);
-
-    // 4. Draw QR Code
-    const svgData = new XMLSerializer().serializeToString(qrRef.current);
-    const img = new Image();
-    
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-    });
-
-    const qrSize = 400;
-    ctx.drawImage(img, 540 - qrSize / 2, 280, qrSize, qrSize);
-
-    // 5. Draw Details
-    let currentY = 710;
-    
-    if (amount) {
-      ctx.font = '900 64px "Inter", sans-serif';
-      ctx.fillText(`₹${amount}`, 540, currentY);
-      currentY += 70;
-    }
-
-    if (payeeName) {
-      ctx.font = 'bold 32px "Inter", sans-serif';
-      ctx.fillText(`PAYING TO: ${payeeName.toUpperCase()}`, 540, currentY);
-      currentY += 50;
-    }
-
-    if (remarks) {
-      ctx.font = 'italic 500 24px "Inter", sans-serif';
-      ctx.fillStyle = 'rgba(45, 45, 43, 0.7)';
-      ctx.fillText(`"${remarks}"`, 540, currentY);
-    }
-
-    // 6. Draw Footer
-    ctx.fillStyle = 'rgba(45, 45, 43, 0.4)';
-    ctx.font = 'bold 24px "Inter", sans-serif';
-    ctx.fillText('SCAN TO PAY WITH ANY UPI APP', 540, 900);
-
-    // 7. Draw Developer Info
-    ctx.fillStyle = 'rgba(45, 45, 43, 0.6)';
-    ctx.font = 'bold 20px "Comic Sans MS", "Comic Sans", cursive';
-    ctx.fillText('Developer: Abhinav Yaduvanshi', 540, 940);
-
-    return canvas;
-  };
-
-  const handleDownload = async () => {
-    const canvas = await generateCanvas();
-    if (!canvas) return;
-    
-    const pngFile = canvas.toDataURL('image/png');
-    const downloadLink = document.createElement('a');
-    downloadLink.download = `abhi-link-qr-${amount ? amount + 'rs' : 'code'}.png`;
-    downloadLink.href = pngFile;
-    downloadLink.click();
-  };
-
-  const handleShare = async () => {
-    const canvas = await generateCanvas();
-    if (!canvas) return;
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], `abhi-link-qr.png`, { type: 'image/png' });
-      
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'ABHI LINK Payment QR',
-            text: 'Scan this QR code to pay.',
-            files: [file],
-          });
-        } catch (error) {
-          console.error('Error sharing:', error);
-        }
-      } else {
-        alert('Sharing is not supported on this device/browser.');
-      }
-    }, 'image/png');
-  };
-
   return (
     <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
+      {/* Dummy datalist to trick browsers into disabling autocomplete */}
+      <datalist id="autocompleteOff"></datalist>
+      
       {/* Developer's Other App Link */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
         <a
@@ -185,178 +77,33 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2">
             
             {/* Form Section */}
-            <div className="p-8 border-b md:border-b-0 md:border-r border-[#d9d3ce]">
-              <h2 className="text-lg font-bold text-[#2d2d2b] mb-6 uppercase tracking-wide">Payment Details</h2>
-              
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="upiId" className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-                    UPI ID (VPA) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-[#2d2d2b]/40" />
-                    </div>
-                    <input
-                      type="text"
-                      id="upiId"
-                      className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl outline-none sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
-                        !isValidUpi && upiId.length > 0
-                          ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                          : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10'
-                      }`}
-                      placeholder="e.g. john@okhdfcbank"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                    />
-                  </div>
-                  {!isValidUpi && upiId.length > 0 && (
-                    <p className="mt-2 text-xs font-bold text-red-500 uppercase tracking-wide">
-                      Please enter a valid UPI ID
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="payeeName" className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-                    Receiver Name
-                  </label>
-                  <input
-                    type="text"
-                    id="payeeName"
-                    className="block w-full px-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
-                    placeholder="e.g. John Doe"
-                    value={payeeName}
-                    onChange={(e) => setPayeeName(e.target.value)}
-                  />
-                  
-                  <div className="flex items-center mt-4">
-                    <input
-                      type="checkbox"
-                      id="saveDetails"
-                      checked={saveDetails}
-                      onChange={(e) => setSaveDetails(e.target.checked)}
-                      className="h-4 w-4 text-[#2d2d2b] focus:ring-[#2d2d2b] border-2 border-[#d9d3ce] rounded transition-colors cursor-pointer"
-                    />
-                    <label htmlFor="saveDetails" className="ml-2 block text-xs font-bold text-[#2d2d2b]/70 uppercase tracking-wide cursor-pointer select-none">
-                      Save details for next time
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="amount" className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-                    Amount (₹)
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <IndianRupee className="h-5 w-5 text-[#2d2d2b]/40" />
-                    </div>
-                    <input
-                      type="number"
-                      id="amount"
-                      min="1"
-                      step="any"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
-                      placeholder="0.00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="remarks" className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-                    Remarks / Note
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MessageSquare className="h-5 w-5 text-[#2d2d2b]/40" />
-                    </div>
-                    <input
-                      type="text"
-                      id="remarks"
-                      maxLength={30}
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
-                      placeholder="e.g. Rent (Max 30 chars)"
-                      value={remarks}
-                      onChange={(e) => setRemarks(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PaymentForm 
+              upiId={upiId}
+              setUpiId={setUpiId}
+              payeeName={payeeName}
+              setPayeeName={setPayeeName}
+              amount={amount}
+              setAmount={setAmount}
+              remarks={remarks}
+              setRemarks={setRemarks}
+              saveDetails={saveDetails}
+              setSaveDetails={setSaveDetails}
+              showUpiError={showUpiError}
+              setTouchedUpiId={setTouchedUpiId}
+            />
 
             {/* QR Code Section */}
-            <div className="p-8 bg-[#faf9f8] flex flex-col items-center justify-center">
-              {upiId && isValidUpi ? (
-                <div className="flex flex-col items-center w-full">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-[#d9d3ce] mb-6">
-                    <QRCodeSVG
-                      id="upi-qr-code"
-                      value={upiUrl}
-                      size={200}
-                      level="H"
-                      includeMargin={false}
-                      ref={qrRef}
-                      fgColor="#2d2d2b"
-                      imageSettings={{
-                        src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
-                        x: undefined,
-                        y: undefined,
-                        height: 48,
-                        width: 48,
-                        excavate: true,
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="text-center mb-6 w-full">
-                    {amount && (
-                      <div className="text-3xl font-black text-[#2d2d2b] mb-1">
-                        ₹{amount}
-                      </div>
-                    )}
-                    {payeeName && (
-                      <div className="text-sm font-bold text-[#2d2d2b] uppercase tracking-wide">
-                        Paying to: {payeeName}
-                      </div>
-                    )}
-                    {remarks && (
-                      <div className="text-xs text-[#2d2d2b]/70 mt-1 italic font-medium">
-                        "{remarks}"
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 w-full">
-                    <button
-                      onClick={handleDownload}
-                      className="flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] hover:bg-black text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide transition-colors shadow-sm"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download
-                    </button>
-                    <button
-                      onClick={handleShare}
-                      className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-[#faf9f8] text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide transition-colors shadow-sm"
-                    >
-                      <Share2 className="w-5 h-5" />
-                      Share
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center flex flex-col items-center justify-center h-full text-[#2d2d2b]/30">
-                  <QrCode className="w-16 h-16 mb-4" />
-                  <p className="text-sm font-bold uppercase tracking-wide">
-                    {upiId && !isValidUpi 
-                      ? "Enter a valid UPI ID to generate your custom QR code."
-                      : "Enter a UPI ID to generate your custom QR code."}
-                  </p>
-                </div>
-              )}
-            </div>
+            <QRCodeDisplay 
+              upiId={upiId}
+              isValidUpi={isValidUpi}
+              upiUrl={upiUrl}
+              amount={amount}
+              payeeName={payeeName}
+              remarks={remarks}
+              qrRef={qrRef}
+              onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
+              onShare={() => handleShare(qrRef, amount, payeeName, remarks)}
+            />
             
           </div>
         </div>
