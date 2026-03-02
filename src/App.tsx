@@ -1,13 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Download, QrCode, IndianRupee, MessageSquare, User, Share2, ExternalLink } from 'lucide-react';
 
 export default function App() {
-  const [upiId, setUpiId] = useState('');
-  const [payeeName, setPayeeName] = useState('');
+  const [upiId, setUpiId] = useState(() => localStorage.getItem('savedUpiId') || '');
+  const [payeeName, setPayeeName] = useState(() => localStorage.getItem('savedPayeeName') || '');
   const [amount, setAmount] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [saveDetails, setSaveDetails] = useState(() => localStorage.getItem('saveDetails') === 'true');
   const qrRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (saveDetails) {
+      localStorage.setItem('savedUpiId', upiId);
+      localStorage.setItem('savedPayeeName', payeeName);
+      localStorage.setItem('saveDetails', 'true');
+    } else {
+      localStorage.removeItem('savedUpiId');
+      localStorage.removeItem('savedPayeeName');
+      localStorage.setItem('saveDetails', 'false');
+    }
+  }, [upiId, payeeName, saveDetails]);
+
+  // Validate UPI ID format (e.g., name@bank)
+  const upiRegex = /^[\w.-]+@[\w.-]+$/;
+  const isValidUpi = upiId === '' || upiRegex.test(upiId);
 
   // Construct UPI URL
   // Format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=INR&tn=REMARKS
@@ -142,7 +159,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative">
+    <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
       {/* Developer's Other App Link */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
         <a
@@ -183,12 +200,21 @@ export default function App() {
                     <input
                       type="text"
                       id="upiId"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl focus:ring-0 focus:border-[#2d2d2b] sm:text-sm transition-colors bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
+                      className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl outline-none sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
+                        !isValidUpi && upiId.length > 0
+                          ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                          : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10'
+                      }`}
                       placeholder="e.g. john@okhdfcbank"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                     />
                   </div>
+                  {!isValidUpi && upiId.length > 0 && (
+                    <p className="mt-2 text-xs font-bold text-red-500 uppercase tracking-wide">
+                      Please enter a valid UPI ID
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -198,11 +224,24 @@ export default function App() {
                   <input
                     type="text"
                     id="payeeName"
-                    className="block w-full px-3 py-3 border-2 border-[#d9d3ce] rounded-xl focus:ring-0 focus:border-[#2d2d2b] sm:text-sm transition-colors bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
+                    className="block w-full px-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
                     placeholder="e.g. John Doe"
                     value={payeeName}
                     onChange={(e) => setPayeeName(e.target.value)}
                   />
+                  
+                  <div className="flex items-center mt-4">
+                    <input
+                      type="checkbox"
+                      id="saveDetails"
+                      checked={saveDetails}
+                      onChange={(e) => setSaveDetails(e.target.checked)}
+                      className="h-4 w-4 text-[#2d2d2b] focus:ring-[#2d2d2b] border-2 border-[#d9d3ce] rounded transition-colors cursor-pointer"
+                    />
+                    <label htmlFor="saveDetails" className="ml-2 block text-xs font-bold text-[#2d2d2b]/70 uppercase tracking-wide cursor-pointer select-none">
+                      Save details for next time
+                    </label>
+                  </div>
                 </div>
 
                 <div>
@@ -218,7 +257,7 @@ export default function App() {
                       id="amount"
                       min="1"
                       step="any"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl focus:ring-0 focus:border-[#2d2d2b] sm:text-sm transition-colors bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
+                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
@@ -238,7 +277,7 @@ export default function App() {
                       type="text"
                       id="remarks"
                       maxLength={30}
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl focus:ring-0 focus:border-[#2d2d2b] sm:text-sm transition-colors bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
+                      className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40"
                       placeholder="e.g. Rent (Max 30 chars)"
                       value={remarks}
                       onChange={(e) => setRemarks(e.target.value)}
@@ -250,7 +289,7 @@ export default function App() {
 
             {/* QR Code Section */}
             <div className="p-8 bg-[#faf9f8] flex flex-col items-center justify-center">
-              {upiId ? (
+              {upiId && isValidUpi ? (
                 <div className="flex flex-col items-center w-full">
                   <div className="bg-white p-6 rounded-2xl shadow-sm border-2 border-[#d9d3ce] mb-6">
                     <QRCodeSVG
@@ -310,7 +349,11 @@ export default function App() {
               ) : (
                 <div className="text-center flex flex-col items-center justify-center h-full text-[#2d2d2b]/30">
                   <QrCode className="w-16 h-16 mb-4" />
-                  <p className="text-sm font-bold uppercase tracking-wide">Enter a UPI ID to generate<br/>your custom QR code.</p>
+                  <p className="text-sm font-bold uppercase tracking-wide">
+                    {upiId && !isValidUpi 
+                      ? "Enter a valid UPI ID to generate your custom QR code."
+                      : "Enter a UPI ID to generate your custom QR code."}
+                  </p>
                 </div>
               )}
             </div>
