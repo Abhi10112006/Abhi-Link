@@ -1,8 +1,11 @@
+import { Theme } from '../components/QRCodeDisplay';
+
 export const generateCanvas = async (
   qrRef: React.RefObject<SVGSVGElement>,
   amount: string,
   payeeName: string,
-  remarks: string
+  remarks: string,
+  theme: Theme
 ): Promise<HTMLCanvasElement | null> => {
   if (!qrRef.current) return null;
   
@@ -16,11 +19,11 @@ export const generateCanvas = async (
   if (!ctx) return null;
 
   // 1. Draw Background
-  ctx.fillStyle = '#e6e1dc';
+  ctx.fillStyle = theme.containerBg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // 2. Draw Card
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = theme.cardBg;
   ctx.shadowColor = 'rgba(0,0,0,0.05)';
   ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 20;
@@ -34,7 +37,7 @@ export const generateCanvas = async (
   ctx.textBaseline = 'top';
 
   if (payeeName) {
-    ctx.fillStyle = 'rgba(45, 45, 43, 0.5)';
+    ctx.fillStyle = theme.textMuted;
     ctx.font = '900 28px "Archivo Black", sans-serif';
     ctx.fillText('ABHI LINK', 540, 140);
 
@@ -79,18 +82,18 @@ export const generateCanvas = async (
     const startX = 540 - (totalWidth / 2);
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(45, 45, 43, 0.6)';
+    ctx.fillStyle = theme.textMuted;
     ctx.font = `bold ${fontSize}px "Inter", sans-serif`;
     ctx.fillText(prefix, startX, 240);
 
-    ctx.fillStyle = '#2d2d2b';
+    ctx.fillStyle = theme.text;
     ctx.font = `900 ${fontSize}px "Inter", sans-serif`;
     ctx.fillText(finalNameStr, startX + prefixWidth, 240);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
   } else {
-    ctx.fillStyle = '#2d2d2b';
+    ctx.fillStyle = theme.text;
     ctx.font = '900 80px "Archivo Black", sans-serif';
     ctx.fillText('ABHI LINK', 540, 170);
   }
@@ -112,7 +115,7 @@ export const generateCanvas = async (
   let remarksY = 780; // Centered between QR and footer if no amount
   
   if (amount) {
-    ctx.fillStyle = '#2d2d2b';
+    ctx.fillStyle = theme.text;
     ctx.font = '900 80px "Inter", sans-serif';
     ctx.fillText(`₹${amount}`, 540, 720);
     remarksY = 835; // Centered between amount (bottom ~800) and footer (top 900)
@@ -120,17 +123,17 @@ export const generateCanvas = async (
 
   if (remarks) {
     ctx.font = 'italic 500 28px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(45, 45, 43, 0.7)';
+    ctx.fillStyle = theme.textMuted;
     ctx.fillText(`"${remarks}"`, 540, remarksY, 800);
   }
 
   // 6. Draw Footer
-  ctx.fillStyle = 'rgba(45, 45, 43, 0.4)';
+  ctx.fillStyle = theme.textMuted;
   ctx.font = 'bold 24px "Inter", sans-serif';
   ctx.fillText('SCAN TO PAY WITH ANY UPI APP', 540, 900);
 
   // 7. Draw Developer Info
-  ctx.fillStyle = 'rgba(45, 45, 43, 0.6)';
+  ctx.fillStyle = theme.textMuted;
   ctx.font = 'bold 20px "Comic Sans MS", "Comic Sans", cursive';
   ctx.fillText('Developer: Abhinav Yaduvanshi', 540, 940);
 
@@ -141,9 +144,10 @@ export const handleDownload = async (
   qrRef: React.RefObject<SVGSVGElement>,
   amount: string,
   payeeName: string,
-  remarks: string
+  remarks: string,
+  theme: Theme
 ) => {
-  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
+  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks, theme);
   if (!canvas) return;
   
   const pngFile = canvas.toDataURL('image/png');
@@ -159,9 +163,10 @@ export const handleShare = async (
   amount: string,
   payeeName: string,
   remarks: string,
-  upiId: string
+  upiId: string,
+  theme: Theme
 ) => {
-  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
+  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks, theme);
   if (!canvas) return;
 
   canvas.toBlob(async (blob) => {

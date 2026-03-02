@@ -7,12 +7,12 @@ import { handleDownload, handleShare } from './utils/qrGenerator';
 export default function App() {
   const [upiId, setUpiId] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('upi') || localStorage.getItem('savedUpiId') || '';
+    return params.get('upi') || '';
   });
   const [touchedUpiId, setTouchedUpiId] = useState(false);
   const [payeeName, setPayeeName] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('name') || localStorage.getItem('savedPayeeName') || '';
+    return params.get('name') || '';
   });
   const [amount, setAmount] = useState(() => {
     const params = new URLSearchParams(window.location.search);
