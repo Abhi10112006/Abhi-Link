@@ -11,10 +11,11 @@ interface PaymentFormProps {
   setAmount: (value: string) => void;
   remarks: string;
   setRemarks: (value: string) => void;
-  saveDetails: boolean;
-  setSaveDetails: (value: boolean) => void;
   showUpiError: boolean;
   setTouchedUpiId: (value: boolean) => void;
+  recentPayees: {upiId: string, payeeName: string}[];
+  onSelectRecent: (payee: {upiId: string, payeeName: string}) => void;
+  onRemoveRecent: (upiId: string) => void;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -26,10 +27,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   setAmount,
   remarks,
   setRemarks,
-  saveDetails,
-  setSaveDetails,
   showUpiError,
   setTouchedUpiId,
+  recentPayees,
+  onSelectRecent,
+  onRemoveRecent,
 }) => {
   // Autofill prevention state
   const [randomUpiId] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
@@ -78,6 +80,40 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         <input type="text" name="fakeusernameremembered" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
         <input type="password" name="fakepasswordremembered" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
         
+        {recentPayees.length > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <p className="text-[11px] font-bold text-[#2d2d2b]/50 uppercase tracking-widest mb-3">
+              {recentPayees.length > 1 ? 'Recent Users' : 'Recent User'}
+            </p>
+            <div className="flex flex-row gap-2 w-full">
+              {recentPayees.map((payee) => (
+                <motion.div 
+                  key={payee.upiId}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border-2 border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
+                  onClick={() => onSelectRecent(payee)}
+                >
+                  <div className="flex flex-col mr-2 overflow-hidden">
+                    {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
+                    <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-[#2d2d2b]/60' : 'text-[#2d2d2b]'}`}>{payee.upiId}</span>
+                  </div>
+                  <button 
+                    className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveRecent(payee.upiId);
+                    }}
+                    aria-label="Remove recent payee"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         <motion.div variants={itemVariants}>
           <label htmlFor={randomUpiId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
             UPI ID (VPA) <span className="text-red-500">*</span>
@@ -160,19 +196,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               onBlur={() => setFocusedField(null)}
             />
           </motion.div>
-          
-          <div className="flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="saveDetails"
-              checked={saveDetails}
-              onChange={(e) => setSaveDetails(e.target.checked)}
-              className="h-4 w-4 text-[#2d2d2b] focus:ring-[#2d2d2b] border-2 border-[#d9d3ce] rounded transition-colors cursor-pointer"
-            />
-            <label htmlFor="saveDetails" className="ml-2 block text-xs font-bold text-[#2d2d2b]/70 uppercase tracking-wide cursor-pointer select-none">
-              Save details for next time
-            </label>
-          </div>
         </motion.div>
 
         <motion.div variants={itemVariants}>

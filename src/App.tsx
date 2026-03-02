@@ -36,25 +36,99 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get('remarks') || '';
   });
-  const [saveDetails, setSaveDetails] = useState(() => localStorage.getItem('saveDetails') === 'true');
-  const qrRef = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    if (saveDetails) {
-      localStorage.setItem('savedUpiId', upiId);
-      localStorage.setItem('savedPayeeName', payeeName);
-      localStorage.setItem('saveDetails', 'true');
-    } else {
-      localStorage.removeItem('savedUpiId');
-      localStorage.removeItem('savedPayeeName');
-      localStorage.setItem('saveDetails', 'false');
+  
+  const [recentPayees, setRecentPayees] = useState<{upiId: string, payeeName: string}[]>(() => {
+    try {
+      const saved = localStorage.getItem('recentPayees');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  }, [upiId, payeeName, saveDetails]);
+  });
+
+  const qrRef = useRef<SVGSVGElement>(null);
+  const typewriterRef = useRef<number | null>(null);
 
   // Validate UPI ID format (e.g., name@bank)
   const upiRegex = /^[\w.-]+@[\w.-]+$/;
   const isValidUpi = upiId === '' || upiRegex.test(upiId);
   const showUpiError = touchedUpiId && !isValidUpi && upiId.length > 0;
+
+  useEffect(() => {
+    if (isValidUpi && upiId) {
+      const timeout = setTimeout(() => {
+        setRecentPayees(prev => {
+          const existingIndex = prev.findIndex(p => p.upiId === upiId);
+          let newPayees = [...prev];
+          if (existingIndex >= 0) {
+            newPayees[existingIndex] = { upiId, payeeName: payeeName || newPayees[existingIndex].payeeName };
+            const [item] = newPayees.splice(existingIndex, 1);
+            newPayees.unshift(item);
+          } else {
+            newPayees.unshift({ upiId, payeeName });
+          }
+          newPayees = newPayees.slice(0, 2); // Keep last 2
+          localStorage.setItem('recentPayees', JSON.stringify(newPayees));
+          return newPayees;
+        });
+      }, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [upiId, payeeName, isValidUpi]);
+
+  const handleSelectRecent = (payee: {upiId: string, payeeName: string}) => {
+    if (typewriterRef.current) {
+      window.clearInterval(typewriterRef.current);
+    }
+
+    setUpiId('');
+    setPayeeName('');
+    setTouchedUpiId(false);
+
+    let upiIndex = 0;
+    let nameIndex = 0;
+
+    typewriterRef.current = window.setInterval(() => {
+      let upiDone = false;
+      let nameDone = false;
+
+      if (upiIndex < payee.upiId.length) {
+        setUpiId(payee.upiId.substring(0, upiIndex + 1));
+        upiIndex++;
+      } else {
+        upiDone = true;
+      }
+
+      if (nameIndex < payee.payeeName.length) {
+        setPayeeName(payee.payeeName.substring(0, nameIndex + 1));
+        nameIndex++;
+      } else {
+        nameDone = true;
+      }
+
+      if (upiDone && nameDone) {
+        if (typewriterRef.current) window.clearInterval(typewriterRef.current);
+      }
+    }, 30);
+  };
+
+  const handleUpiIdChange = (val: string) => {
+    if (typewriterRef.current) window.clearInterval(typewriterRef.current);
+    setUpiId(val);
+  };
+
+  const handlePayeeNameChange = (val: string) => {
+    if (typewriterRef.current) window.clearInterval(typewriterRef.current);
+    setPayeeName(val);
+  };
+
+  const handleRemoveRecent = (upiIdToRemove: string) => {
+    setRecentPayees(prev => {
+      const newPayees = prev.filter(p => p.upiId !== upiIdToRemove);
+      localStorage.setItem('recentPayees', JSON.stringify(newPayees));
+      return newPayees;
+    });
+  };
 
   // Construct UPI URL
   // Format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=INR&tn=REMARKS
@@ -140,17 +214,18 @@ export default function App() {
             {/* Form Section */}
             <PaymentForm 
               upiId={upiId}
-              setUpiId={setUpiId}
+              setUpiId={handleUpiIdChange}
               payeeName={payeeName}
-              setPayeeName={setPayeeName}
+              setPayeeName={handlePayeeNameChange}
               amount={amount}
               setAmount={setAmount}
               remarks={remarks}
               setRemarks={setRemarks}
-              saveDetails={saveDetails}
-              setSaveDetails={setSaveDetails}
               showUpiError={showUpiError}
               setTouchedUpiId={setTouchedUpiId}
+              recentPayees={recentPayees}
+              onSelectRecent={handleSelectRecent}
+              onRemoveRecent={handleRemoveRecent}
             />
 
             {/* QR Code Section */}
