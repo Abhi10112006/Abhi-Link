@@ -83,7 +83,7 @@ export default function App() {
 
     if (payeeName) {
       ctx.font = 'bold 32px "Inter", sans-serif';
-      ctx.fillText(`PAYING: ${payeeName.toUpperCase()}`, 540, currentY);
+      ctx.fillText(`PAYING TO: ${payeeName.toUpperCase()}`, 540, currentY);
       currentY += 50;
     }
 
@@ -193,7 +193,7 @@ export default function App() {
 
                 <div>
                   <label htmlFor="payeeName" className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-                    Payee Name
+                    Receiver Name
                   </label>
                   <input
                     type="text"
@@ -280,7 +280,7 @@ export default function App() {
                     )}
                     {payeeName && (
                       <div className="text-sm font-bold text-[#2d2d2b] uppercase tracking-wide">
-                        Paying: {payeeName}
+                        Paying to: {payeeName}
                       </div>
                     )}
                     {remarks && (
