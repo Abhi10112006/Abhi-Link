@@ -242,7 +242,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         transition={{ duration: 0.4 }}
         className="text-lg font-bold text-[#2d2d2b] mb-6 uppercase tracking-wide"
       >
-        Payment Details
+        {t.paymentDetails}
       </motion.h2>
       
       <motion.form 
@@ -261,7 +261,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         {recentPayees.length > 0 && (
           <motion.div variants={itemVariants} className="mb-6">
             <p className="text-[11px] font-bold text-[#2d2d2b]/50 uppercase tracking-widest mb-3">
-              {recentPayees.length > 1 ? 'Recent Users' : 'Recent User'}
+              {recentPayees.length > 1 ? t.recentUsers : t.recentUser}
             </p>
             <div className="grid grid-cols-2 gap-2 w-full">
               {recentPayees.map((payee) => (

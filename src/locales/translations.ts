@@ -46,7 +46,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "Enter a UPI ID to generate your custom QR code.",
     upiIdFormat: "Format: username@bank (e.g. john@oksbi)",
     remarksNote: "Note for the receiver",
-    clearFields: "Clear Fields"
+    clearFields: "Clear Fields",
+    onlyNaviCred: "Only Navi, CRED, Amazon Pay or any newer UPI app? Click the button below.",
+    usingGpay: "Using GPay, PhonePe, or Paytm? Please scan the QR code above for security.",
+    paymentDetails: "Payment Details",
+    recentUser: "Recent User",
+    recentUsers: "Recent Users"
   },
   hi_en: {
     subtitle: "Apne hisaab se amount aur message set karke apna UPI QR code banayein.",
@@ -80,7 +85,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "Apna QR code banane ke liye UPI ID dalein.",
     upiIdFormat: "Format: username@bank (jaise john@oksbi)",
     remarksNote: "Receiver ke liye message",
-    clearFields: "Clear Karein"
+    clearFields: "Clear Karein",
+    onlyNaviCred: "Sirf Navi, CRED, Amazon Pay ya koi naya UPI app? Neeche button click karein.",
+    usingGpay: "GPay, PhonePe, ya Paytm use kar rahe hain? Security ke liye upar QR code scan karein.",
+    paymentDetails: "Payment Details",
+    recentUser: "Recent User",
+    recentUsers: "Recent Users"
   },
   hi: {
     subtitle: "पहले से अमाउंट और मैसेज सेट करके अपना खुद का UPI QR कोड बनाएं।",
@@ -114,7 +124,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "अपना QR कोड बनाने के लिए UPI आईडी डालें।",
     upiIdFormat: "फॉर्मेट: username@bank (जैसे john@oksbi)",
     remarksNote: "प्राप्तकर्ता के लिए मैसेज",
-    clearFields: "क्लियर करें"
+    clearFields: "क्लियर करें",
+    onlyNaviCred: "सिर्फ Navi, CRED, Amazon Pay या कोई नया UPI ऐप? नीचे बटन पर क्लिक करें।",
+    usingGpay: "GPay, PhonePe, या Paytm इस्तेमाल कर रहे हैं? सुरक्षा के लिए ऊपर QR कोड स्कैन करें।",
+    paymentDetails: "पेमेंट डिटेल्स",
+    recentUser: "हालिया यूजर",
+    recentUsers: "हालिया यूजर्स"
   },
   bn: {
     subtitle: "আগে থেকে টাকার পরিমাণ আর মেসেজ দিয়ে নিজের UPI QR কোড তৈরি করুন।",
@@ -148,7 +163,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "আপনার QR কোড তৈরি করতে UPI আইডি দিন।",
     upiIdFormat: "ফরম্যাট: username@bank (যেমন john@oksbi)",
     remarksNote: "প্রাপকের জন্য মেসেজ",
-    clearFields: "মুছুন"
+    clearFields: "মুছুন",
+    onlyNaviCred: "শুধুমাত্র Navi, CRED, Amazon Pay বা কোনো নতুন UPI অ্যাপ? নিচের বোতামে ক্লিক করুন।",
+    usingGpay: "GPay, PhonePe, বা Paytm ব্যবহার করছেন? নিরাপত্তার জন্য উপরের QR কোড স্ক্যান করুন।",
+    paymentDetails: "পেমেন্ট ডিটেইলস",
+    recentUser: "সাম্প্রতিক ইউজার",
+    recentUsers: "সাম্প্রতিক ইউজাররা"
   },
   mr: {
     subtitle: "आधीच रक्कम आणि मेसेज टाकून तुमचा स्वतःचा UPI QR कोड बनवा.",
@@ -182,7 +202,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "तुमचा QR कोड बनवण्यासाठी UPI आयडी टाका.",
     upiIdFormat: "फॉर्मेट: username@bank (उदा. john@oksbi)",
     remarksNote: "प्राप्तकर्त्यासाठी मेसेज",
-    clearFields: "क्लिअर करा"
+    clearFields: "क्लिअर करा",
+    onlyNaviCred: "फक्त Navi, CRED, Amazon Pay किंवा नवीन UPI ॲप? खालील बटणावर क्लिक करा।",
+    usingGpay: "GPay, PhonePe, किंवा Paytm वापरत आहात? सुरक्षिततेसाठी वरील QR कोड स्कॅन करा।",
+    paymentDetails: "पेमेंट तपशील",
+    recentUser: "अलीकडील युजर",
+    recentUsers: "अलीकडील युजर्स"
   },
   ta: {
     subtitle: "முன்பே தொகையையும் மெசேஜையும் செட் செய்து உங்களுக்கான UPI QR கோடை உருவாக்குங்கள்.",
@@ -216,7 +241,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "உங்கள் QR கோடை உருவாக்க UPI ஐடியை உள்ளிடவும்.",
     upiIdFormat: "ஃபார்மேட்: username@bank (எ.கா. john@oksbi)",
     remarksNote: "பெறுநருக்கான மெசேஜ்",
-    clearFields: "அழி"
+    clearFields: "அழி",
+    onlyNaviCred: "Navi, CRED, Amazon Pay அல்லது புதிய UPI ஆப் மட்டும்? கீழே உள்ள பட்டனை கிளிக் செய்யவும்.",
+    usingGpay: "GPay, PhonePe அல்லது Paytm பயன்படுத்துகிறீர்களா? பாதுகாப்பிற்காக மேலே உள்ள QR குறியீட்டை ஸ்கேன் செய்யவும்.",
+    paymentDetails: "பேமெண்ட் விவரங்கள்",
+    recentUser: "சமீபத்திய பயனர்",
+    recentUsers: "சமீபத்திய பயனர்கள்"
   },
   te: {
     subtitle: "ముందుగానే అమౌంట్ మరియు మెసేజ్ సెట్ చేసి మీ సొంత UPI QR కోడ్‌ను క్రియేట్ చేసుకోండి.",
@@ -250,7 +280,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "మీ QR కోడ్ క్రియేట్ చేయడానికి UPI ID ఎంటర్ చేయండి.",
     upiIdFormat: "ఫార్మాట్: username@bank (ఉదా. john@oksbi)",
     remarksNote: "గ్రహీతకు మెసేజ్",
-    clearFields: "క్లియర్ చేయండి"
+    clearFields: "క్లియర్ చేయండి",
+    onlyNaviCred: "కేవలం Navi, CRED, Amazon Pay లేదా ఏదైనా కొత్త UPI యాప్? కింద ఉన్న బటన్ క్లిక్ చేయండి.",
+    usingGpay: "GPay, PhonePe, లేదా Paytm వాడుతున్నారా? భద్రత కోసం పైన ఉన్న QR కోడ్‌ని స్కాన్ చేయండి.",
+    paymentDetails: "పేమెంట్ వివరాలు",
+    recentUser: "ఇటీవలి యూజర్",
+    recentUsers: "ఇటీవలి యూజర్లు"
   },
   kn: {
     subtitle: "ಮೊದಲೇ ಮೊತ್ತ ಮತ್ತು ಮೆಸೇಜ್ ಸೆಟ್ ಮಾಡಿ ನಿಮ್ಮದೇ ಆದ UPI QR ಕೋಡ್ ರಚಿಸಿ.",
@@ -284,7 +319,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "ನಿಮ್ಮ QR ಕೋಡ್ ರಚಿಸಲು UPI ಐಡಿ ಹಾಕಿ.",
     upiIdFormat: "ಫಾರ್ಮ್ಯಾಟ್: username@bank (ಉದಾ. john@oksbi)",
     remarksNote: "ಸ್ವೀಕರಿಸುವವರಿಗೆ ಮೆಸೇಜ್",
-    clearFields: "ಅಳಿಸಿ"
+    clearFields: "ಅಳಿಸಿ",
+    onlyNaviCred: "ಕೇವಲ Navi, CRED, Amazon Pay ಅಥವಾ ಹೊಸ UPI ಆಪ್? ಕೆಳಗಿನ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ.",
+    usingGpay: "GPay, PhonePe, ಅಥವಾ Paytm ಬಳಸುತ್ತಿದ್ದೀರಾ? ಸುರಕ್ಷತೆಗಾಗಿ ಮೇಲಿನ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ.",
+    paymentDetails: "ಪೇಮೆಂಟ್ ವಿವರಗಳು",
+    recentUser: "ಇತ್ತೀಚಿನ ಬಳಕೆದಾರ",
+    recentUsers: "ಇತ್ತೀಚಿನ ಬಳಕೆದಾರರು"
   },
   ne: {
     subtitle: "पहिले नै रकम र म्यासेज सेट गरेर आफ्नो UPI QR कोड बनाउनुहोस्।",
@@ -318,7 +358,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "आफ्नो QR कोड बनाउन UPI आईडी हाल्नुहोस्।",
     upiIdFormat: "ढाँचा: username@bank (जस्तै john@oksbi)",
     remarksNote: "प्राप्तकर्ताको लागि म्यासेज",
-    clearFields: "हटाउनुहोस्"
+    clearFields: "हटाउनुहोस्",
+    onlyNaviCred: "Navi, CRED, Amazon Pay वा कुनै नयाँ UPI एप मात्र? तलको बटन क्लिक गर्नुहोस्।",
+    usingGpay: "GPay, PhonePe, वा Paytm प्रयोग गर्दै हुनुहुन्छ? सुरक्षाको लागि माथिको QR कोड स्क्यान गर्नुहोस्।",
+    paymentDetails: "पेमेन्ट विवरण",
+    recentUser: "हालको प्रयोगकर्ता",
+    recentUsers: "हालका प्रयोगकर्ताहरू"
   },
   sa: {
     subtitle: "पूर्वं धनं सन्देशं च निश्चित्य स्वस्य UPI QR-सङ्केतं रचयन्तु।",
@@ -352,7 +397,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "स्वस्य QR-सङ्केतं जनयितुं UPI ID प्रविशन्तु।",
     upiIdFormat: "प्रारूपम्: username@bank (उदा. john@oksbi)",
     remarksNote: "प्रापकाय सन्देशः",
-    clearFields: "मार्जयन्तु"
+    clearFields: "मार्जयन्तु",
+    onlyNaviCred: "केवलं Navi, CRED, Amazon Pay अथवा नूतन UPI अनुप्रयोगम्? अधः पिञ्जं नुदन्तु।",
+    usingGpay: "GPay, PhonePe, अथवा Paytm उपयुज्यते? सुरक्षायै उपरि QR कूटं वीक्षन्ताम्।",
+    paymentDetails: "धन-विवरणम्",
+    recentUser: "नूतनः उपयोक्ता",
+    recentUsers: "नूतनाः उपयोक्तारः"
   },
   gu: {
     subtitle: "પહેલાથી રકમ અને મેસેજ સેટ કરીને તમારો પોતાનો UPI QR કોડ બનાવો.",
@@ -386,7 +436,12 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "તમારો QR કોડ બનાવવા માટે UPI આઈડી નાખો.",
     upiIdFormat: "ફોર્મેટ: username@bank (દા.ત. john@oksbi)",
     remarksNote: "મેળવનાર માટે મેસેજ",
-    clearFields: "ભૂંસી નાખો"
+    clearFields: "ભૂંસી નાખો",
+    onlyNaviCred: "માત્ર Navi, CRED, Amazon Pay અથવા નવી UPI એપ? નીચે બટન પર ક્લિક કરો.",
+    usingGpay: "GPay, PhonePe, અથવા Paytm વાપરો છો? સુરક્ષા માટે ઉપરનો QR કોડ સ્કેન કરો.",
+    paymentDetails: "પેમેન્ટ વિગતો",
+    recentUser: "તાજેતરના યુઝર",
+    recentUsers: "તાજેતરના યુઝર્સ"
   },
   or: {
     subtitle: "ଆଗରୁ ଟଙ୍କା ଏବଂ ମେସେଜ୍ ସେଟ୍ କରି ନିଜର UPI QR କୋଡ୍ ତିଆରି କରନ୍ତୁ।",
@@ -420,6 +475,11 @@ export const translations: Record<string, Record<string, string>> = {
     enterUpiId: "ଆପଣଙ୍କର QR କୋଡ୍ ତିଆରି କରିବାକୁ UPI ଆଇଡି ଦିଅନ୍ତୁ।",
     upiIdFormat: "ଫର୍ମାଟ୍: username@bank (ଯେପରି john@oksbi)",
     remarksNote: "ପ୍ରାପ୍ତକର୍ତ୍ତା ପାଇଁ ମେସେଜ୍",
-    clearFields: "ହଟାନ୍ତୁ"
+    clearFields: "ହଟାନ୍ତୁ",
+    onlyNaviCred: "କେବଳ Navi, CRED, Amazon Pay କିମ୍ବା ନୂଆ UPI ଆପ୍? ତଳ ବଟନ୍ କ୍ଲିକ୍ କରନ୍ତୁ।",
+    usingGpay: "GPay, PhonePe, କିମ୍ବା Paytm ବ୍ୟବହାର କରୁଛନ୍ତି? ସୁରକ୍ଷା ପାଇଁ ଉପର QR କୋଡ୍ ସ୍କାନ୍ କରନ୍ତୁ।",
+    paymentDetails: "ପେମେଣ୍ଟ ବିବରଣୀ",
+    recentUser: "ସାମ୍ପ୍ରତିକ ୟୁଜର୍",
+    recentUsers: "ସାମ୍ପ୍ରତିକ ୟୁଜର୍ସ"
   }
 };

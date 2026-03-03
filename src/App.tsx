@@ -415,10 +415,10 @@ export default function App() {
               </div>
 
               <p className="text-[#2d2d2b]/70 mb-6 font-medium text-sm">
-                Only Navi, CRED, Amazon Pay or any newer UPI app? Click the button below.
+                {t.onlyNaviCred}
                 <br/>
                 <span className="text-xs opacity-80 mt-2 block">
-                  Using GPay, PhonePe, or Paytm? Please scan the QR code above for security.
+                  {t.usingGpay}
                 </span>
               </p>
               <motion.a 
