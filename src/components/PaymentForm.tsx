@@ -390,32 +390,67 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-lg overflow-hidden pointer-events-auto max-w-[250px] ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-xl overflow-hidden pointer-events-auto max-w-[250px] border border-white/5 ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
                 >
                   {multipleUpiOptions.length > 0 ? (
-                    <div className="flex flex-col">
-                      <div className="px-3 py-2 bg-[#2d2d2b] border-b border-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold">
-                        Select UPI ID to Paste
-                      </div>
-                      {multipleUpiOptions.map((id, index) => (
-                        <button
-                          key={index}
-                          type="button"
+                    <div className="flex flex-col min-w-[200px]">
+                      <div className="px-3 py-2 bg-[#2d2d2b] border-b border-white/10 flex items-center justify-between">
+                        <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">Select UPI ID</span>
+                        <button 
                           onClick={() => {
-                            setUpiId(id);
-                            if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
-                            const input = document.getElementById(randomUpiId);
-                            if (input) input.focus();
-                            setDetectedClipboardUpi(null);
                             setShowToast(false);
                             setMultipleUpiOptions([]);
                           }}
-                          className="px-3 py-2.5 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 flex items-center gap-2"
+                          className="text-white/40 hover:text-white transition-colors"
                         >
-                          <User className="h-3 w-3 text-blue-400 shrink-0" />
-                          <span className="truncate">{id}</span>
+                          <X className="h-3 w-3" />
                         </button>
-                      ))}
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {multipleUpiOptions.map((id, index) => (
+                          <motion.button
+                            key={index}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            type="button"
+                            onClick={() => {
+                              // Close menu first
+                              setShowToast(false);
+                              setMultipleUpiOptions([]);
+                              setDetectedClipboardUpi(null);
+                              
+                              // Clear any existing interval
+                              if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+                              
+                              // Typewriter effect logic
+                              let i = 0;
+                              setUpiId('');
+                              const input = document.getElementById(randomUpiId);
+                              if (input) input.focus();
+                              
+                              handleTypewriterRef.current = window.setInterval(() => {
+                                if (i < id.length) {
+                                  setUpiId(prev => prev + id.charAt(i));
+                                  i++;
+                                } else {
+                                  if (handleTypewriterRef.current) {
+                                    window.clearInterval(handleTypewriterRef.current);
+                                    handleTypewriterRef.current = null;
+                                  }
+                                }
+                              }, 30); // Speed of typing
+                            }}
+                            className="w-full px-3 py-2.5 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 flex items-center gap-2 group"
+                          >
+                            <div className="h-6 w-6 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                              <User className="h-3 w-3 text-blue-400" />
+                            </div>
+                            <span className="truncate text-white/90 group-hover:text-white transition-colors">{id}</span>
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <>
