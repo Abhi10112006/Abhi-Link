@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, X } from 'lucide-react';
+import { ExternalLink, X, Download, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { QRCodeSVG } from 'qrcode.react';
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
@@ -58,6 +59,7 @@ export default function App() {
   });
 
   const qrRef = useRef<SVGSVGElement>(null);
+  const requestQrRef = useRef<SVGSVGElement>(null);
   const typewriterRef = useRef<number | null>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
@@ -278,6 +280,41 @@ export default function App() {
                   )}
                 </div>
               )}
+
+              {/* QR Code Section in Banner */}
+              <div className="flex flex-col items-center justify-center mb-8">
+                <div className="bg-white p-4 rounded-2xl border border-[#d9d3ce] shadow-sm mb-4">
+                  <QRCodeSVG
+                    value={requestUpiUrl}
+                    size={180}
+                    level="H"
+                    includeMargin={false}
+                    ref={requestQrRef}
+                    className="w-full h-full"
+                  />
+                </div>
+                
+                <div className="flex gap-3 w-full max-w-xs justify-center">
+                  <motion.button
+                    onClick={() => handleShare(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '', requestUpiId || '')}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce]"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </motion.button>
+                  <motion.button
+                    onClick={() => handleDownload(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '')}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce]"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Download className="w-4 h-4" />
+                    Save
+                  </motion.button>
+                </div>
+              </div>
 
               <p className="text-[#2d2d2b]/70 mb-6 font-medium text-sm">
                 Only Navi, CRED, Amazon Pay or any newer UPI app? Click the button below.
