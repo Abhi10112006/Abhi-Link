@@ -5,9 +5,12 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
+import { Changelog } from './components/Changelog';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 
 export default function App() {
+  const [showChangelog, setShowChangelog] = useState(false);
+
   // PWA Update Logic
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -242,11 +245,16 @@ export default function App() {
       </div>
 
       {/* Version Badge */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-none select-none">
-        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/40 bg-white/30 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm">
-          <span>Version 0.17</span>
+      <motion.div 
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 select-none cursor-pointer z-40"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowChangelog(true)}
+      >
+        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/60 hover:text-[#2d2d2b] bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
+          <span>Version 0.18</span>
         </div>
-      </div>
+      </motion.div>
 
       <div className="max-w-3xl mx-auto mt-8 sm:mt-0">
         <div className="text-center mb-10">
@@ -475,6 +483,10 @@ export default function App() {
           </p>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showChangelog && <Changelog onClose={() => setShowChangelog(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
