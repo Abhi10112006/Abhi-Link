@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import Database from 'better-sqlite3';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isVercelKV = !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN;
 let localDb: Database.Database | null = null;
+let redis: Redis | null = null;
 
 if (!isVercelKV) {
   console.log('Using local SQLite database (dev mode)');
@@ -27,15 +28,19 @@ if (!isVercelKV) {
   `);
 } else {
   console.log('Using Vercel KV (production mode)');
+  redis = new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
+  });
 }
 
 // 20 hours in seconds
 const LINK_EXPIRY_SECONDS = 20 * 60 * 60; 
 
 async function saveLink(code: string, url: string): Promise<void> {
-  if (isVercelKV) {
+  if (redis) {
     // Save to Vercel KV with 20-hour expiry (EX = seconds)
-    await kv.set(code, url, { ex: LINK_EXPIRY_SECONDS });
+    await redis.set(code, url, { ex: LINK_EXPIRY_SECONDS });
   } else if (localDb) {
     // Save to local SQLite
     const expiresAt = Math.floor(Date.now() / 1000) + LINK_EXPIRY_SECONDS;
@@ -45,9 +50,9 @@ async function saveLink(code: string, url: string): Promise<void> {
 }
 
 async function getLink(code: string): Promise<string | null> {
-  if (isVercelKV) {
+  if (redis) {
     // Get from Vercel KV
-    return await kv.get<string>(code);
+    return await redis.get<string>(code);
   } else if (localDb) {
     // Get from local SQLite and check expiry
     const row = localDb.prepare('SELECT original_url, expires_at FROM links WHERE id = ?').get(code) as { original_url: string, expires_at: number } | undefined;
@@ -67,8 +72,8 @@ async function getLink(code: string): Promise<string | null> {
 }
 
 async function checkExists(code: string): Promise<boolean> {
-  if (isVercelKV) {
-    const exists = await kv.exists(code);
+  if (redis) {
+    const exists = await redis.exists(code);
     return exists === 1;
   } else if (localDb) {
     const row = localDb.prepare('SELECT id FROM links WHERE id = ?').get(code);
