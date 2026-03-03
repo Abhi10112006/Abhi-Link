@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink } from 'lucide-react';
-import { motion } from "motion/react";
+import { ExternalLink, X } from 'lucide-react';
+import { motion, AnimatePresence } from "motion/react";
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
@@ -12,6 +12,9 @@ export default function App() {
   const requestPayeeName = searchParams.get('name');
   const requestAmount = searchParams.get('amount');
   const requestRemarks = searchParams.get('remarks');
+
+  // State to control visibility of the payment request banner
+  const [isPaymentRequestVisible, setIsPaymentRequestVisible] = useState(!!requestUpiId);
 
   // Form state (initially empty, decoupled from URL params)
   const [upiId, setUpiId] = useState('');
@@ -170,34 +173,8 @@ export default function App() {
 
   const requestUpiUrl = generateRequestUpiUrl();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const rawUpi = params.get('upi');
-    
-    if (rawUpi) {
-      // Clean the data (Crucial for GPay/PhonePe)
-      const cleanUpiId = decodeURIComponent(rawUpi).trim();
-      const rawName = params.get('name') || '';
-      const cleanName = rawName.replace(/\+/g, ' ').trim();
-      const amount = params.get('amount')?.trim();
-      const remarks = params.get('remarks')?.trim();
-      const trId = "ABHI" + Date.now();
-
-      // Build the flawless UPI Intent Link
-      let finalUpiLink = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
-      
-      if (amount) {
-        finalUpiLink += `&am=${amount}`;
-      }
-      
-      if (remarks) {
-        finalUpiLink += `&tn=${encodeURIComponent(remarks)}`;
-      }
-      
-      // Attempt to auto-open the UPI app
-      window.location.replace(finalUpiLink);
-    }
-  }, []);
+  // Automatic redirect removed as per user request to prevent security blocks
+  // useEffect(() => { ... }, []);
 
   return (
     <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
@@ -225,55 +202,82 @@ export default function App() {
           </p>
         </div>
 
-        {requestUpiId && (
-          <div className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
-            
-            {(requestPayeeName || requestAmount) && (
-              <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
-                {requestPayeeName && (
-                  <div className="mb-2">
-                    <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Request from</p>
-                    <p className="text-xl font-bold text-[#2d2d2b]">{requestPayeeName}</p>
-                  </div>
-                )}
-                
-                {requestAmount && (
-                  <div className={requestPayeeName ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
-                    <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Amount</p>
-                    <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
-                      ₹{requestAmount}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
-            <motion.a 
-              href={requestUpiUrl}
-              className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
-              whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        <AnimatePresence>
+          {requestUpiId && isPaymentRequestVisible && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20, height: 0, scale: 0.95, filter: "blur(0px)" }}
+              animate={{ opacity: 1, y: 0, height: 'auto', scale: 1, filter: "blur(0px)" }}
+              exit={{ 
+                opacity: 0,
+                scale: 1.1,
+                filter: "blur(12px) grayscale(100%)",
+                x: 60,
+                y: -20,
+                height: 0,
+                marginBottom: 0,
+                transition: { 
+                  duration: 0.8,
+                  ease: "easeInOut"
+                }
+              }}
+              className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center relative overflow-hidden"
             >
-              <span className="relative z-10">Pay Now with UPI App</span>
-              <motion.div
-                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                initial={{ x: '-100%' }}
-                animate={{ x: '200%' }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 1.5, 
-                  ease: "easeInOut", 
-                  repeatDelay: 3 
-                }}
-              />
-            </motion.a>
-          </div>
-        )}
+              <button 
+                onClick={() => setIsPaymentRequestVisible(false)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-[#faf9f8] transition-colors text-[#2d2d2b]/40 hover:text-[#2d2d2b]"
+                aria-label="Close payment request"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
+              
+              {(requestPayeeName || requestAmount) && (
+                <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
+                  {requestPayeeName && (
+                    <div className="mb-2">
+                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Request from</p>
+                      <p className="text-xl font-bold text-[#2d2d2b]">{requestPayeeName}</p>
+                    </div>
+                  )}
+                  
+                  {requestAmount && (
+                    <div className={requestPayeeName ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
+                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Amount</p>
+                      <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
+                        ₹{requestAmount}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
+              <motion.a 
+                href={requestUpiUrl}
+                className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
+                whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <span className="relative z-10">Pay Now with UPI App</span>
+                <motion.div
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '200%' }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 1.5, 
+                    ease: "easeInOut", 
+                    repeatDelay: 3 
+                  }}
+                />
+              </motion.a>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="bg-white rounded-3xl shadow-sm border border-[#d9d3ce] overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
