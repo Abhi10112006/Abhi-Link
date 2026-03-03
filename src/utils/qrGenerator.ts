@@ -184,7 +184,7 @@ export const handleShare = async (
       const baseUrl = 'https://abhi-link.vercel.app/';
       webUrl = `${baseUrl}?${webParams.toString()}`;
       
-      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''}\n\nUsing Navi, CRED, or Amazon Pay? Tap the link below to pay directly.\n\nUsing GPay, PhonePe, or Paytm? For your security, please Scan the attached QR Code instead.`;
+      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''} \nUsing GPay, PhonePe, or Paytm? For your security, please Scan the attached QR Code instead. \n\nUsing Navi, CRED, or Amazon Pay? Tap the link below to pay directly.`;
     }
     
     if (navigator.share) {
