@@ -6,37 +6,19 @@ import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 
 export default function App() {
-  const [upiId, setUpiId] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('upi') || '';
-  });
+  // Parse URL params for Payment Request mode
+  const searchParams = new URLSearchParams(window.location.search);
+  const requestUpiId = searchParams.get('upi');
+  const requestPayeeName = searchParams.get('name');
+  const requestAmount = searchParams.get('amount');
+  const requestRemarks = searchParams.get('remarks');
+
+  // Form state (initially empty, decoupled from URL params)
+  const [upiId, setUpiId] = useState('');
   const [touchedUpiId, setTouchedUpiId] = useState(false);
-  const [payeeName, setPayeeName] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('name') || '';
-  });
-  const [amount, setAmount] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlAmount = params.get('amount');
-    if (!urlAmount) return '';
-    
-    let val = urlAmount.replace(/[^0-9.]/g, '');
-    const parts = val.split('.');
-    if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
-    if (parts.length === 2 && parts[1].length > 2) val = parts[0] + '.' + parts[1].substring(0, 2);
-    if (val) {
-      const splitVal = val.split('.');
-      let intPart = splitVal[0].replace(/^0+(?=\d)/, '');
-      if (intPart) intPart = new Intl.NumberFormat('en-IN').format(BigInt(intPart));
-      else if (val.startsWith('.')) intPart = '0';
-      val = splitVal.length > 1 ? intPart + '.' + splitVal[1] : intPart;
-    }
-    return val;
-  });
-  const [remarks, setRemarks] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('remarks') || '';
-  });
+  const [payeeName, setPayeeName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [remarks, setRemarks] = useState('');
   
   const [recentPayees, setRecentPayees] = useState<{upiId: string, payeeName: string}[]>(() => {
     try {
@@ -136,14 +118,45 @@ export default function App() {
     const params = new URLSearchParams();
     params.append('pa', upiId);
     if (payeeName) params.append('pn', payeeName);
-    if (amount) params.append('am', amount.replace(/,/g, ''));
+    
+    if (amount) {
+      const cleanAmount = amount.replace(/,/g, '');
+      if (!isNaN(Number(cleanAmount))) {
+        params.append('am', parseFloat(cleanAmount).toFixed(2));
+      }
+    }
+    
     params.append('cu', 'INR');
     if (remarks) params.append('tn', remarks);
 
-    return `upi://pay?${params.toString()}`;
+    // Replace + with %20 for better compatibility with some UPI apps
+    return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
   };
 
   const upiUrl = generateUpiUrl();
+
+  // Construct Request UPI URL (for the top banner)
+  const generateRequestUpiUrl = () => {
+    if (!requestUpiId) return '';
+    
+    const params = new URLSearchParams();
+    params.append('pa', requestUpiId);
+    if (requestPayeeName) params.append('pn', requestPayeeName);
+    
+    if (requestAmount) {
+      const cleanAmount = requestAmount.replace(/,/g, '');
+      if (!isNaN(Number(cleanAmount))) {
+        params.append('am', parseFloat(cleanAmount).toFixed(2));
+      }
+    }
+    
+    params.append('cu', 'INR');
+    if (requestRemarks) params.append('tn', requestRemarks);
+
+    return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
+  };
+
+  const requestUpiUrl = generateRequestUpiUrl();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -156,11 +169,18 @@ export default function App() {
       const upiParams = new URLSearchParams();
       upiParams.append('pa', urlUpi);
       if (urlName) upiParams.append('pn', urlName);
-      if (urlAmount) upiParams.append('am', urlAmount.replace(/,/g, ''));
+      
+      if (urlAmount) {
+        const cleanAmount = urlAmount.replace(/,/g, '');
+        if (!isNaN(Number(cleanAmount))) {
+          upiParams.append('am', parseFloat(cleanAmount).toFixed(2));
+        }
+      }
+      
       upiParams.append('cu', 'INR');
       if (urlRemarks) upiParams.append('tn', urlRemarks);
 
-      const intentUrl = `upi://pay?${upiParams.toString()}`;
+      const intentUrl = `upi://pay?${upiParams.toString().replace(/\+/g, '%20')}`;
       
       // Attempt to auto-open the UPI app
       window.location.replace(intentUrl);
@@ -193,24 +213,24 @@ export default function App() {
           </p>
         </div>
 
-        {new URLSearchParams(window.location.search).get('upi') && (
+        {requestUpiId && (
           <div className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
             
-            {(new URLSearchParams(window.location.search).get('name') || new URLSearchParams(window.location.search).get('amount')) && (
+            {(requestPayeeName || requestAmount) && (
               <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
-                {new URLSearchParams(window.location.search).get('name') && (
+                {requestPayeeName && (
                   <div className="mb-2">
                     <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Request from</p>
-                    <p className="text-xl font-bold text-[#2d2d2b]">{new URLSearchParams(window.location.search).get('name')}</p>
+                    <p className="text-xl font-bold text-[#2d2d2b]">{requestPayeeName}</p>
                   </div>
                 )}
                 
-                {new URLSearchParams(window.location.search).get('amount') && (
-                  <div className={new URLSearchParams(window.location.search).get('name') ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
+                {requestAmount && (
+                  <div className={requestPayeeName ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
                     <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Amount</p>
                     <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
-                      ₹{new URLSearchParams(window.location.search).get('amount')}
+                      ₹{requestAmount}
                     </p>
                   </div>
                 )}
@@ -219,7 +239,7 @@ export default function App() {
 
             <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
             <motion.a 
-              href={upiUrl}
+              href={requestUpiUrl}
               className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
               whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
               whileTap={{ scale: 0.95 }}
