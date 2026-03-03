@@ -1,158 +1,17 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import Database from 'better-sqlite3';
-import { createClient, RedisClientType } from 'redis';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import apiApp from './api/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// --- Storage Abstraction ---
-// We use Vercel KV (Redis) in production for persistence and expiry.
-// We use SQLite locally for easy development without credentials.
-
-// Vercel Redis integration typically provides KV_URL (or REDIS_URL)
-const redisUrl = process.env.KV_URL || process.env.REDIS_URL;
-const isProductionRedis = !!redisUrl;
-
-let localDb: Database.Database | null = null;
-let redisClient: RedisClientType | null = null;
-
-if (!isProductionRedis) {
-  console.log('Using local SQLite database (dev mode)');
-  localDb = new Database('links.db');
-  localDb.exec(`
-    CREATE TABLE IF NOT EXISTS links (
-      id TEXT PRIMARY KEY,
-      original_url TEXT NOT NULL,
-      created_at INTEGER DEFAULT (unixepoch()),
-      expires_at INTEGER
-    )
-  `);
-} else {
-  console.log('Using Vercel Redis (production mode)');
-  // Create and connect Redis client
-  redisClient = createClient({
-    url: redisUrl
-  });
-  
-  redisClient.on('error', (err) => console.error('Redis Client Error', err));
-  
-  // We need to await connection, but top-level await might be tricky in some envs
-  // We'll connect inside startServer or immediately if ESM
-  await redisClient.connect();
-}
-
-// 20 hours in seconds
-const LINK_EXPIRY_SECONDS = 20 * 60 * 60; 
-
-async function saveLink(code: string, url: string): Promise<void> {
-  if (redisClient) {
-    // Save to Redis with 20-hour expiry (EX = seconds)
-    await redisClient.set(code, url, { EX: LINK_EXPIRY_SECONDS });
-  } else if (localDb) {
-    // Save to local SQLite
-    const expiresAt = Math.floor(Date.now() / 1000) + LINK_EXPIRY_SECONDS;
-    const insert = localDb.prepare('INSERT INTO links (id, original_url, expires_at) VALUES (?, ?, ?)');
-    insert.run(code, url, expiresAt);
-  }
-}
-
-async function getLink(code: string): Promise<string | null> {
-  if (redisClient) {
-    // Get from Redis
-    const result = await redisClient.get(code);
-    return result as string | null;
-  } else if (localDb) {
-    // Get from local SQLite and check expiry
-    const row = localDb.prepare('SELECT original_url, expires_at FROM links WHERE id = ?').get(code) as { original_url: string, expires_at: number } | undefined;
-    
-    if (!row) return null;
-    
-    // Check if expired (simulate TTL for local dev)
-    if (row.expires_at && row.expires_at < Math.floor(Date.now() / 1000)) {
-      // Clean up expired link
-      localDb.prepare('DELETE FROM links WHERE id = ?').run(code);
-      return null;
-    }
-    
-    return row.original_url;
-  }
-  return null;
-}
-
-async function checkExists(code: string): Promise<boolean> {
-  if (redisClient) {
-    const exists = await redisClient.exists(code);
-    return exists === 1;
-  } else if (localDb) {
-    const row = localDb.prepare('SELECT id FROM links WHERE id = ?').get(code);
-    return !!row;
-  }
-  return false;
-}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Trust proxy for correct protocol/host behind Nginx/Vercel
-  app.set('trust proxy', true);
-
-  app.use(express.json());
-
-  // API Routes
-  app.post('/api/shorten', async (req, res) => {
-    const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ error: 'URL is required' });
-    }
-
-    try {
-      // Generate a random 6-character code
-      let shortCode = Math.random().toString(36).substring(2, 8);
-      
-      // Check for collision (simple retry logic)
-      let attempts = 0;
-      while (attempts < 5) {
-        const exists = await checkExists(shortCode);
-        if (!exists) break;
-        shortCode = Math.random().toString(36).substring(2, 8);
-        attempts++;
-      }
-
-      if (attempts === 5) {
-        return res.status(500).json({ error: 'Failed to generate unique code' });
-      }
-
-      await saveLink(shortCode, url);
-
-      // In production, this would be the full domain
-      // For now, we return the relative path which works in the browser context
-      const shortUrl = `${req.protocol}://${req.get('host')}/p/${shortCode}`;
-      
-      res.json({ shortCode, shortUrl });
-    } catch (error) {
-      console.error('Database error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-  app.get('/p/:code', async (req, res) => {
-    const { code } = req.params;
-    try {
-      const originalUrl = await getLink(code);
-      
-      if (originalUrl) {
-        res.redirect(originalUrl);
-      } else {
-        res.status(404).send('Link not found or expired');
-      }
-    } catch (error) {
-      console.error('Database error:', error);
-      res.status(500).send('Internal server error');
-    }
-  });
+  // Mount the API routes (which includes /api/shorten and /p/:code)
+  app.use(apiApp);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
