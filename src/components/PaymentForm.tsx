@@ -411,9 +411,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         {multipleUpiOptions.map((id, index) => (
                           <motion.button
                             key={index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.2, delay: index * 0.05 }}
                             type="button"
                             onClick={() => {
                               // Close menu first
@@ -432,7 +432,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                               
                               handleTypewriterRef.current = window.setInterval(() => {
                                 if (i < id.length) {
-                                  setUpiId(prev => prev + id.charAt(i));
+                                  // Use substring to ensure correct text even if state updates are batched/delayed
+                                  setUpiId(id.substring(0, i + 1));
                                   i++;
                                 } else {
                                   if (handleTypewriterRef.current) {
