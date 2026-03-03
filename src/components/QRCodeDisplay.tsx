@@ -13,6 +13,7 @@ interface QRCodeDisplayProps {
   qrRef: React.RefObject<SVGSVGElement>;
   onDownload: () => Promise<void>;
   onShare: () => Promise<void>;
+  t: Record<string, string>;
 }
 
 export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
@@ -25,6 +26,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   qrRef,
   onDownload,
   onShare,
+  t,
 }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -145,7 +147,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 <>
                   <span className="relative z-10 flex items-center gap-2">
                     <Download className="w-5 h-5" />
-                    Download
+                    {t.download}
                   </span>
                   <motion.div
                     className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
@@ -211,7 +213,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               ) : (
                 <>
                   <Share2 className="w-5 h-5" />
-                  <span className="relative z-10">Share</span>
+                  <span className="relative z-10">{t.share}</span>
                 </>
               )}
             </motion.button>
@@ -222,8 +224,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           <QrCode className="w-16 h-16 mb-4" />
           <p className="text-sm font-bold uppercase tracking-wide">
             {upiId && !isValidUpi 
-              ? "Enter a valid UPI ID to generate your custom QR code."
-              : "Enter a UPI ID to generate your custom QR code."}
+              ? t.invalidUpi
+              : t.enterUpiId}
           </p>
         </div>
       )}

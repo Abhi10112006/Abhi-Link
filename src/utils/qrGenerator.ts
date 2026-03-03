@@ -229,9 +229,10 @@ export const handleShare = async (
 
           if (!onlyImage) {
              // Append URL to text for better compatibility across apps (WhatsApp, etc.)
+             // We do not set shareData.url here because setting both text (with URL) and url
+             // causes some apps (like WhatsApp) to show the link twice.
              const finalShareText = webUrl ? `${shareText}\n\n${webUrl}` : shareText;
              shareData.text = finalShareText;
-             if (webUrl) shareData.url = webUrl;
           }
 
           await navigator.share(shareData);

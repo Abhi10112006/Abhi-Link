@@ -32,6 +32,7 @@ interface PaymentFormProps {
   onRemoveRecent: (upiId: string) => void;
   onSaveRecent?: () => void;
   amountInputRef?: React.RefObject<HTMLInputElement>;
+  t: Record<string, string>;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -50,6 +51,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onRemoveRecent,
   onSaveRecent,
   amountInputRef,
+  t,
 }) => {
   // Autofill prevention state
   const [randomUpiId] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
@@ -292,7 +294,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         <motion.div variants={itemVariants} className={showAutocomplete ? "relative z-50" : "relative z-10"}>
           <label htmlFor={randomUpiId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-            UPI ID (VPA) <span className="text-red-500">*</span>
+            {t.upiIdLabel} <span className="text-red-500">*</span>
           </label>
           <motion.div 
             className="relative"
@@ -319,7 +321,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
                   : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 shadow-sm hover:shadow-md'
               }`}
-              placeholder="e.g. john@okhdfcbank"
+              placeholder={t.upiIdPlaceholder}
               value={upiId}
               onChange={handleUpiChange}
               onFocus={() => {
@@ -514,7 +516,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
                 className="text-xs font-bold text-red-500 uppercase tracking-wide overflow-hidden"
               >
-                Please enter a valid UPI ID
+                {t.invalidUpi}
               </motion.p>
             )}
           </AnimatePresence>
@@ -522,7 +524,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         <motion.div variants={itemVariants}>
           <label htmlFor={randomPayeeId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-            Receiver Name
+            {t.nameLabel}
           </label>
           <motion.div
             animate={{ scale: focusedField === randomPayeeId ? 1.02 : 1 }}
@@ -540,7 +542,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               data-form-type="other"
               list="autocompleteOff"
               className="block w-full px-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
-              placeholder="e.g. John Doe"
+              placeholder={t.namePlaceholder}
               value={payeeName}
               onChange={(e) => setPayeeName(e.target.value)}
               onFocus={() => setFocusedField(randomPayeeId)}
@@ -554,7 +556,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
         <motion.div variants={itemVariants}>
           <label htmlFor={randomAmountId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-            Amount (₹)
+            {t.amountLabel}
           </label>
           <motion.div 
             className="relative"
@@ -576,7 +578,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               data-form-type="other"
               list="autocompleteOff"
               className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
-              placeholder="0.00"
+              placeholder={t.amountPlaceholder}
               value={amount}
               ref={amountInputRef}
               onChange={(e) => {
@@ -611,14 +613,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               onBlur={() => setFocusedField(null)}
             />
           </motion.div>
-          <p className="text-xs font-medium text-[#2d2d2b]/50 mt-2 px-1">
-            Enter amount in Indian Rupees (₹)
-          </p>
         </motion.div>
 
         <motion.div variants={itemVariants}>
           <label htmlFor={randomRemarksId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-            Remarks / Note
+            {t.remarksLabel}
           </label>
           <motion.div 
             className="relative"
@@ -641,7 +640,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               data-form-type="other"
               list="autocompleteOff"
               className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
-              placeholder="e.g. Rent"
+              placeholder={t.remarksPlaceholder}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               onFocus={() => setFocusedField(randomRemarksId)}

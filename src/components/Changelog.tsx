@@ -85,7 +85,7 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose }) => {
           variants={item} 
           className="text-8xl sm:text-[12rem] font-black tracking-tighter leading-none mb-2 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/30"
         >
-          v0.18
+          v0.2
         </motion.h1>
         
         <motion.p 
@@ -105,9 +105,9 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose }) => {
           
           <div className="flex flex-col gap-6 w-full">
             {[
-              "Premium Loading States.",
+              "Multiple Language Support.",
               "TinyURL Integration.",
-              "Image-Only Banner Sharing."
+              "Premium Animations."
             ].map((text, i) => (
               <motion.div 
                 key={i}

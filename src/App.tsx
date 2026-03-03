@@ -6,10 +6,21 @@ import { QRCodeSVG } from 'qrcode.react';
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { Changelog } from './components/Changelog';
+import { LanguageSelector } from './components/LanguageSelector';
 import { handleDownload, handleShare } from './utils/qrGenerator';
+import { translations } from './locales/translations';
 
 export default function App() {
   const [showChangelog, setShowChangelog] = useState(false);
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem('abhi-link-lang') || 'en';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('abhi-link-lang', lang);
+  }, [lang]);
+
+  const t = translations[lang] || translations['en'];
 
   // PWA Update Logic
   const {
@@ -231,15 +242,17 @@ export default function App() {
       {/* Dummy datalist to trick browsers into disabling autocomplete */}
       <datalist id="autocompleteOff"></datalist>
       
-      {/* Developer's Other App Link */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+      {/* Top Right Actions */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 z-40">
+        <LanguageSelector currentLang={lang} onLanguageChange={setLang} />
         <a
           href="https://ledger69.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
         >
-          <span>Try Ledger69</span>
+          <span className="hidden sm:inline">{t.tryLedger}</span>
+          <span className="sm:hidden">Ledger69</span>
           <ExternalLink className="w-4 h-4" />
         </a>
       </div>
@@ -252,7 +265,7 @@ export default function App() {
         onClick={() => setShowChangelog(true)}
       >
         <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/60 hover:text-[#2d2d2b] bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
-          <span>Version 0.18</span>
+          <span>{t.version}</span>
         </div>
       </motion.div>
 
@@ -260,7 +273,7 @@ export default function App() {
         <div className="text-center mb-10">
           <h1 className="text-6xl md:text-8xl font-black text-[#2d2d2b] tracking-tighter font-display uppercase mb-4">ABHI LINK</h1>
           <p className="mt-3 text-[#2d2d2b]/70 max-w-xl mx-auto font-medium">
-            Create a personalized UPI payment QR code with a pre-filled amount and custom remarks.
+            {t.subtitle}
           </p>
         </div>
 
@@ -294,20 +307,20 @@ export default function App() {
                 <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
+              <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">{t.paymentRequest}</h2>
               
               {(requestPayeeName || requestAmount) && (
                 <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
                   {requestPayeeName && (
                     <div className="mb-2">
-                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Request from</p>
+                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">{t.payingTo}</p>
                       <p className="text-xl font-bold text-[#2d2d2b]">{requestPayeeName}</p>
                     </div>
                   )}
                   
                   {requestAmount && (
                     <div className={requestPayeeName ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
-                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Amount</p>
+                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">{t.amountLabel}</p>
                       <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
                         ₹{requestAmount}
                       </p>
@@ -364,7 +377,7 @@ export default function App() {
                     ) : (
                       <>
                         <Share2 className="w-4 h-4" />
-                        Share
+                        {t.share}
                       </>
                     )}
                   </motion.button>
@@ -394,7 +407,7 @@ export default function App() {
                     ) : (
                       <>
                         <Download className="w-4 h-4" />
-                        Save
+                        {t.save}
                       </>
                     )}
                   </motion.button>
@@ -417,7 +430,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <span className="relative z-10">Pay Now with UPI App</span>
+                <span className="relative z-10">{t.openInUpi}</span>
                 <motion.div
                   className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
                   initial={{ x: '-100%' }}
@@ -455,6 +468,7 @@ export default function App() {
                 onRemoveRecent={handleRemoveRecent}
                 onSaveRecent={saveRecentPayee}
                 amountInputRef={amountInputRef}
+                t={t}
               />
             </motion.div>
 
@@ -470,6 +484,7 @@ export default function App() {
                 qrRef={qrRef}
                 onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
                 onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
+                t={t}
               />
             </motion.div>
             
@@ -477,15 +492,15 @@ export default function App() {
         </motion.div>
         
         <div className="mt-8 text-center text-sm font-bold text-[#2d2d2b]/50 uppercase tracking-wide">
-          <p>Scan this QR code with any UPI app</p>
+          <p>{t.scanInstruction}</p>
           <p className="mt-2 text-sm normal-case text-[#2d2d2b]/70" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive', fontWeight: 'bold' }}>
-            Developer: Abhinav Yaduvanshi
+            {t.developer}
           </p>
         </div>
       </div>
 
       <AnimatePresence>
-        {showChangelog && <Changelog onClose={() => setShowChangelog(false)} />}
+        {showChangelog && <Changelog onClose={() => setShowChangelog(false)} t={t} />}
       </AnimatePresence>
     </div>
   );
