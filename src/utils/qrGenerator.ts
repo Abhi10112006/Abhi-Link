@@ -187,6 +187,8 @@ export const handleShare = async (
       url.search = webParams.toString();
       const longUrl = url.toString();
       
+      console.log('Generating short link for:', longUrl); // Debug log
+
       try {
         const response = await fetch('/api/shorten', {
           method: 'POST',
