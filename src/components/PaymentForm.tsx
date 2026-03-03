@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IndianRupee, MessageSquare, User } from 'lucide-react';
+import { IndianRupee, MessageSquare, User, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const COMMON_UPI_HANDLES = [
@@ -31,6 +31,7 @@ interface PaymentFormProps {
   onSelectRecent: (payee: {upiId: string, payeeName: string}) => void;
   onRemoveRecent: (upiId: string) => void;
   onSaveRecent?: () => void;
+  amountInputRef?: React.RefObject<HTMLInputElement>;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -48,6 +49,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onSelectRecent,
   onRemoveRecent,
   onSaveRecent,
+  amountInputRef,
 }) => {
   // Autofill prevention state
   const [randomUpiId] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
@@ -293,6 +295,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               )}
             </AnimatePresence>
           </motion.div>
+          <div className="flex items-start gap-1.5 mt-2 px-1">
+            <Info className="w-3.5 h-3.5 text-[#2d2d2b]/40 mt-0.5 flex-shrink-0" />
+            <p className="text-xs font-medium text-[#2d2d2b]/50 leading-tight">
+              Format: username@bank (e.g. john@oksbi)
+            </p>
+          </div>
           <AnimatePresence>
             {showUpiError && (
               <motion.p 
@@ -365,6 +373,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
               placeholder="0.00"
               value={amount}
+              ref={amountInputRef}
               onChange={(e) => {
                 let val = e.target.value.replace(/[^0-9.]/g, '');
                 
@@ -397,6 +406,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               onBlur={() => setFocusedField(null)}
             />
           </motion.div>
+          <p className="text-xs font-medium text-[#2d2d2b]/50 mt-2 px-1">
+            Enter amount in Indian Rupees (₹)
+          </p>
         </motion.div>
 
         <motion.div variants={itemVariants}>
@@ -424,13 +436,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               data-form-type="other"
               list="autocompleteOff"
               className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
-              placeholder="e.g. Rent (Max 30 chars)"
+              placeholder="e.g. Rent"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               onFocus={() => setFocusedField(randomRemarksId)}
               onBlur={() => setFocusedField(null)}
             />
           </motion.div>
+          <div className="flex justify-between items-center mt-2 px-1">
+            <p className="text-xs font-medium text-[#2d2d2b]/50">
+              Optional note for the receiver
+            </p>
+            <p className={`text-xs font-bold transition-colors ${remarks.length >= 30 ? 'text-red-500' : 'text-[#2d2d2b]/40'}`}>
+              {remarks.length}/30
+            </p>
+          </div>
         </motion.div>
       </motion.form>
     </div>

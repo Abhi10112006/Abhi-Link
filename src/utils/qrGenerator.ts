@@ -170,6 +170,7 @@ export const handleShare = async (
     const file = new File([blob], `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`, { type: 'image/png' });
     
     let shareText = 'Scan this QR code to pay.';
+    let webUrl = '';
     
     if (upiId) {
       // Construct Web URL parameters (matching what App.tsx expects)
@@ -180,39 +181,18 @@ export const handleShare = async (
       if (remarks) webParams.append('remarks', remarks);
       
       // Create the full Web URL
-      // Use the production URL provided by the user
       const baseUrl = 'https://abhi-link.vercel.app/';
-      let webUrl = `${baseUrl}?${webParams.toString()}`;
+      webUrl = `${baseUrl}?${webParams.toString()}`;
       
-      // Shorten the URL
-      try {
-        const response = await fetch('/api/shorten', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: webUrl }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.shortUrl) {
-            webUrl = data.shortUrl;
-          }
-        }
-      } catch (error) {
-        console.error('Error shortening URL:', error);
-        // Fallback to original URL if shortening fails
-      }
-      
-      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''}\n\nClick to Pay: ${webUrl}\n\nOr scan the attached QR code.`;
+      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''}`;
     }
     
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    if (navigator.share) {
       try {
         await navigator.share({
           title: 'ABHI LINK Payment Request',
           text: shareText,
+          url: webUrl || undefined,
           files: [file],
         });
       } catch (error) {

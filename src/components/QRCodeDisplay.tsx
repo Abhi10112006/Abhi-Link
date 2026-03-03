@@ -77,11 +77,21 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             <motion.button
               onClick={onDownload}
               className="relative flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg overflow-hidden group"
-              whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ 
+                scale: 1.02, 
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              }}
               initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: { type: "spring", stiffness: 400, damping: 17 }
+              }}
             >
               <span className="relative z-10 flex items-center gap-2">
                 <Download className="w-5 h-5" />
@@ -103,11 +113,21 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             <motion.button
               onClick={onShare}
               className="flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8]"
-              whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)" }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ 
+                scale: 1.02, 
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)",
+                transition: { duration: 0.2 }
+              }}
+              whileTap={{ 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              }}
               initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17, delay: 0.1 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.1 }
+              }}
             >
               <Share2 className="w-5 h-5" />
               Share

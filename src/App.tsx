@@ -31,6 +31,7 @@ export default function App() {
 
   const qrRef = useRef<SVGSVGElement>(null);
   const typewriterRef = useRef<number | null>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   // Validate UPI ID format (e.g., name@bank)
   const upiRegex = /^[\w.-]+@[\w.-]+$/;
@@ -88,6 +89,10 @@ export default function App() {
 
       if (upiDone && nameDone) {
         if (typewriterRef.current) window.clearInterval(typewriterRef.current);
+        // Focus amount field after animation completes
+        setTimeout(() => {
+          amountInputRef.current?.focus();
+        }, 50);
       }
     }, 30);
   };
@@ -111,26 +116,29 @@ export default function App() {
   };
 
   // Construct UPI URL
-  // Format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=INR&tn=REMARKS
+  // Format: upi://pay?pa=UPI_ID&pn=PAYEE_NAME&am=AMOUNT&cu=INR&tn=REMARKS&tr=TRANSACTION_REF
   const generateUpiUrl = () => {
     if (!upiId) return '';
     
-    const params = new URLSearchParams();
-    params.append('pa', upiId);
-    if (payeeName) params.append('pn', payeeName);
+    const cleanUpiId = upiId.trim();
+    const cleanName = payeeName.trim();
+    const cleanAmount = amount.replace(/,/g, '').trim();
+    const cleanRemarks = remarks.trim();
+    const trId = "ABHI" + Date.now();
+
+    // Note: We replace %40 with @ in the 'pa' parameter to comply with NPCI security framework
+    // which may flag %40 as a security risk or invalid format in some apps.
+    let link = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
     
-    if (amount) {
-      const cleanAmount = amount.replace(/,/g, '');
-      if (!isNaN(Number(cleanAmount))) {
-        params.append('am', parseFloat(cleanAmount).toFixed(2));
-      }
+    if (cleanAmount && !isNaN(Number(cleanAmount))) {
+      link += `&am=${cleanAmount}`;
     }
     
-    params.append('cu', 'INR');
-    if (remarks) params.append('tn', remarks);
+    if (cleanRemarks) {
+      link += `&tn=${encodeURIComponent(cleanRemarks)}`;
+    }
 
-    // Replace + with %20 for better compatibility with some UPI apps
-    return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
+    return link;
   };
 
   const upiUrl = generateUpiUrl();
@@ -139,51 +147,55 @@ export default function App() {
   const generateRequestUpiUrl = () => {
     if (!requestUpiId) return '';
     
-    const params = new URLSearchParams();
-    params.append('pa', requestUpiId);
-    if (requestPayeeName) params.append('pn', requestPayeeName);
+    // Clean the data (Crucial for GPay/PhonePe)
+    const cleanUpiId = decodeURIComponent(requestUpiId).trim();
+    const cleanName = requestPayeeName ? requestPayeeName.replace(/\+/g, ' ').trim() : '';
+    const cleanAmount = requestAmount ? requestAmount.trim() : '';
+    const cleanRemarks = requestRemarks ? requestRemarks.trim() : '';
+    const trId = "ABHI" + Date.now();
+
+    // Build the flawless UPI Intent Link
+    let link = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
     
-    if (requestAmount) {
-      const cleanAmount = requestAmount.replace(/,/g, '');
-      if (!isNaN(Number(cleanAmount))) {
-        params.append('am', parseFloat(cleanAmount).toFixed(2));
-      }
+    if (cleanAmount) {
+      link += `&am=${cleanAmount}`;
     }
     
-    params.append('cu', 'INR');
-    if (requestRemarks) params.append('tn', requestRemarks);
+    if (cleanRemarks) {
+      link += `&tn=${encodeURIComponent(cleanRemarks)}`;
+    }
 
-    return `upi://pay?${params.toString().replace(/\+/g, '%20')}`;
+    return link;
   };
 
   const requestUpiUrl = generateRequestUpiUrl();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const urlUpi = params.get('upi');
-    if (urlUpi) {
-      const urlName = params.get('name');
-      const urlAmount = params.get('amount');
-      const urlRemarks = params.get('remarks');
+    const rawUpi = params.get('upi');
+    
+    if (rawUpi) {
+      // Clean the data (Crucial for GPay/PhonePe)
+      const cleanUpiId = decodeURIComponent(rawUpi).trim();
+      const rawName = params.get('name') || '';
+      const cleanName = rawName.replace(/\+/g, ' ').trim();
+      const amount = params.get('amount')?.trim();
+      const remarks = params.get('remarks')?.trim();
+      const trId = "ABHI" + Date.now();
+
+      // Build the flawless UPI Intent Link
+      let finalUpiLink = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
       
-      const upiParams = new URLSearchParams();
-      upiParams.append('pa', urlUpi);
-      if (urlName) upiParams.append('pn', urlName);
-      
-      if (urlAmount) {
-        const cleanAmount = urlAmount.replace(/,/g, '');
-        if (!isNaN(Number(cleanAmount))) {
-          upiParams.append('am', parseFloat(cleanAmount).toFixed(2));
-        }
+      if (amount) {
+        finalUpiLink += `&am=${amount}`;
       }
       
-      upiParams.append('cu', 'INR');
-      if (urlRemarks) upiParams.append('tn', urlRemarks);
-
-      const intentUrl = `upi://pay?${upiParams.toString().replace(/\+/g, '%20')}`;
+      if (remarks) {
+        finalUpiLink += `&tn=${encodeURIComponent(remarks)}`;
+      }
       
       // Attempt to auto-open the UPI app
-      window.location.replace(intentUrl);
+      window.location.replace(finalUpiLink);
     }
   }, []);
 
@@ -282,6 +294,7 @@ export default function App() {
               onSelectRecent={handleSelectRecent}
               onRemoveRecent={handleRemoveRecent}
               onSaveRecent={saveRecentPayee}
+              amountInputRef={amountInputRef}
             />
 
             {/* QR Code Section */}
