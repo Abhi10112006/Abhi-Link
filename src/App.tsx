@@ -221,6 +221,13 @@ export default function App() {
         </a>
       </div>
 
+      {/* Version Badge */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-none select-none">
+        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/40 bg-white/30 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm">
+          <span>Version 0.1</span>
+        </div>
+      </div>
+
       <div className="max-w-3xl mx-auto mt-8 sm:mt-0">
         <div className="text-center mb-10">
           <h1 className="text-6xl md:text-8xl font-black text-[#2d2d2b] tracking-tighter font-display uppercase mb-4">ABHI LINK</h1>
