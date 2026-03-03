@@ -384,13 +384,33 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               )}
             </AnimatePresence>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {showToast && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  key="upi-toast"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={{
+                    hidden: { opacity: 0, y: 10, scale: 0.95 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1,
+                      transition: { 
+                        type: "spring", 
+                        stiffness: 300, 
+                        damping: 25,
+                        staggerChildren: 0.05
+                      }
+                    },
+                    exit: { 
+                      opacity: 0, 
+                      y: 10, 
+                      scale: 0.95,
+                      transition: { duration: 0.2 }
+                    }
+                  }}
                   className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-xl overflow-hidden pointer-events-auto max-w-[250px] border border-white/5 ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
                 >
                   {multipleUpiOptions.length > 0 ? (
@@ -411,9 +431,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         {multipleUpiOptions.map((id, index) => (
                           <motion.button
                             key={index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
+                            variants={{
+                              hidden: { opacity: 0, x: -10 },
+                              visible: { opacity: 1, x: 0 }
+                            }}
                             type="button"
                             onClick={() => {
                               // Close menu first
