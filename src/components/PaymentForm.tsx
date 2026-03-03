@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard } from 'lucide-react';
+import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const COMMON_UPI_HANDLES = [
@@ -384,33 +384,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               )}
             </AnimatePresence>
 
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {showToast && (
                 <motion.div
-                  key="upi-toast"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={{
-                    hidden: { opacity: 0, y: 10, scale: 0.95 },
-                    visible: { 
-                      opacity: 1, 
-                      y: 0, 
-                      scale: 1,
-                      transition: { 
-                        type: "spring", 
-                        stiffness: 300, 
-                        damping: 25,
-                        staggerChildren: 0.05
-                      }
-                    },
-                    exit: { 
-                      opacity: 0, 
-                      y: 10, 
-                      scale: 0.95,
-                      transition: { duration: 0.2 }
-                    }
-                  }}
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-xl overflow-hidden pointer-events-auto max-w-[250px] border border-white/5 ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
                 >
                   {multipleUpiOptions.length > 0 ? (
@@ -431,10 +411,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         {multipleUpiOptions.map((id, index) => (
                           <motion.button
                             key={index}
-                            variants={{
-                              hidden: { opacity: 0, x: -10 },
-                              visible: { opacity: 1, x: 0 }
-                            }}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
                             type="button"
                             onClick={() => {
                               // Close menu first
