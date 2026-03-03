@@ -61,8 +61,22 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [detectedClipboardUpi, setDetectedClipboardUpi] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [multipleUpiOptions, setMultipleUpiOptions] = useState<string[]>([]);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
+
+  // Helper to extract all potential UPI IDs from text
+  const extractUpiIds = (text: string): string[] => {
+    // Regex to find strings that look like UPI IDs (e.g., name@bank)
+    // Matches alphanumeric, dots, hyphens, underscores before @, and alphabetic after @
+    const regex = /[a-zA-Z0-9.\-_]+@[a-zA-Z]+/g;
+    const matches = text.match(regex);
+    if (!matches) return [];
+    
+    // Filter out duplicates and invalid ones (containing spaces)
+    const uniqueIds = Array.from(new Set(matches.filter(id => !id.includes(' '))));
+    return uniqueIds;
+  };
 
   // Smart Clipboard Check (The "Premium Touch")
   useEffect(() => {
@@ -75,9 +89,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           
           if (permission.state === 'granted') {
              const text = await navigator.clipboard.readText();
-             const cleanText = text?.trim();
-             if (cleanText && cleanText.includes('@') && !cleanText.includes(' ')) {
-               setDetectedClipboardUpi(cleanText);
+             const ids = extractUpiIds(text || '');
+             if (ids.length > 0) {
+               // Just store the first one for the "pulse" effect, or maybe a flag
+               setDetectedClipboardUpi(ids[0]);
              } else {
                setDetectedClipboardUpi(null);
              }
@@ -97,10 +112,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   useEffect(() => {
     if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 3000);
-      return () => clearTimeout(timer);
+      // Only auto-hide if it's the "No valid UPI" message, not the selection list
+      if (multipleUpiOptions.length === 0) {
+        const timer = setTimeout(() => setShowToast(false), 3000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [showToast]);
+  }, [showToast, multipleUpiOptions]);
 
   useEffect(() => {
     return () => {
@@ -324,22 +342,25 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   type="button"
                   onClick={async () => {
                     try {
-                      let text = detectedClipboardUpi;
-                      if (!text) {
-                        text = await navigator.clipboard.readText();
-                      }
+                      const text = await navigator.clipboard.readText();
+                      const ids = extractUpiIds(text || '');
                       
-                      const cleanText = text?.trim();
-                      if (cleanText && cleanText.includes('@') && !cleanText.includes(' ')) {
-                        setUpiId(cleanText);
-                        // Clear typewriter effect if running
+                      if (ids.length === 1) {
+                        // Single ID found - paste directly
+                        setUpiId(ids[0]);
                         if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
-                        // Focus the input so user can edit if needed
                         const input = document.getElementById(randomUpiId);
                         if (input) input.focus();
-                        setDetectedClipboardUpi(null); // Reset after paste
+                        setDetectedClipboardUpi(null);
+                        setMultipleUpiOptions([]);
+                        setShowToast(false);
+                      } else if (ids.length > 1) {
+                        // Multiple IDs found - show selection
+                        setMultipleUpiOptions(ids);
+                        setShowToast(true);
                       } else {
-                        // Show toast if no valid UPI ID found
+                        // No IDs found
+                        setMultipleUpiOptions([]);
                         setShowToast(true);
                         const input = document.getElementById(randomUpiId);
                         if (input) input.focus();
@@ -369,10 +390,39 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 pointer-events-none"
+                  className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-lg overflow-hidden pointer-events-auto max-w-[250px] ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
                 >
-                  <Info className="h-3.5 w-3.5 text-red-400" />
-                  <span>No valid UPI ID detected</span>
+                  {multipleUpiOptions.length > 0 ? (
+                    <div className="flex flex-col">
+                      <div className="px-3 py-2 bg-[#2d2d2b] border-b border-white/10 text-white/60 text-[10px] uppercase tracking-wider font-bold">
+                        Select UPI ID to Paste
+                      </div>
+                      {multipleUpiOptions.map((id, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setUpiId(id);
+                            if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+                            const input = document.getElementById(randomUpiId);
+                            if (input) input.focus();
+                            setDetectedClipboardUpi(null);
+                            setShowToast(false);
+                            setMultipleUpiOptions([]);
+                          }}
+                          className="px-3 py-2.5 text-left hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 flex items-center gap-2"
+                        >
+                          <User className="h-3 w-3 text-blue-400 shrink-0" />
+                          <span className="truncate">{id}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <Info className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                      <span>No valid UPI ID detected</span>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
