@@ -183,8 +183,9 @@ export const handleShare = async (
       if (remarks) webParams.append('remarks', remarks);
       
       // Create the full Web URL
-      const baseUrl = window.location.origin; // Use current origin for relative paths
-      const longUrl = `${baseUrl}/?${webParams.toString()}`;
+      const url = new URL(window.location.origin);
+      url.search = webParams.toString();
+      const longUrl = url.toString();
       
       try {
         const response = await fetch('/api/shorten', {
