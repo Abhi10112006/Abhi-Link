@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IndianRupee, MessageSquare, User, Info, Eraser } from 'lucide-react';
+import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const COMMON_UPI_HANDLES = [
@@ -59,8 +59,40 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [detectedClipboardUpi, setDetectedClipboardUpi] = useState<string | null>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
+
+  // Smart Clipboard Check (The "Premium Touch")
+  useEffect(() => {
+    const checkClipboard = async () => {
+      try {
+        // Check if browser supports permission query
+        if (navigator.permissions && navigator.permissions.query) {
+          // @ts-ignore - 'clipboard-read' is not yet in standard TS types
+          const permission = await navigator.permissions.query({ name: 'clipboard-read' });
+          
+          if (permission.state === 'granted') {
+             const text = await navigator.clipboard.readText();
+             const cleanText = text?.trim();
+             if (cleanText && cleanText.includes('@') && !cleanText.includes(' ')) {
+               setDetectedClipboardUpi(cleanText);
+             } else {
+               setDetectedClipboardUpi(null);
+             }
+          }
+        }
+      } catch (err) {
+        // Silently fail - privacy first
+      }
+    };
+
+    window.addEventListener('focus', checkClipboard);
+    // Also check once on mount
+    checkClipboard();
+
+    return () => window.removeEventListener('focus', checkClipboard);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -256,7 +288,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               data-lpignore="true"
               data-form-type="other"
               list="autocompleteOff"
-              className={`block w-full pl-10 pr-3 py-3 border-2 rounded-xl outline-none sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
+              className={`block w-full pl-10 pr-12 py-3 border-2 rounded-xl outline-none sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
                 showUpiError
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
                   : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 shadow-sm hover:shadow-md'
@@ -274,6 +306,48 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 if (onSaveRecent) onSaveRecent();
               }}
             />
+            
+            <AnimatePresence>
+              {!upiId && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      let text = detectedClipboardUpi;
+                      if (!text) {
+                        text = await navigator.clipboard.readText();
+                      }
+                      
+                      if (text) {
+                        setUpiId(text.trim());
+                        // Clear typewriter effect if running
+                        if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+                        // Focus the input so user can edit if needed
+                        const input = document.getElementById(randomUpiId);
+                        if (input) input.focus();
+                        setDetectedClipboardUpi(null); // Reset after paste
+                      }
+                    } catch (err) {
+                      console.error('Failed to read clipboard', err);
+                      // Fallback: just focus the input so user can paste manually
+                      const input = document.getElementById(randomUpiId);
+                      if (input) input.focus();
+                    }
+                  }}
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer transition-all z-20 ${
+                    detectedClipboardUpi 
+                      ? 'text-blue-600 animate-pulse scale-110' 
+                      : 'text-[#2d2d2b]/40 hover:text-[#2d2d2b]'
+                  }`}
+                  title={detectedClipboardUpi ? "Paste detected UPI ID" : "Paste from clipboard"}
+                >
+                  <Clipboard className={`h-5 w-5 ${detectedClipboardUpi ? 'stroke-[2.5px]' : ''}`} />
+                </motion.button>
+              )}
+            </AnimatePresence>
             
             <AnimatePresence>
               {showAutocomplete && getFilteredHandles().length > 0 && (
