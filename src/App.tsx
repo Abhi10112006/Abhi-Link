@@ -41,6 +41,26 @@ export default function App() {
 
   // State to control visibility of the payment request banner
   const [isPaymentRequestVisible, setIsPaymentRequestVisible] = useState(!!requestUpiId);
+  const [isBannerSharing, setIsBannerSharing] = useState(false);
+  const [isBannerDownloading, setIsBannerDownloading] = useState(false);
+
+  const onBannerShareClick = async () => {
+    setIsBannerSharing(true);
+    try {
+      await handleShare(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '', requestUpiId || '', true);
+    } finally {
+      setIsBannerSharing(false);
+    }
+  };
+
+  const onBannerDownloadClick = async () => {
+    setIsBannerDownloading(true);
+    try {
+      await handleDownload(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '');
+    } finally {
+      setIsBannerDownloading(false);
+    }
+  };
 
   // Form state (initially empty, decoupled from URL params)
   const [upiId, setUpiId] = useState('');
@@ -224,7 +244,7 @@ export default function App() {
       {/* Version Badge */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-none select-none">
         <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/40 bg-white/30 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm">
-          <span>Version 0.15</span>
+          <span>Version 0.17</span>
         </div>
       </div>
 
@@ -311,22 +331,64 @@ export default function App() {
                 
                 <div className="flex gap-3 w-full max-w-xs justify-center">
                   <motion.button
-                    onClick={() => handleShare(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '', requestUpiId || '', true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce]"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    onClick={onBannerShareClick}
+                    disabled={isBannerSharing}
+                    className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
+                    whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
+                    whileTap={!isBannerSharing ? { scale: 0.95 } : {}}
                   >
-                    <Share2 className="w-4 h-4" />
-                    Share
+                    {isBannerSharing ? (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex items-center justify-center w-4 h-4">
+                          <motion.span 
+                            className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          />
+                          <motion.span 
+                            className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
+                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                        </div>
+                        <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">WAIT</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4" />
+                        Share
+                      </>
+                    )}
                   </motion.button>
                   <motion.button
-                    onClick={() => handleDownload(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '')}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce]"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    onClick={onBannerDownloadClick}
+                    disabled={isBannerDownloading}
+                    className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
+                    whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
+                    whileTap={!isBannerDownloading ? { scale: 0.95 } : {}}
                   >
-                    <Download className="w-4 h-4" />
-                    Save
+                    {isBannerDownloading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex items-center justify-center w-4 h-4">
+                          <motion.span 
+                            className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          />
+                          <motion.span 
+                            className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
+                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                        </div>
+                        <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">SAVING</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        Save
+                      </>
+                    )}
                   </motion.button>
                 </div>
               </div>

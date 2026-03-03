@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, QrCode, Share2 } from 'lucide-react';
+import { Download, QrCode, Share2, Loader2 } from 'lucide-react';
 import { motion } from "motion/react";
 
 interface QRCodeDisplayProps {
@@ -11,8 +11,8 @@ interface QRCodeDisplayProps {
   payeeName: string;
   remarks: string;
   qrRef: React.RefObject<SVGSVGElement>;
-  onDownload: () => void;
-  onShare: () => void;
+  onDownload: () => Promise<void>;
+  onShare: () => Promise<void>;
 }
 
 export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
@@ -26,6 +26,27 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   onDownload,
   onShare,
 }) => {
+  const [isSharing, setIsSharing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleShareClick = async () => {
+    setIsSharing(true);
+    try {
+      await onShare();
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleDownloadClick = async () => {
+    setIsDownloading(true);
+    try {
+      await onDownload();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="p-8 bg-[#faf9f8] flex flex-col items-center justify-center min-h-full">
       {upiId && isValidUpi ? (
@@ -75,17 +96,18 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <motion.button
-              onClick={onDownload}
-              className="relative flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg overflow-hidden group"
-              whileHover={{ 
+              onClick={handleDownloadClick}
+              disabled={isDownloading}
+              className="relative flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg overflow-hidden group disabled:opacity-90 disabled:cursor-not-allowed"
+              whileHover={!isDownloading ? { 
                 scale: 1.02, 
                 boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                 transition: { duration: 0.2 }
-              }}
-              whileTap={{ 
+              } : {}}
+              whileTap={!isDownloading ? { 
                 scale: 0.95,
                 transition: { duration: 0.1 }
-              }}
+              } : {}}
               initial={{ opacity: 0, y: 10 }}
               animate={{ 
                 opacity: 1, 
@@ -93,35 +115,66 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 transition: { type: "spring", stiffness: 400, damping: 17 }
               }}
             >
-              <span className="relative z-10 flex items-center gap-2">
-                <Download className="w-5 h-5" />
-                Download
-              </span>
-              <motion.div
-                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
-                initial={{ x: '-100%' }}
-                animate={{ x: '200%' }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 2, 
-                  ease: "easeInOut", 
-                  repeatDelay: 4 
-                }}
-              />
+              {isDownloading ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center w-5 h-5">
+                    <motion.span 
+                      className="absolute w-full h-full border-2 border-[#e6e1dc]/20 border-t-[#e6e1dc] rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <motion.span 
+                      className="absolute w-1.5 h-1.5 bg-[#e6e1dc] rounded-full"
+                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                  <span className="relative z-10 font-black tracking-widest text-sm text-[#e6e1dc]">SAVING</span>
+                  <motion.div
+                    className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 1.5, 
+                      ease: "easeInOut"
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Download className="w-5 h-5" />
+                    Download
+                  </span>
+                  <motion.div
+                    className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 2, 
+                      ease: "easeInOut", 
+                      repeatDelay: 4 
+                    }}
+                  />
+                </>
+              )}
             </motion.button>
 
             <motion.button
-              onClick={onShare}
-              className="flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8]"
-              whileHover={{ 
+              onClick={handleShareClick}
+              disabled={isSharing}
+              className="relative flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8] disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden"
+              whileHover={!isSharing ? { 
                 scale: 1.02, 
                 boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)",
                 transition: { duration: 0.2 }
-              }}
-              whileTap={{ 
+              } : {}}
+              whileTap={!isSharing ? { 
                 scale: 0.95,
                 transition: { duration: 0.1 }
-              }}
+              } : {}}
               initial={{ opacity: 0, y: 10 }}
               animate={{ 
                 opacity: 1, 
@@ -129,8 +182,38 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.1 }
               }}
             >
-              <Share2 className="w-5 h-5" />
-              Share
+              {isSharing ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center w-5 h-5">
+                    <motion.span 
+                      className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <motion.span 
+                      className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
+                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                  <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">PROCESSING</span>
+                  <motion.div
+                    className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 1.5, 
+                      ease: "easeInOut"
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <Share2 className="w-5 h-5" />
+                  <span className="relative z-10">Share</span>
+                </>
+              )}
             </motion.button>
           </div>
         </div>

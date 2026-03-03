@@ -144,16 +144,21 @@ export const handleDownload = async (
   amount: string,
   payeeName: string,
   remarks: string
-) => {
-  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
-  if (!canvas) return;
-  
-  const pngFile = canvas.toDataURL('image/png');
-  const downloadLink = document.createElement('a');
-  const cleanAmount = amount ? amount.replace(/,/g, '') : '';
-  downloadLink.download = `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`;
-  downloadLink.href = pngFile;
-  downloadLink.click();
+): Promise<void> => {
+  return new Promise(async (resolve) => {
+    const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
+    if (!canvas) return resolve();
+    
+    const pngFile = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    const cleanAmount = amount ? amount.replace(/,/g, '') : '';
+    downloadLink.download = `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`;
+    downloadLink.href = pngFile;
+    downloadLink.click();
+    
+    // Add a tiny delay to ensure the UI shows the loading state briefly for feedback
+    setTimeout(resolve, 500);
+  });
 };
 
 export const handleShare = async (
@@ -163,77 +168,82 @@ export const handleShare = async (
   remarks: string,
   upiId: string,
   onlyImage: boolean = false
-) => {
-  const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
-  if (!canvas) return;
+): Promise<void> => {
+  return new Promise(async (resolve) => {
+    const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
+    if (!canvas) return resolve();
 
-  canvas.toBlob(async (blob) => {
-    if (!blob) return;
-    const cleanAmount = amount ? amount.replace(/,/g, '') : '';
-    const file = new File([blob], `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`, { type: 'image/png' });
-    
-    let shareText = 'Scan this QR code to pay.';
-    let webUrl = '';
-    
-    if (upiId && !onlyImage) {
-      // Construct Web URL parameters (matching what App.tsx expects)
-      const webParams = new URLSearchParams();
-      webParams.append('upi', upiId);
-      if (payeeName) webParams.append('name', payeeName);
-      if (cleanAmount) webParams.append('amount', cleanAmount);
-      if (remarks) webParams.append('remarks', remarks);
+    canvas.toBlob(async (blob) => {
+      if (!blob) return resolve();
+      const cleanAmount = amount ? amount.replace(/,/g, '') : '';
+      const file = new File([blob], `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`, { type: 'image/png' });
       
-      // Create the full Web URL
-      const url = new URL(window.location.origin);
-      url.search = webParams.toString();
-      const longUrl = url.toString();
+      let shareText = 'Scan this QR code to pay.';
+      let webUrl = '';
       
-      console.log('Generating short link for:', longUrl); // Debug log
+      if (upiId && !onlyImage) {
+        // Construct Web URL parameters (matching what App.tsx expects)
+        const webParams = new URLSearchParams();
+        webParams.append('upi', upiId);
+        if (payeeName) webParams.append('name', payeeName);
+        if (cleanAmount) webParams.append('amount', cleanAmount);
+        if (remarks) webParams.append('remarks', remarks);
+        
+        // Create the full Web URL
+        const url = new URL(window.location.origin);
+        url.search = webParams.toString();
+        const longUrl = url.toString();
+        
+        console.log('Generating short link for:', longUrl); // Debug log
 
-      try {
-        const response = await fetch('/api/shorten', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: longUrl }),
-        });
+        try {
+          const response = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: longUrl }),
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          webUrl = data.shortUrl;
-        } else {
-          console.error('Failed to shorten URL, using long URL');
+          if (response.ok) {
+            const data = await response.json();
+            webUrl = data.shortUrl;
+          } else {
+            console.error('Failed to shorten URL, using long URL');
+            webUrl = longUrl;
+          }
+        } catch (error) {
+          console.error('Error shortening URL:', error);
           webUrl = longUrl;
         }
-      } catch (error) {
-        console.error('Error shortening URL:', error);
-        webUrl = longUrl;
+        
+        shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''} \nUsing GPay, PhonePe, or Paytm? For your security, please Scan the attached QR Code instead. \n\nUsing Navi, CRED, or Amazon Pay? Tap the link below to pay directly.`;
       }
       
-      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''} \nUsing GPay, PhonePe, or Paytm? For your security, please Scan the attached QR Code instead. \n\nUsing Navi, CRED, or Amazon Pay? Tap the link below to pay directly.`;
-    }
-    
-    if (navigator.share) {
-      try {
-        const shareData: ShareData = {
-          files: [file],
-          title: 'ABHI LINK Payment Request',
-        };
+      if (navigator.share) {
+        try {
+          const shareData: ShareData = {
+            files: [file],
+            title: 'ABHI LINK Payment Request',
+          };
 
-        if (!onlyImage) {
-           // Append URL to text for better compatibility across apps (WhatsApp, etc.)
-           const finalShareText = webUrl ? `${shareText}\n\n${webUrl}` : shareText;
-           shareData.text = finalShareText;
-           if (webUrl) shareData.url = webUrl;
+          if (!onlyImage) {
+             // Append URL to text for better compatibility across apps (WhatsApp, etc.)
+             const finalShareText = webUrl ? `${shareText}\n\n${webUrl}` : shareText;
+             shareData.text = finalShareText;
+             if (webUrl) shareData.url = webUrl;
+          }
+
+          await navigator.share(shareData);
+        } catch (error) {
+          console.error('Error sharing:', error);
         }
-
-        await navigator.share(shareData);
-      } catch (error) {
-        console.error('Error sharing:', error);
+      } else {
+        alert('Sharing is not supported on this device/browser.');
       }
-    } else {
-      alert('Sharing is not supported on this device/browser.');
-    }
-  }, 'image/png');
+      
+      // Add a tiny delay to ensure the UI shows the loading state briefly for feedback
+      setTimeout(resolve, 500);
+    }, 'image/png');
+  });
 };
