@@ -224,7 +224,7 @@ export default function App() {
       {/* Version Badge */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-6 pointer-events-none select-none">
         <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/40 bg-white/30 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm">
-          <span>Version 0.13</span>
+          <span>Version 0.15</span>
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export default function App() {
                 
                 <div className="flex gap-3 w-full max-w-xs justify-center">
                   <motion.button
-                    onClick={() => handleShare(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '', requestUpiId || '')}
+                    onClick={() => handleShare(requestQrRef, requestAmount || '', requestPayeeName || '', requestRemarks || '', requestUpiId || '', true)}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce]"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

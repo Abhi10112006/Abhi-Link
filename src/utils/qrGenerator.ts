@@ -161,7 +161,8 @@ export const handleShare = async (
   amount: string,
   payeeName: string,
   remarks: string,
-  upiId: string
+  upiId: string,
+  onlyImage: boolean = false
 ) => {
   const canvas = await generateCanvas(qrRef, amount, payeeName, remarks);
   if (!canvas) return;
@@ -174,7 +175,7 @@ export const handleShare = async (
     let shareText = 'Scan this QR code to pay.';
     let webUrl = '';
     
-    if (upiId) {
+    if (upiId && !onlyImage) {
       // Construct Web URL parameters (matching what App.tsx expects)
       const webParams = new URLSearchParams();
       webParams.append('upi', upiId);
@@ -215,12 +216,19 @@ export const handleShare = async (
     
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'ABHI LINK Payment Request',
-          text: shareText,
-          url: webUrl || undefined,
+        const shareData: ShareData = {
           files: [file],
-        });
+          title: 'ABHI LINK Payment Request',
+        };
+
+        if (!onlyImage) {
+           // Append URL to text for better compatibility across apps (WhatsApp, etc.)
+           const finalShareText = webUrl ? `${shareText}\n\n${webUrl}` : shareText;
+           shareData.text = finalShareText;
+           if (webUrl) shareData.url = webUrl;
+        }
+
+        await navigator.share(shareData);
       } catch (error) {
         console.error('Error sharing:', error);
       }
