@@ -60,6 +60,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [detectedClipboardUpi, setDetectedClipboardUpi] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
 
@@ -93,6 +94,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
     return () => window.removeEventListener('focus', checkClipboard);
   }, []);
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     return () => {
@@ -321,14 +329,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         text = await navigator.clipboard.readText();
                       }
                       
-                      if (text) {
-                        setUpiId(text.trim());
+                      const cleanText = text?.trim();
+                      if (cleanText && cleanText.includes('@') && !cleanText.includes(' ')) {
+                        setUpiId(cleanText);
                         // Clear typewriter effect if running
                         if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
                         // Focus the input so user can edit if needed
                         const input = document.getElementById(randomUpiId);
                         if (input) input.focus();
                         setDetectedClipboardUpi(null); // Reset after paste
+                      } else {
+                        // Show toast if no valid UPI ID found
+                        setShowToast(true);
+                        const input = document.getElementById(randomUpiId);
+                        if (input) input.focus();
                       }
                     } catch (err) {
                       console.error('Failed to read clipboard', err);
@@ -346,6 +360,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 >
                   <Clipboard className={`h-5 w-5 ${detectedClipboardUpi ? 'stroke-[2.5px]' : ''}`} />
                 </motion.button>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showToast && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 pointer-events-none"
+                >
+                  <Info className="h-3.5 w-3.5 text-red-400" />
+                  <span>No valid UPI ID detected</span>
+                </motion.div>
               )}
             </AnimatePresence>
             
