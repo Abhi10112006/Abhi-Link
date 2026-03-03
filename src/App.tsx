@@ -1,11 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 
 export default function App() {
+  // PWA Update Logic
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegistered(r) {
+      if (r) {
+        setInterval(() => {
+          r.update();
+        }, 60 * 1000); // Check for updates every minute
+      }
+    },
+    onRegisterError(error) {
+      console.log('SW registration error', error);
+    },
+  });
+
+  // Automatically update when a new version is available
+  useEffect(() => {
+    if (needRefresh) {
+      updateServiceWorker(true);
+    }
+  }, [needRefresh, updateServiceWorker]);
+
   // Parse URL params for Payment Request mode
   const searchParams = new URLSearchParams(window.location.search);
   const requestUpiId = searchParams.get('upi');
@@ -202,9 +227,11 @@ export default function App() {
           </p>
         </div>
 
-        <AnimatePresence>
+        <AnimatePresence mode="popLayout">
           {requestUpiId && isPaymentRequestVisible && (
             <motion.div 
+              key="payment-request-banner"
+              layout
               initial={{ opacity: 0, y: 20, height: 0, scale: 0.95, filter: "blur(0px)" }}
               animate={{ opacity: 1, y: 0, height: 'auto', scale: 1, filter: "blur(0px)" }}
               exit={{ 
@@ -216,7 +243,7 @@ export default function App() {
                 height: 0,
                 marginBottom: 0,
                 transition: { 
-                  duration: 0.8,
+                  duration: 0.6,
                   ease: "easeInOut"
                 }
               }}
@@ -252,7 +279,13 @@ export default function App() {
                 </div>
               )}
 
-              <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
+              <p className="text-[#2d2d2b]/70 mb-6 font-medium text-sm">
+                Only Navi, CRED, Amazon Pay or any newer UPI app? Click the button below.
+                <br/>
+                <span className="text-xs opacity-80 mt-2 block">
+                  Using GPay, PhonePe, or Paytm? Please scan the QR code below for security.
+                </span>
+              </p>
               <motion.a 
                 href={requestUpiUrl}
                 className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
@@ -279,7 +312,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-[#d9d3ce] overflow-hidden">
+        <motion.div layout className="bg-white rounded-3xl shadow-sm border border-[#d9d3ce] overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
             
             {/* Form Section */}
@@ -315,7 +348,7 @@ export default function App() {
             />
             
           </div>
-        </div>
+        </motion.div>
         
         <div className="mt-8 text-center text-sm font-bold text-[#2d2d2b]/50 uppercase tracking-wide">
           <p>Scan this QR code with any UPI app</p>
