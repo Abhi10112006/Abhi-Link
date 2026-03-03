@@ -328,7 +328,7 @@ export default function App() {
                 Only Navi, CRED, Amazon Pay or any newer UPI app? Click the button below.
                 <br/>
                 <span className="text-xs opacity-80 mt-2 block">
-                  Using GPay, PhonePe, or Paytm? Please scan the QR code below for security.
+                  Using GPay, PhonePe, or Paytm? Please scan the QR code above for security.
                 </span>
               </p>
               <motion.a 
