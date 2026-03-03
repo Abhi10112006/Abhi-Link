@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import Database from 'better-sqlite3';
-import { Redis } from '@upstash/redis';
+import { createClient, RedisClientType } from 'redis';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,11 +11,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // We use Vercel KV (Redis) in production for persistence and expiry.
 // We use SQLite locally for easy development without credentials.
 
-const isVercelKV = !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN;
-let localDb: Database.Database | null = null;
-let redis: Redis | null = null;
+// Vercel Redis integration typically provides KV_URL (or REDIS_URL)
+const redisUrl = process.env.KV_URL || process.env.REDIS_URL;
+const isProductionRedis = !!redisUrl;
 
-if (!isVercelKV) {
+let localDb: Database.Database | null = null;
+let redisClient: RedisClientType | null = null;
+
+if (!isProductionRedis) {
   console.log('Using local SQLite database (dev mode)');
   localDb = new Database('links.db');
   localDb.exec(`
@@ -27,20 +30,26 @@ if (!isVercelKV) {
     )
   `);
 } else {
-  console.log('Using Vercel KV (production mode)');
-  redis = new Redis({
-    url: process.env.KV_REST_API_URL!,
-    token: process.env.KV_REST_API_TOKEN!,
+  console.log('Using Vercel Redis (production mode)');
+  // Create and connect Redis client
+  redisClient = createClient({
+    url: redisUrl
   });
+  
+  redisClient.on('error', (err) => console.error('Redis Client Error', err));
+  
+  // We need to await connection, but top-level await might be tricky in some envs
+  // We'll connect inside startServer or immediately if ESM
+  await redisClient.connect();
 }
 
 // 20 hours in seconds
 const LINK_EXPIRY_SECONDS = 20 * 60 * 60; 
 
 async function saveLink(code: string, url: string): Promise<void> {
-  if (redis) {
-    // Save to Vercel KV with 20-hour expiry (EX = seconds)
-    await redis.set(code, url, { ex: LINK_EXPIRY_SECONDS });
+  if (redisClient) {
+    // Save to Redis with 20-hour expiry (EX = seconds)
+    await redisClient.set(code, url, { EX: LINK_EXPIRY_SECONDS });
   } else if (localDb) {
     // Save to local SQLite
     const expiresAt = Math.floor(Date.now() / 1000) + LINK_EXPIRY_SECONDS;
@@ -50,9 +59,10 @@ async function saveLink(code: string, url: string): Promise<void> {
 }
 
 async function getLink(code: string): Promise<string | null> {
-  if (redis) {
-    // Get from Vercel KV
-    return await redis.get<string>(code);
+  if (redisClient) {
+    // Get from Redis
+    const result = await redisClient.get(code);
+    return result as string | null;
   } else if (localDb) {
     // Get from local SQLite and check expiry
     const row = localDb.prepare('SELECT original_url, expires_at FROM links WHERE id = ?').get(code) as { original_url: string, expires_at: number } | undefined;
@@ -72,8 +82,8 @@ async function getLink(code: string): Promise<string | null> {
 }
 
 async function checkExists(code: string): Promise<boolean> {
-  if (redis) {
-    const exists = await redis.exists(code);
+  if (redisClient) {
+    const exists = await redisClient.exists(code);
     return exists === 1;
   } else if (localDb) {
     const row = localDb.prepare('SELECT id FROM links WHERE id = ?').get(code);
