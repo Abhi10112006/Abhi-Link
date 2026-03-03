@@ -1,6 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { IndianRupee, MessageSquare, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const COMMON_UPI_HANDLES = [
+  '@ybl', '@paytm', '@okicici', '@okhdfcbank', '@oksbi',
+  '@okaxis', '@apl', '@ibl', '@axl', '@icici', '@sbi',
+  '@hdfcbank', '@kotak', '@axisbank', '@yesbank', '@idfcbank',
+  '@waaxis', '@wahdfcbank', '@waicici', '@wasbi',
+  '@upi', '@freecharge', '@mobikwik', '@slice', '@cred',
+  '@fampay', '@amazonpay', '@airtel', '@airtelpaymentsbank',
+  '@bajaj', '@payzapp', '@wealth', '@jupiter', '@fi', '@niyo',
+  '@dbs', '@rbl', '@federal', '@indus', '@hsbc', '@citi',
+  '@barodapay', '@pnb', '@cnrb', '@boi', '@unionbank',
+  '@indianbank', '@uco', '@centralbank', '@mahabank', '@idbi',
+  '@kbl', '@southindianbank', '@equitas', '@au'
+];
 
 interface PaymentFormProps {
   upiId: string;
@@ -16,6 +30,7 @@ interface PaymentFormProps {
   recentPayees: {upiId: string, payeeName: string}[];
   onSelectRecent: (payee: {upiId: string, payeeName: string}) => void;
   onRemoveRecent: (upiId: string) => void;
+  onSaveRecent?: () => void;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -32,6 +47,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   recentPayees,
   onSelectRecent,
   onRemoveRecent,
+  onSaveRecent,
 }) => {
   // Autofill prevention state
   const [randomUpiId] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
@@ -40,6 +56,89 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [randomRemarksId] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const autocompleteRef = useRef<HTMLDivElement>(null);
+  const handleTypewriterRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+        setShowAutocomplete(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleUpiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+    const val = e.target.value;
+    setUpiId(val);
+    setTouchedUpiId(false);
+    
+    if (val.includes('@')) {
+      const parts = val.split('@');
+      if (parts.length === 2 && parts[1].length >= 0) {
+        setShowAutocomplete(true);
+      } else {
+        setShowAutocomplete(false);
+      }
+    } else {
+      setShowAutocomplete(false);
+    }
+  };
+
+  const selectHandle = (handle: string) => {
+    if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+
+    const prefix = upiId.split('@')[0];
+    const fullTarget = prefix + handle;
+    let currentLength = prefix.length + 1; // Start right after the '@'
+    
+    setUpiId(prefix + '@');
+    setShowAutocomplete(false);
+    
+    handleTypewriterRef.current = window.setInterval(() => {
+      if (currentLength < fullTarget.length) {
+        currentLength++;
+        setUpiId(fullTarget.substring(0, currentLength));
+      } else {
+        if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+        setTouchedUpiId(true);
+      }
+    }, 40); // 40ms per letter for typewriter effect
+  };
+
+  const getFilteredHandles = () => {
+    if (!upiId.includes('@')) return COMMON_UPI_HANDLES.slice(0, 5);
+    const searchPart = upiId.split('@')[1].toLowerCase();
+    if (!searchPart) return COMMON_UPI_HANDLES.slice(0, 5);
+    return COMMON_UPI_HANDLES.filter(h => h.toLowerCase().startsWith('@' + searchPart)).slice(0, 5);
+  };
+
+  const dropdownVariants = {
+    hidden: { opacity: 0, y: -5, scale: 0.98, transformOrigin: "top" },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { 
+        type: "spring", stiffness: 500, damping: 30
+      } 
+    },
+    exit: { opacity: 0, y: -5, scale: 0.98, transition: { duration: 0.15 } }
+  };
+
+  const dropdownItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 400, damping: 24 } }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -85,7 +184,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             <p className="text-[11px] font-bold text-[#2d2d2b]/50 uppercase tracking-widest mb-3">
               {recentPayees.length > 1 ? 'Recent Users' : 'Recent User'}
             </p>
-            <div className="flex flex-row gap-2 w-full">
+            <div className="grid grid-cols-2 gap-2 w-full">
               {recentPayees.map((payee) => (
                 <motion.div 
                   key={payee.upiId}
@@ -114,7 +213,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </motion.div>
         )}
 
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className={showAutocomplete ? "relative z-50" : "relative z-10"}>
           <label htmlFor={randomUpiId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
             UPI ID (VPA) <span className="text-red-500">*</span>
           </label>
@@ -122,6 +221,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             className="relative"
             animate={{ scale: focusedField === randomUpiId ? 1.02 : 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            ref={autocompleteRef}
           >
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <User className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomUpiId ? 'text-[#2d2d2b]' : 'text-[#2d2d2b]/40'}`} />
@@ -144,16 +244,54 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               }`}
               placeholder="e.g. john@okhdfcbank"
               value={upiId}
-              onChange={(e) => {
-                setUpiId(e.target.value);
-                setTouchedUpiId(false); // Reset touched state while typing
+              onChange={handleUpiChange}
+              onFocus={() => {
+                setFocusedField(randomUpiId);
+                if (upiId.includes('@')) setShowAutocomplete(true);
               }}
-              onFocus={() => setFocusedField(randomUpiId)}
               onBlur={() => {
                 setFocusedField(null);
                 setTouchedUpiId(true); // Validate when user clicks away
+                if (onSaveRecent) onSaveRecent();
               }}
             />
+            
+            <AnimatePresence>
+              {showAutocomplete && getFilteredHandles().length > 0 && (
+                <motion.div
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  className="absolute z-10 w-full mt-2 bg-white border-2 border-[#d9d3ce] rounded-xl shadow-xl overflow-hidden"
+                >
+                  <ul className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                    {getFilteredHandles().map((handle, index) => (
+                      <motion.li 
+                        key={handle} 
+                        variants={dropdownItemVariants}
+                        initial="hidden"
+                        animate="show"
+                        layout="position"
+                        transition={{ delay: index * 0.03 }}
+                      >
+                        <button
+                          type="button"
+                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-[#2d2d2b] hover:bg-[#faf9f8] hover:text-blue-600 transition-all rounded-lg flex items-center gap-1 group"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevents input from losing focus
+                            selectHandle(handle);
+                          }}
+                        >
+                          <span className="opacity-40 group-hover:opacity-60 transition-opacity truncate max-w-[50%]">{upiId.split('@')[0]}</span>
+                          <span className="font-bold text-base">{handle}</span>
+                        </button>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
           <AnimatePresence>
             {showUpiError && (
@@ -193,7 +331,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               value={payeeName}
               onChange={(e) => setPayeeName(e.target.value)}
               onFocus={() => setFocusedField(randomPayeeId)}
-              onBlur={() => setFocusedField(null)}
+              onBlur={() => {
+                setFocusedField(null);
+                if (onSaveRecent) onSaveRecent();
+              }}
             />
           </motion.div>
         </motion.div>

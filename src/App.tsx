@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink } from 'lucide-react';
+import { motion } from "motion/react";
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { handleDownload, handleShare } from './utils/qrGenerator';
@@ -54,27 +55,24 @@ export default function App() {
   const isValidUpi = upiId === '' || upiRegex.test(upiId);
   const showUpiError = touchedUpiId && !isValidUpi && upiId.length > 0;
 
-  useEffect(() => {
+  const saveRecentPayee = () => {
     if (isValidUpi && upiId) {
-      const timeout = setTimeout(() => {
-        setRecentPayees(prev => {
-          const existingIndex = prev.findIndex(p => p.upiId === upiId);
-          let newPayees = [...prev];
-          if (existingIndex >= 0) {
-            newPayees[existingIndex] = { upiId, payeeName: payeeName || newPayees[existingIndex].payeeName };
-            const [item] = newPayees.splice(existingIndex, 1);
-            newPayees.unshift(item);
-          } else {
-            newPayees.unshift({ upiId, payeeName });
-          }
-          newPayees = newPayees.slice(0, 2); // Keep last 2
-          localStorage.setItem('recentPayees', JSON.stringify(newPayees));
-          return newPayees;
-        });
-      }, 1500);
-      return () => clearTimeout(timeout);
+      setRecentPayees(prev => {
+        const existingIndex = prev.findIndex(p => p.upiId === upiId);
+        let newPayees = [...prev];
+        if (existingIndex >= 0) {
+          newPayees[existingIndex] = { upiId, payeeName: payeeName || newPayees[existingIndex].payeeName };
+          const [item] = newPayees.splice(existingIndex, 1);
+          newPayees.unshift(item);
+        } else {
+          newPayees.unshift({ upiId, payeeName });
+        }
+        newPayees = newPayees.slice(0, 4); // Keep last 4
+        localStorage.setItem('recentPayees', JSON.stringify(newPayees));
+        return newPayees;
+      });
     }
-  }, [upiId, payeeName, isValidUpi]);
+  };
 
   const handleSelectRecent = (payee: {upiId: string, payeeName: string}) => {
     if (typewriterRef.current) {
@@ -198,13 +196,50 @@ export default function App() {
         {new URLSearchParams(window.location.search).get('upi') && (
           <div className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">Payment Request</h2>
+            
+            {(new URLSearchParams(window.location.search).get('name') || new URLSearchParams(window.location.search).get('amount')) && (
+              <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
+                {new URLSearchParams(window.location.search).get('name') && (
+                  <div className="mb-2">
+                    <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Request from</p>
+                    <p className="text-xl font-bold text-[#2d2d2b]">{new URLSearchParams(window.location.search).get('name')}</p>
+                  </div>
+                )}
+                
+                {new URLSearchParams(window.location.search).get('amount') && (
+                  <div className={new URLSearchParams(window.location.search).get('name') ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
+                    <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">Amount</p>
+                    <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
+                      ₹{new URLSearchParams(window.location.search).get('amount')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <p className="text-[#2d2d2b]/70 mb-6 font-medium">If your UPI app didn't open automatically, click the button below to pay.</p>
-            <a 
+            <motion.a 
               href={upiUrl}
-              className="inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl hover:bg-black transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
+              whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              Pay Now with UPI App
-            </a>
+              <span className="relative z-10">Pay Now with UPI App</span>
+              <motion.div
+                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                initial={{ x: '-100%' }}
+                animate={{ x: '200%' }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 1.5, 
+                  ease: "easeInOut", 
+                  repeatDelay: 3 
+                }}
+              />
+            </motion.a>
           </div>
         )}
 
@@ -226,6 +261,7 @@ export default function App() {
               recentPayees={recentPayees}
               onSelectRecent={handleSelectRecent}
               onRemoveRecent={handleRemoveRecent}
+              onSaveRecent={saveRecentPayee}
             />
 
             {/* QR Code Section */}

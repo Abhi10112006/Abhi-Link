@@ -170,21 +170,48 @@ export const handleShare = async (
     const file = new File([blob], `abhi-link-qr-${cleanAmount ? cleanAmount + 'rs' : 'code'}.png`, { type: 'image/png' });
     
     let shareText = 'Scan this QR code to pay.';
+    
     if (upiId) {
-      const upiParams = new URLSearchParams();
-      upiParams.append('pa', upiId);
-      if (payeeName) upiParams.append('pn', payeeName);
-      if (cleanAmount) upiParams.append('am', cleanAmount);
-      upiParams.append('cu', 'INR');
-      if (remarks) upiParams.append('tn', remarks);
-      const shareUrl = `upi://pay?${upiParams.toString()}`;
-      shareText = `Scan this QR code or click on this Link to Pay.\n${shareUrl}`;
+      // Construct Web URL parameters (matching what App.tsx expects)
+      const webParams = new URLSearchParams();
+      webParams.append('upi', upiId);
+      if (payeeName) webParams.append('name', payeeName);
+      if (cleanAmount) webParams.append('amount', cleanAmount);
+      if (remarks) webParams.append('remarks', remarks);
+      
+      // Create the full Web URL
+      // Use the production URL provided by the user
+      const baseUrl = 'https://abhi-link.vercel.app/';
+      let webUrl = `${baseUrl}?${webParams.toString()}`;
+      
+      // Shorten the URL
+      try {
+        const response = await fetch('/api/shorten', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: webUrl }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.shortUrl) {
+            webUrl = data.shortUrl;
+          }
+        }
+      } catch (error) {
+        console.error('Error shortening URL:', error);
+        // Fallback to original URL if shortening fails
+      }
+      
+      shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''}\n\nClick to Pay: ${webUrl}\n\nOr scan the attached QR code.`;
     }
     
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
-          title: 'ABHI LINK Payment QR',
+          title: 'ABHI LINK Payment Request',
           text: shareText,
           files: [file],
         });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Download, QrCode, Share2 } from 'lucide-react';
+import { motion } from "motion/react";
 
 interface QRCodeDisplayProps {
   upiId: string;
@@ -73,20 +74,44 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <button
+            <motion.button
               onClick={onDownload}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] hover:bg-black text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide transition-colors shadow-sm"
+              className="relative flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] text-[#e6e1dc] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg overflow-hidden group"
+              whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <Download className="w-5 h-5" />
-              Download
-            </button>
-            <button
+              <span className="relative z-10 flex items-center gap-2">
+                <Download className="w-5 h-5" />
+                Download
+              </span>
+              <motion.div
+                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+                initial={{ x: '-100%' }}
+                animate={{ x: '200%' }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 2, 
+                  ease: "easeInOut", 
+                  repeatDelay: 4 
+                }}
+              />
+            </motion.button>
+
+            <motion.button
               onClick={onShare}
-              className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-[#faf9f8] text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide transition-colors shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8]"
+              whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)" }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17, delay: 0.1 }}
             >
               <Share2 className="w-5 h-5" />
               Share
-            </button>
+            </motion.button>
           </div>
         </div>
       ) : (
