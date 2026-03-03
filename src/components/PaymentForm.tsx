@@ -376,7 +376,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   }}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer transition-all z-20 ${
                     detectedClipboardUpi 
-                      ? 'text-blue-600 animate-pulse scale-110' 
+                      ? 'text-[#2d2d2b] drop-shadow-[0_0_8px_rgba(45,45,43,0.4)] animate-pulse scale-110' 
                       : 'text-[#2d2d2b]/40 hover:text-[#2d2d2b]'
                   }`}
                   title={detectedClipboardUpi ? "Paste detected UPI ID" : "Paste from clipboard"}
@@ -649,7 +649,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </motion.div>
           <div className="flex justify-between items-center mt-2 px-1">
             <p className="text-xs font-medium text-[#2d2d2b]/50">
-              Optional note for the receiver
+              {t.remarksNote}
             </p>
             <p className={`text-xs font-bold transition-colors ${remarks.length >= 30 ? 'text-red-500' : 'text-[#2d2d2b]/40'}`}>
               {remarks.length}/30

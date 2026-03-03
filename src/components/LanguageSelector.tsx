@@ -61,13 +61,15 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
           >
             <div className="max-h-64 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-[#d9d3ce] scrollbar-track-transparent">
               {languages.map((lang) => (
-                <button
+                <motion.button
                   key={lang.code}
                   onClick={() => {
                     onLanguageChange(lang.code);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-3 flex items-center justify-between hover:bg-[#f5f5f0] transition-colors ${
+                  whileHover={{ backgroundColor: '#f5f5f0' }}
+                  whileTap={{ scale: 0.98, backgroundColor: '#e6e1dc' }}
+                  className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${
                     currentLang === lang.code ? 'bg-[#f5f5f0]' : ''
                   }`}
                 >
@@ -78,7 +80,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
                   {currentLang === lang.code && (
                     <Check className="w-4 h-4 text-[#2d2d2b]" />
                   )}
-                </button>
+                </motion.button>
               ))}
             </div>
           </motion.div>
