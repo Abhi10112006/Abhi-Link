@@ -36,8 +36,8 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
           transition: { duration: 0.2 }
         }}
         whileTap={{ 
-          scale: 0.95,
-          transition: { duration: 0.1 }
+          scale: 0.9,
+          transition: { type: "spring", stiffness: 400, damping: 10 }
         }}
       >
         <motion.div
@@ -68,7 +68,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
                     setIsOpen(false);
                   }}
                   whileHover={{ backgroundColor: '#f5f5f0' }}
-                  whileTap={{ scale: 0.98, backgroundColor: '#e6e1dc' }}
+                  whileTap={{ scale: 0.95, backgroundColor: '#e6e1dc' }}
                   className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${
                     currentLang === lang.code ? 'bg-[#f5f5f0]' : ''
                   }`}

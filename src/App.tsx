@@ -245,16 +245,18 @@ export default function App() {
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 z-40">
         <LanguageSelector currentLang={lang} onLanguageChange={setLang} />
-        <a
+        <motion.a
           href="https://ledger69.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           <span className="hidden sm:inline">{t.tryLedger}</span>
           <span className="sm:hidden">Ledger69</span>
           <ExternalLink className="w-4 h-4" />
-        </a>
+        </motion.a>
       </div>
 
       {/* Version Badge */}
