@@ -291,6 +291,14 @@ export default function App() {
                     includeMargin={false}
                     ref={requestQrRef}
                     className="w-full h-full"
+                    imageSettings={{
+                      src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
+                      x: undefined,
+                      y: undefined,
+                      height: 40,
+                      width: 40,
+                      excavate: true,
+                    }}
                   />
                 </div>
                 
@@ -353,36 +361,40 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2">
             
             {/* Form Section */}
-            <PaymentForm 
-              upiId={upiId}
-              setUpiId={handleUpiIdChange}
-              payeeName={payeeName}
-              setPayeeName={handlePayeeNameChange}
-              amount={amount}
-              setAmount={setAmount}
-              remarks={remarks}
-              setRemarks={setRemarks}
-              showUpiError={showUpiError}
-              setTouchedUpiId={setTouchedUpiId}
-              recentPayees={recentPayees}
-              onSelectRecent={handleSelectRecent}
-              onRemoveRecent={handleRemoveRecent}
-              onSaveRecent={saveRecentPayee}
-              amountInputRef={amountInputRef}
-            />
+            <motion.div layout className="h-full">
+              <PaymentForm 
+                upiId={upiId}
+                setUpiId={handleUpiIdChange}
+                payeeName={payeeName}
+                setPayeeName={handlePayeeNameChange}
+                amount={amount}
+                setAmount={setAmount}
+                remarks={remarks}
+                setRemarks={setRemarks}
+                showUpiError={showUpiError}
+                setTouchedUpiId={setTouchedUpiId}
+                recentPayees={recentPayees}
+                onSelectRecent={handleSelectRecent}
+                onRemoveRecent={handleRemoveRecent}
+                onSaveRecent={saveRecentPayee}
+                amountInputRef={amountInputRef}
+              />
+            </motion.div>
 
             {/* QR Code Section */}
-            <QRCodeDisplay 
-              upiId={upiId}
-              isValidUpi={isValidUpi}
-              upiUrl={upiUrl}
-              amount={amount}
-              payeeName={payeeName}
-              remarks={remarks}
-              qrRef={qrRef}
-              onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
-              onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
-            />
+            <motion.div layout className="h-full">
+              <QRCodeDisplay 
+                upiId={upiId}
+                isValidUpi={isValidUpi}
+                upiUrl={upiUrl}
+                amount={amount}
+                payeeName={payeeName}
+                remarks={remarks}
+                qrRef={qrRef}
+                onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
+                onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
+              />
+            </motion.div>
             
           </div>
         </motion.div>

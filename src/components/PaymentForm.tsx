@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IndianRupee, MessageSquare, User, Info } from 'lucide-react';
+import { IndianRupee, MessageSquare, User, Info, Eraser } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const COMMON_UPI_HANDLES = [
@@ -155,6 +155,23 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
+
+  const handleClear = () => {
+    if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+    
+    let iterations = Math.max(amount.length, remarks.length);
+    if (iterations === 0) return;
+
+    handleTypewriterRef.current = window.setInterval(() => {
+      setAmount(prev => prev.length > 0 ? prev.slice(0, -1) : prev);
+      setRemarks(prev => prev.length > 0 ? prev.slice(0, -1) : prev);
+      
+      iterations--;
+      if (iterations <= 0) {
+        if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
+      }
+    }, 20);
   };
 
   return (
@@ -451,6 +468,29 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               {remarks.length}/30
             </p>
           </div>
+          
+          <AnimatePresence>
+            {(amount || remarks) && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                className="flex justify-end overflow-hidden"
+              >
+                <motion.button
+                  type="button"
+                  onClick={handleClear}
+                  className="flex items-center gap-2 text-xs font-bold text-[#2d2d2b] uppercase tracking-wider bg-[#f5f5f0] hover:bg-[#e6e1dc] px-4 py-2 rounded-xl transition-colors border border-[#d9d3ce] shadow-sm"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Eraser className="w-4 h-4" />
+                  Clear Fields
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </motion.form>
     </div>
