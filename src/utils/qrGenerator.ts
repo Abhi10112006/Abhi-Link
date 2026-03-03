@@ -1,3 +1,5 @@
+import React from 'react';
+
 export const generateCanvas = async (
   qrRef: React.RefObject<SVGSVGElement>,
   amount: string,
@@ -181,8 +183,29 @@ export const handleShare = async (
       if (remarks) webParams.append('remarks', remarks);
       
       // Create the full Web URL
-      const baseUrl = 'https://abhi-link.vercel.app/';
-      webUrl = `${baseUrl}?${webParams.toString()}`;
+      const baseUrl = window.location.origin; // Use current origin for relative paths
+      const longUrl = `${baseUrl}?${webParams.toString()}`;
+      
+      try {
+        const response = await fetch('/api/shorten', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: longUrl }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          webUrl = data.shortUrl;
+        } else {
+          console.error('Failed to shorten URL, using long URL');
+          webUrl = longUrl;
+        }
+      } catch (error) {
+        console.error('Error shortening URL:', error);
+        webUrl = longUrl;
+      }
       
       shareText = `Payment Request${payeeName ? ` from ${payeeName}` : ''} \nUsing GPay, PhonePe, or Paytm? For your security, please Scan the attached QR Code instead. \n\nUsing Navi, CRED, or Amazon Pay? Tap the link below to pay directly.`;
     }
