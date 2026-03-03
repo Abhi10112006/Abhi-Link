@@ -1,91 +1,11 @@
 import express from 'express';
-import { Redis } from '@upstash/redis';
+import fetch from 'node-fetch';
 
 const app = express();
 app.use(express.json());
 
 // Trust proxy for correct protocol/host behind Nginx/Vercel
 app.set('trust proxy', true);
-
-const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production';
-const redisUrl = process.env.KV_REST_API_URL || process.env.KV_URL;
-const redisToken = process.env.KV_REST_API_TOKEN;
-
-let redis: Redis | null = null;
-let localDb: any = null;
-
-if (redisUrl && redisToken) {
-  console.log('Using Upstash Redis (Serverless)');
-  redis = new Redis({
-    url: redisUrl,
-    token: redisToken,
-  });
-} else if (!isVercel) {
-  console.log('Using local SQLite database (dev mode)');
-  try {
-    const { default: Database } = await import('better-sqlite3');
-    localDb = new Database('links.db');
-    localDb.exec(`
-      CREATE TABLE IF NOT EXISTS links (
-        id TEXT PRIMARY KEY,
-        original_url TEXT NOT NULL,
-        created_at INTEGER DEFAULT (unixepoch()),
-        expires_at INTEGER
-      )
-    `);
-  } catch (e) {
-    console.warn('better-sqlite3 not found, falling back to in-memory map');
-    localDb = new Map();
-  }
-}
-
-// 20 hours in seconds
-const LINK_EXPIRY_SECONDS = 20 * 60 * 60; 
-
-async function saveLink(code: string, url: string): Promise<void> {
-  if (redis) {
-    await redis.set(code, url, { ex: LINK_EXPIRY_SECONDS });
-  } else if (localDb instanceof Map) {
-    localDb.set(code, { url, expiresAt: Date.now() + LINK_EXPIRY_SECONDS * 1000 });
-  } else if (localDb) {
-    const expiresAt = Math.floor(Date.now() / 1000) + LINK_EXPIRY_SECONDS;
-    const insert = localDb.prepare('INSERT INTO links (id, original_url, expires_at) VALUES (?, ?, ?)');
-    insert.run(code, url, expiresAt);
-  }
-}
-
-async function getLink(code: string): Promise<string | null> {
-  if (redis) {
-    return await redis.get<string>(code);
-  } else if (localDb instanceof Map) {
-    const data = localDb.get(code);
-    if (data && data.expiresAt > Date.now()) return data.url;
-    if (data) localDb.delete(code);
-    return null;
-  } else if (localDb) {
-    const row = localDb.prepare('SELECT original_url, expires_at FROM links WHERE id = ?').get(code) as any;
-    if (!row) return null;
-    if (row.expires_at && row.expires_at < Math.floor(Date.now() / 1000)) {
-      localDb.prepare('DELETE FROM links WHERE id = ?').run(code);
-      return null;
-    }
-    return row.original_url;
-  }
-  return null;
-}
-
-async function checkExists(code: string): Promise<boolean> {
-  if (redis) {
-    const exists = await redis.exists(code);
-    return exists === 1;
-  } else if (localDb instanceof Map) {
-    return localDb.has(code);
-  } else if (localDb) {
-    const row = localDb.prepare('SELECT id FROM links WHERE id = ?').get(code);
-    return !!row;
-  }
-  return false;
-}
 
 app.post('/api/shorten', async (req, res) => {
   const { url } = req.body;
@@ -94,41 +14,45 @@ app.post('/api/shorten', async (req, res) => {
   }
 
   try {
-    let shortCode = Math.random().toString(36).substring(2, 8);
+    // Try to generate a custom alias with TinyURL
+    // Format: abhi-link-<6_random_chars>
     let attempts = 0;
-    while (attempts < 5) {
-      const exists = await checkExists(shortCode);
-      if (!exists) break;
-      shortCode = Math.random().toString(36).substring(2, 8);
+    let shortUrl = '';
+    
+    while (attempts < 5 && !shortUrl) {
+      // Generate a random suffix (4-6 chars)
+      const suffix = Math.random().toString(36).substring(2, 8);
+      const alias = `abhi-link-${suffix}`;
+      
+      // Try to create with alias
+      const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}&alias=${alias}`);
+      
+      if (response.ok) {
+        const text = await response.text();
+        if (text.startsWith('http')) {
+          shortUrl = text;
+        }
+      }
+      
       attempts++;
     }
 
-    if (attempts === 5) {
-      return res.status(500).json({ error: 'Failed to generate unique code' });
+    // Fallback to standard random assignment if custom alias fails
+    if (!shortUrl) {
+      const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+      if (!response.ok) {
+        throw new Error(`TinyURL API failed with status: ${response.status}`);
+      }
+      shortUrl = await response.text();
     }
-
-    await saveLink(shortCode, url);
-
-    const shortUrl = `${req.protocol}://${req.get('host')}/p/${shortCode}`;
-    res.json({ shortCode, shortUrl });
+    
+    // TinyURL returns the full URL (e.g., https://tinyurl.com/xyz)
+    res.json({ shortUrl });
   } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/p/:code', async (req, res) => {
-  const { code } = req.params;
-  try {
-    const originalUrl = await getLink(code);
-    if (originalUrl) {
-      res.redirect(originalUrl);
-    } else {
-      res.status(404).send('Link not found or expired');
-    }
-  } catch (error) {
-    console.error('Database error:', error);
-    res.status(500).send('Internal server error');
+    console.error('Shortening error:', error);
+    // Fallback to original URL if shortening fails, or return error
+    // Returning the original URL as "shortUrl" allows the app to continue working
+    res.json({ shortUrl: url });
   }
 });
 
