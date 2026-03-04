@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, QrCode, Share2, Loader2 } from 'lucide-react';
+import { Download, QrCode, Share2, Loader2, ReceiptText } from 'lucide-react';
 import { motion } from "motion/react";
 
 interface QRCodeDisplayProps {
@@ -13,6 +13,7 @@ interface QRCodeDisplayProps {
   qrRef: React.RefObject<SVGSVGElement>;
   onDownload: () => Promise<void>;
   onShare: () => Promise<void>;
+  onGenerateReceipt: () => Promise<void>;
   t: Record<string, string>;
 }
 
@@ -26,10 +27,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   qrRef,
   onDownload,
   onShare,
+  onGenerateReceipt,
   t,
 }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleShareClick = async () => {
     setIsSharing(true);
@@ -46,6 +49,21 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       await onDownload();
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleGenerateClick = async () => {
+    setIsGenerating(true);
+    // Add a small delay to allow the UI to update (show "Generating..." state)
+    // before any potential blocking alerts (confirm/prompt) in onGenerateReceipt
+    await new Promise(resolve => setTimeout(resolve, 100));
+    try {
+      console.log("Calling onGenerateReceipt");
+      await onGenerateReceipt();
+    } catch (error) {
+      console.error("Error in onGenerateReceipt:", error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -218,6 +236,52 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               )}
             </motion.button>
           </div>
+          <motion.button
+            onClick={handleGenerateClick}
+            disabled={isGenerating}
+            className="w-full flex items-center justify-center gap-2 bg-[#f5f5f0] text-[#2d2d2b] border-2 border-[#d9d3ce] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#e6e1dc] transition-all mt-3 disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden relative"
+            whileHover={!isGenerating ? { scale: 1.02 } : {}}
+            whileTap={!isGenerating ? { scale: 0.95 } : {}}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.2 }
+            }}
+          >
+            {isGenerating ? (
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center w-5 h-5">
+                  <motion.span 
+                    className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  <motion.span 
+                    className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
+                    animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+                <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">GENERATING</span>
+                <motion.div
+                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '200%' }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 1.5, 
+                    ease: "easeInOut"
+                  }}
+                />
+              </div>
+            ) : (
+              <>
+                <ReceiptText className="w-5 h-5" />
+                {t.generateReceipt}
+              </>
+            )}
+          </motion.button>
         </div>
       ) : (
         <div className="text-center flex flex-col items-center justify-center h-full text-[#2d2d2b]/30">

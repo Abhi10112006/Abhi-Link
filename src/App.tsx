@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, X, Download, Share2 } from 'lucide-react';
+import { ExternalLink, X, Download, Share2, ReceiptText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { motion, AnimatePresence } from "motion/react";
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -9,6 +11,8 @@ import { Changelog } from './components/Changelog';
 import { LanguageSelector } from './components/LanguageSelector';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 import { translations } from './locales/translations';
+import { ReceiptConfirmationModal, SenderNameModal } from './components/ReceiptModals';
+import { Receipt } from './components/Receipt';
 
 export default function App() {
   const [showChangelog, setShowChangelog] = useState(false);
@@ -75,6 +79,147 @@ export default function App() {
       setIsBannerDownloading(false);
     }
   };
+
+
+  // Receipt Generation State
+  const [showReceiptConfirmation, setShowReceiptConfirmation] = useState(false);
+  const [showSenderNameInput, setShowSenderNameInput] = useState(false);
+  const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
+  const [pendingReceiptData, setPendingReceiptData] = useState<{
+    payee: string;
+    upiId: string;
+    amount: string;
+    remarks: string;
+    isReceiver: boolean;
+  } | null>(null);
+  
+  const [receiptToPrint, setReceiptToPrint] = useState<{
+    payeeName: string;
+    payeeUpiId: string;
+    amount: string;
+    remarks: string;
+    senderName: string;
+    date: string;
+    isReceiver: boolean;
+  } | null>(null);
+  const receiptRefEn = useRef<HTMLDivElement>(null);
+  const receiptRefLang = useRef<HTMLDivElement>(null);
+
+
+  const handleGenerateReceiptClick = (
+    dataPayee: string,
+    dataUpiId: string,
+    dataAmount: string,
+    dataRemarks: string,
+    isReceiver: boolean = false
+  ) => {
+    setPendingReceiptData({
+      payee: dataPayee,
+      upiId: dataUpiId,
+      amount: dataAmount,
+      remarks: dataRemarks,
+      isReceiver,
+    });
+    setShowReceiptConfirmation(true);
+  };
+
+  const handleReceiptConfirmed = () => {
+    setShowReceiptConfirmation(false);
+    // Small delay to allow modal to close smoothly
+    setTimeout(() => setShowSenderNameInput(true), 200);
+  };
+
+  const handleSenderNameSubmit = async (senderName: string) => {
+    setIsGeneratingReceipt(true);
+    if (!pendingReceiptData) return;
+
+    const { payee, upiId, amount, remarks, isReceiver } = pendingReceiptData;
+    // Date without time
+    const date = new Date().toLocaleDateString();
+
+    const data = {
+      payeeName: payee,
+      payeeUpiId: upiId,
+      amount,
+      remarks,
+      senderName,
+      date,
+      isReceiver
+    };
+
+    setReceiptToPrint(data);
+
+    // Wait for render
+    setTimeout(async () => {
+      try {
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        // Generate English Page
+        if (receiptRefEn.current) {
+          const canvasEn = await html2canvas(receiptRefEn.current, {
+            scale: 2, // Better quality
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgDataEn = canvasEn.toDataURL('image/png');
+          const imgWidth = 210;
+          const imgHeight = (canvasEn.height * imgWidth) / canvasEn.width;
+          
+          doc.addImage(imgDataEn, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+
+        // Generate Second Page if language is not English
+        if (lang !== 'en' && receiptRefLang.current) {
+          const canvasLang = await html2canvas(receiptRefLang.current, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgDataLang = canvasLang.toDataURL('image/png');
+          const imgWidth = 210;
+          const imgHeight = (canvasLang.height * imgWidth) / canvasLang.width;
+          
+          doc.addPage();
+          doc.addImage(imgDataLang, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+
+        try {
+          const blob = doc.output('blob');
+          const file = new File([blob], "receipt.pdf", { type: "application/pdf" });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Payment Receipt',
+              text: `Receipt for payment to ${payee}`,
+            });
+          } else {
+            doc.save('receipt.pdf');
+          }
+        } catch (error) {
+          console.error("Error sharing receipt:", error);
+          doc.save('receipt.pdf');
+        }
+      } catch (err) {
+        console.error("Error generating receipt:", err);
+      }
+      
+      setReceiptToPrint(null);
+      setPendingReceiptData(null);
+      setIsGeneratingReceipt(false);
+      setShowSenderNameInput(false);
+    }, 500); // Small delay to ensure rendering
+  };
+
+  // ... existing render logic
 
   // Form state (initially empty, decoupled from URL params)
   const [upiId, setUpiId] = useState('');
@@ -241,6 +386,22 @@ export default function App() {
     <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
       {/* Dummy datalist to trick browsers into disabling autocomplete */}
       <datalist id="autocompleteOff"></datalist>
+
+      {/* Modals */}
+      <ReceiptConfirmationModal
+        isOpen={showReceiptConfirmation}
+        onClose={() => setShowReceiptConfirmation(false)}
+        onConfirm={handleReceiptConfirmed}
+        isReceiver={pendingReceiptData?.isReceiver || false}
+        t={t}
+      />
+      <SenderNameModal
+        isOpen={showSenderNameInput}
+        onClose={() => setShowSenderNameInput(false)}
+        onSubmit={handleSenderNameSubmit}
+        isLoading={isGeneratingReceipt}
+        t={t}
+      />
       
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 z-40">
@@ -413,6 +574,15 @@ export default function App() {
                       </>
                     )}
                   </motion.button>
+                  <motion.button
+                    onClick={() => handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false)}
+                    className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white hover:bg-[#f5f5f0] px-4 py-3 rounded-xl border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide mt-3"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ReceiptText className="w-4 h-4" />
+                    {t.generateReceipt}
+                  </motion.button>
                 </div>
               </div>
 
@@ -486,6 +656,7 @@ export default function App() {
                 qrRef={qrRef}
                 onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
                 onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
+                onGenerateReceipt={async () => handleGenerateReceiptClick(payeeName, upiId, amount, remarks, true)}
                 t={t}
               />
             </motion.div>
@@ -504,6 +675,14 @@ export default function App() {
       <AnimatePresence>
         {showChangelog && <Changelog onClose={() => setShowChangelog(false)} t={t} />}
       </AnimatePresence>
+
+      {/* Hidden Receipt Component for PDF Generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <Receipt ref={receiptRefEn} data={receiptToPrint} lang="en" />
+        {lang !== 'en' && (
+          <Receipt ref={receiptRefLang} data={receiptToPrint} lang={lang} />
+        )}
+      </div>
     </div>
   );
 }

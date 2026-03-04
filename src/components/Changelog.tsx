@@ -85,14 +85,14 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose }) => {
           variants={item} 
           className="text-8xl sm:text-[12rem] font-black tracking-tighter leading-none mb-2 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/30"
         >
-          v0.2
+          v0.3
         </motion.h1>
         
         <motion.p 
           variants={item} 
           className="text-lg sm:text-2xl font-medium text-white/30 mb-16 font-mono tracking-widest uppercase"
         >
-          March 3, 2026
+          March 4, 2026
         </motion.p>
 
         <motion.div 
@@ -107,7 +107,7 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose }) => {
             {[
               "Multiple Language Support.",
               "TinyURL Integration.",
-              "Premium Animations."
+              "Receipt Generation support."
             ].map((text, i) => (
               <motion.div 
                 key={i}
