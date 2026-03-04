@@ -139,8 +139,12 @@ export default function App() {
     if (!pendingReceiptData) return;
 
     const { payee, upiId, amount, remarks, isReceiver } = pendingReceiptData;
-    // Date without time
-    const date = new Date().toLocaleDateString();
+    // Date in DD/MM/YYYY format
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const date = `${day}/${month}/${year}`;
 
     const data = {
       payeeName: payee,
