@@ -61,6 +61,63 @@ export const ReceiptConfirmationModal: React.FC<ReceiptConfirmationModalProps> =
   );
 };
 
+interface PaymentCompletedModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  t: Record<string, string>;
+}
+
+export const PaymentCompletedModal: React.FC<PaymentCompletedModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  t,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+        >
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-[#2d2d2b] mb-2">
+              {t.paymentCompletedTitle}
+            </h3>
+            <p className="text-[#2d2d2b]/70 mb-6">
+              {t.paymentCompletedMessage}
+            </p>
+            <div className="flex gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onClose}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
+              >
+                {t.notYet}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onConfirm}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
+              >
+                <Check className="w-5 h-5" />
+                {t.yesItsDone}
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
 interface SenderNameModalProps {
   isOpen: boolean;
   onClose: () => void;

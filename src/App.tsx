@@ -11,7 +11,7 @@ import { Changelog } from './components/Changelog';
 import { LanguageSelector } from './components/LanguageSelector';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 import { translations } from './locales/translations';
-import { ReceiptConfirmationModal, SenderNameModal } from './components/ReceiptModals';
+import { ReceiptConfirmationModal, SenderNameModal, PaymentCompletedModal } from './components/ReceiptModals';
 import { Receipt } from './components/Receipt';
 
 export default function App() {
@@ -83,6 +83,7 @@ export default function App() {
 
   // Receipt Generation State
   const [showReceiptConfirmation, setShowReceiptConfirmation] = useState(false);
+  const [showPaymentCompletedModal, setShowPaymentCompletedModal] = useState(false);
   const [showSenderNameInput, setShowSenderNameInput] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
   const [pendingReceiptData, setPendingReceiptData] = useState<{
@@ -124,12 +125,18 @@ export default function App() {
     if (isReceiver) {
       setShowReceiptConfirmation(true);
     } else {
-      setShowSenderNameInput(true);
+      setShowPaymentCompletedModal(true);
     }
   };
 
   const handleReceiptConfirmed = () => {
     setShowReceiptConfirmation(false);
+    // Small delay to allow modal to close smoothly
+    setTimeout(() => setShowSenderNameInput(true), 200);
+  };
+
+  const handlePaymentCompletedConfirmed = () => {
+    setShowPaymentCompletedModal(false);
     // Small delay to allow modal to close smoothly
     setTimeout(() => setShowSenderNameInput(true), 200);
   };
@@ -402,6 +409,12 @@ export default function App() {
         onClose={() => setShowReceiptConfirmation(false)}
         onConfirm={handleReceiptConfirmed}
         isReceiver={pendingReceiptData?.isReceiver || false}
+        t={t}
+      />
+      <PaymentCompletedModal
+        isOpen={showPaymentCompletedModal}
+        onClose={() => setShowPaymentCompletedModal(false)}
+        onConfirm={handlePaymentCompletedConfirmed}
         t={t}
       />
       <SenderNameModal

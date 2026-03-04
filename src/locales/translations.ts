@@ -81,7 +81,12 @@ export const translations: Record<string, Record<string, string>> = {
     verifiedByReceiver: "Manually verified by the Receiver",
     verifiedBySender: "Manually verified by the Sender",
     computerGenerated: "This receipt is computer generated and does not require a physical signature.",
-    simplifyPayments: "Abhi Link - Simplify your UPI payments."
+    simplifyPayments: "Abhi Link - Simplify your UPI payments.",
+    paymentCompletedTitle: "Payment Completed?",
+    paymentCompletedMessage: "Welcome back! Did your transaction go through successfully in your UPI app?",
+    notYet: "Not yet",
+    yesItsDone: "Yes, it's done!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   hi_en: {
     subtitle: "Apne hisaab se amount aur message set karke apna UPI QR code banayein.",
@@ -150,7 +155,12 @@ export const translations: Record<string, Record<string, string>> = {
     verifiedByReceiver: "Receiver dwara manually verify kiya gaya",
     verifiedBySender: "Sender dwara manually verify kiya gaya",
     computerGenerated: "Yeh receipt computer generated hai aur isme physical signature ki zaroorat nahi hai.",
-    simplifyPayments: "Abhi Link - Apne UPI payments ko aasaan banayein."
+    simplifyPayments: "Abhi Link - Apne UPI payments ko aasaan banayein.",
+    paymentCompletedTitle: "Payment Completed?",
+    paymentCompletedMessage: "Welcome back! Kya aapka transaction UPI app mein successfully ho gaya?",
+    notYet: "Abhi nahi",
+    yesItsDone: "Haan, ho gaya!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   hi: {
     subtitle: "पहले से अमाउंट और मैसेज सेट करके अपना खुद का UPI QR कोड बनाएं।",
@@ -219,7 +229,12 @@ export const translations: Record<string, Record<string, string>> = {
     verifiedByReceiver: "रिसीवर द्वारा मैन्युअल रूप से सत्यापित",
     verifiedBySender: "सेंडर द्वारा मैन्युअल रूप से सत्यापित",
     computerGenerated: "यह रसीद कंप्यूटर जनरेटेड है और इसके लिए भौतिक हस्ताक्षर की आवश्यकता नहीं है।",
-    simplifyPayments: "Abhi Link - अपने UPI भुगतान को आसान बनाएं।"
+    simplifyPayments: "Abhi Link - अपने UPI भुगतान को आसान बनाएं।",
+    paymentCompletedTitle: "भुगतान पूरा हुआ?",
+    paymentCompletedMessage: "वापसी पर स्वागत है! क्या आपका लेन-देन आपके UPI ऐप में सफलतापूर्वक हो गया?",
+    notYet: "अभी नहीं",
+    yesItsDone: "हाँ, हो गया!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   bn: {
     subtitle: "আগে থেকে টাকার পরিমাণ আর মেসেজ দিয়ে নিজের UPI QR কোড তৈরি করুন।",
@@ -277,7 +292,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "রসিদ তৈরি করে শেয়ার করুন →",
     senderNameTitle: "প্রেরকের নাম",
     enterSenderNameLabel: "নাম লিখুন",
-    senderNamePlaceholder: "যেমন: রাহুল শর্মা"
+    senderNamePlaceholder: "যেমন: রাহুল শর্মা",
+    paymentCompletedTitle: "পেমেন্ট সম্পন্ন?",
+    paymentCompletedMessage: "স্বাগতম! আপনার লেনদেন কি আপনার UPI অ্যাপে সফলভাবে সম্পন্ন হয়েছে?",
+    notYet: "এখনো না",
+    yesItsDone: "হ্যাঁ, হয়ে গেছে!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   mr: {
     subtitle: "आधीच रक्कम आणि मेसेज टाकून तुमचा स्वतःचा UPI QR कोड बनवा.",
@@ -335,7 +355,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "पावती बनवा आणि शेअर करा →",
     senderNameTitle: "पाठवणाऱ्याचे नाव",
     enterSenderNameLabel: "नाव टाका",
-    senderNamePlaceholder: "उदा. राहुल शर्मा"
+    senderNamePlaceholder: "उदा. राहुल शर्मा",
+    paymentCompletedTitle: "पेमेंट पूर्ण झाले?",
+    paymentCompletedMessage: "स्वागत आहे! तुमचा व्यवहार तुमच्या UPI ॲपमध्ये यशस्वीरित्या पूर्ण झाला का?",
+    notYet: "अजून नाही",
+    yesItsDone: "हो, झाले!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   ta: {
     subtitle: "முன்பே தொகையையும் மெசேஜையும் செட் செய்து உங்களுக்கான UPI QR கோடை உருவாக்குங்கள்.",
@@ -393,7 +418,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "ரசீதை உருவாக்கி பகிரவும் →",
     senderNameTitle: "அனுப்புநர் பெயர்",
     enterSenderNameLabel: "பெயரை உள்ளிடவும்",
-    senderNamePlaceholder: "எ.கா. ராகுல் சர்மா"
+    senderNamePlaceholder: "எ.கா. ராகுல் சர்மா",
+    paymentCompletedTitle: "பேமெண்ட் முடிந்துவிட்டதா?",
+    paymentCompletedMessage: "வரவேற்கிறோம்! உங்கள் UPI ஆப்பில் பரிவர்த்தனை வெற்றிகரமாக முடிந்துவிட்டதா?",
+    notYet: "இன்னும் இல்லை",
+    yesItsDone: "ஆம், முடிந்துவிட்டது!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   te: {
     subtitle: "ముందుగానే అమౌంట్ మరియు మెసేజ్ సెట్ చేసి మీ సొంత UPI QR కోడ్‌ను క్రియేట్ చేసుకోండి.",
@@ -451,7 +481,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "రసీదుని క్రియేట్ చేసి షేర్ చేయండి →",
     senderNameTitle: "పంపినవారి పేరు",
     enterSenderNameLabel: "పేరు రాయండి",
-    senderNamePlaceholder: "ఉదా. రాహుల్ శర్మ"
+    senderNamePlaceholder: "ఉదా. రాహుల్ శర్మ",
+    paymentCompletedTitle: "పేమెంట్ పూర్తయిందా?",
+    paymentCompletedMessage: "స్వాగతం! మీ UPI యాప్‌లో లావాదేవీ విజయవంతంగా పూర్తయిందా?",
+    notYet: "ఇంకా లేదు",
+    yesItsDone: "అవును, పూర్తయింది!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   kn: {
     subtitle: "ಮೊದಲೇ ಮೊತ್ತ ಮತ್ತು ಮೆಸೇಜ್ ಸೆಟ್ ಮಾಡಿ ನಿಮ್ಮದೇ ಆದ UPI QR ಕೋಡ್ ರಚಿಸಿ.",
@@ -509,7 +544,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "ರಶೀದಿ ಮಾಡಿ ಮತ್ತು ಹಂಚಿಕೊಳ್ಳಿ →",
     senderNameTitle: "ಕಳುಹಿಸುವವರ ಹೆಸರು",
     enterSenderNameLabel: "ಹೆಸರನ್ನು ನಮೂದಿಸಿ",
-    senderNamePlaceholder: "ಉದಾ. ರಾಹುಲ್ ಶರ್ಮಾ"
+    senderNamePlaceholder: "ಉದಾ. ರಾಹುಲ್ ಶರ್ಮಾ",
+    paymentCompletedTitle: "ಪೇಮೆಂಟ್ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ?",
+    paymentCompletedMessage: "ಸ್ವಾಗತ! ನಿಮ್ಮ UPI ಆಪ್‌ನಲ್ಲಿ ವಹಿವಾಟು ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ?",
+    notYet: "ಇನ್ನೂ ಇಲ್ಲ",
+    yesItsDone: "ಹೌದು, ಮುಗಿದಿದೆ!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   ne: {
     subtitle: "पहिले नै रकम र म्यासेज सेट गरेर आफ्नो UPI QR कोड बनाउनुहोस्।",
@@ -567,7 +607,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "रसिद बनाउनुहोस् र शेयर गर्नुहोस् →",
     senderNameTitle: "पठाउने व्यक्तिको नाम",
     enterSenderNameLabel: "नाम लेख्नुहोस्",
-    senderNamePlaceholder: "जस्तै: राहुल शर्मा"
+    senderNamePlaceholder: "जस्तै: राहुल शर्मा",
+    paymentCompletedTitle: "भुक्तानी पूरा भयो?",
+    paymentCompletedMessage: "स्वागत छ! के तपाईंको लेनदेन तपाईंको UPI एपमा सफलतापूर्वक पूरा भयो?",
+    notYet: "अझै छैन",
+    yesItsDone: "हो, भयो!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   sa: {
     subtitle: "पूर्वं धनं सन्देशं च निश्चित्य स्वस्य UPI QR-सङ्केतं रचयन्तु।",
@@ -625,7 +670,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "रसीदं रचयतु प्रेषयतु च →",
     senderNameTitle: "प्रेषकस्य नाम",
     enterSenderNameLabel: "नाम लिखतु",
-    senderNamePlaceholder: "यथा - राहुल शर्मा"
+    senderNamePlaceholder: "यथा - राहुल शर्मा",
+    paymentCompletedTitle: "धन-प्रदानं पूर्णम्?",
+    paymentCompletedMessage: "स्वागतम्! किं भवतः लेनदेनं भवतः UPI-अनुप्रयोगे साफल्येन पूर्णम् अभवत्?",
+    notYet: "अद्यापि न",
+    yesItsDone: "आम्, अभवत्!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   gu: {
     subtitle: "પહેલાથી રકમ અને મેસેજ સેટ કરીને તમારો પોતાનો UPI QR કોડ બનાવો.",
@@ -683,7 +733,12 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "રસીદ બનાવો અને શેર કરો →",
     senderNameTitle: "મોકલનારનું નામ",
     enterSenderNameLabel: "નામ લખો",
-    senderNamePlaceholder: "દા.ત. રાહુલ શર્મા"
+    senderNamePlaceholder: "દા.ત. રાહુલ શર્મા",
+    paymentCompletedTitle: "પેમેન્ટ પૂરું થયું?",
+    paymentCompletedMessage: "સ્વાગત છે! શું તમારો વ્યવહાર તમારી UPI એપમાં સફળતાપૂર્વક પૂરો થયો?",
+    notYet: "હજુ નહીં",
+    yesItsDone: "હા, થઈ ગયું!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   },
   or: {
     subtitle: "ଆଗରୁ ଟଙ୍କା ଏବଂ ମେସେଜ୍ ସେଟ୍ କରି ନିଜର UPI QR କୋଡ୍ ତିଆରି କରନ୍ତୁ।",
@@ -741,6 +796,11 @@ export const translations: Record<string, Record<string, string>> = {
     generateAndShare: "ରସିଦ୍ ତିଆରି କରି ସେୟାର କରନ୍ତୁ →",
     senderNameTitle: "ପଠାଇଥିବା ଲୋକଙ୍କ ନାମ",
     enterSenderNameLabel: "ନାମ ଲେଖନ୍ତୁ",
-    senderNamePlaceholder: "ଯେପରିକି: ରାହୁଲ ଶର୍ମା"
+    senderNamePlaceholder: "ଯେପରିକି: ରାହୁଲ ଶର୍ମା",
+    paymentCompletedTitle: "ପେମେଣ୍ଟ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା?",
+    paymentCompletedMessage: "ସ୍ୱାଗତମ! ଆପଣଙ୍କର କାରବାର ଆପଣଙ୍କ UPI ଆପରେ ସଫଳତାର ସହ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା କି?",
+    notYet: "ଏପର୍ଯ୍ୟନ୍ତ ନୁହେଁ",
+    yesItsDone: "ହଁ, ହୋଇଗଲା!",
+    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
   }
 };

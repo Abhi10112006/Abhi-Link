@@ -104,6 +104,11 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data, lang },
           <p className="text-xs text-[#4b5563] font-medium">
             {data.isReceiver ? getTrans('verifiedByReceiver') : getTrans('verifiedBySender')}
           </p>
+          {!data.isReceiver && (
+            <p className="text-xs text-[#6b7280] mt-1 italic">
+              {getTrans('checkBankingApp')}
+            </p>
+          )}
         </div>
       </div>
       
