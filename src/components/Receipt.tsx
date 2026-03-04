@@ -125,7 +125,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data, lang },
             </div>
             <div className="text-right">
               <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-wide">
-                {getTrans('simplifyPayments')}
+                <a href="https://abhi-link.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-[#2563eb] underline">ABHI LINK</a> - SIMPLIFY YOUR UPI PAYMENTS
               </p>
             </div>
           </div>

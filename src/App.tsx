@@ -188,6 +188,10 @@ export default function App() {
           const imgHeight = (canvasEn.height * imgWidth) / canvasEn.width;
           
           doc.addImage(imgDataEn, 'PNG', 0, 0, imgWidth, imgHeight);
+          
+          // Add clickable link over "ABHI LINK" text
+          // x: 100mm, y: 275mm, width: 100mm, height: 10mm
+          doc.link(100, 275, 100, 10, { url: 'https://abhi-link.vercel.app/' });
         }
 
         // Generate Second Page if language is not English
@@ -205,6 +209,10 @@ export default function App() {
           
           doc.addPage();
           doc.addImage(imgDataLang, 'PNG', 0, 0, imgWidth, imgHeight);
+          
+          // Add clickable link over "ABHI LINK" text
+          // x: 100mm, y: 275mm, width: 100mm, height: 10mm
+          doc.link(100, 275, 100, 10, { url: 'https://abhi-link.vercel.app/' });
         }
 
         try {
