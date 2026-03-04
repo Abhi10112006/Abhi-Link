@@ -114,7 +114,61 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+          <div className="flex flex-col gap-3 w-full">
+            <motion.button
+              onClick={handleShareClick}
+              disabled={isSharing}
+              className="relative flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8] disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden"
+              whileHover={!isSharing ? { 
+                scale: 1.02, 
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)",
+                transition: { duration: 0.2 }
+              } : {}}
+              whileTap={!isSharing ? { 
+                scale: 0.95,
+                transition: { duration: 0.1 }
+              } : {}}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.1 }
+              }}
+            >
+              {isSharing ? (
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center w-5 h-5">
+                    <motion.span 
+                      className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <motion.span 
+                      className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
+                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                  <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">PROCESSING</span>
+                  <motion.div
+                    className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '200%' }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 1.5, 
+                      ease: "easeInOut"
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <Share2 className="w-5 h-5" />
+                  <span className="relative z-10">{t.share}</span>
+                </>
+              )}
+            </motion.button>
+
             <motion.button
               onClick={handleDownloadClick}
               disabled={isDownloading}
@@ -183,26 +237,19 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             </motion.button>
 
             <motion.button
-              onClick={handleShareClick}
-              disabled={isSharing}
-              className="relative flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] border-2 border-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#faf9f8] disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden"
-              whileHover={!isSharing ? { 
-                scale: 1.02, 
-                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.01)",
-                transition: { duration: 0.2 }
-              } : {}}
-              whileTap={!isSharing ? { 
-                scale: 0.95,
-                transition: { duration: 0.1 }
-              } : {}}
+              onClick={handleGenerateClick}
+              disabled={isGenerating}
+              className="w-full flex items-center justify-center gap-2 bg-[#f5f5f0] text-[#2d2d2b] border-2 border-[#d9d3ce] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#e6e1dc] transition-all disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden relative"
+              whileHover={!isGenerating ? { scale: 1.02 } : {}}
+              whileTap={!isGenerating ? { scale: 0.95 } : {}}
               initial={{ opacity: 0, y: 10 }}
               animate={{ 
                 opacity: 1, 
                 y: 0,
-                transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.1 }
+                transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.2 }
               }}
             >
-              {isSharing ? (
+              {isGenerating ? (
                 <div className="flex items-center gap-3">
                   <div className="relative flex items-center justify-center w-5 h-5">
                     <motion.span 
@@ -216,7 +263,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                       transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
                     />
                   </div>
-                  <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">PROCESSING</span>
+                  <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">GENERATING</span>
                   <motion.div
                     className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
                     initial={{ x: '-100%' }}
@@ -230,58 +277,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 </div>
               ) : (
                 <>
-                  <Share2 className="w-5 h-5" />
-                  <span className="relative z-10">{t.share}</span>
+                  <ReceiptText className="w-5 h-5" />
+                  {t.generateReceipt}
                 </>
               )}
             </motion.button>
           </div>
-          <motion.button
-            onClick={handleGenerateClick}
-            disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2 bg-[#f5f5f0] text-[#2d2d2b] border-2 border-[#d9d3ce] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-sm hover:bg-[#e6e1dc] transition-all mt-3 disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden relative"
-            whileHover={!isGenerating ? { scale: 1.02 } : {}}
-            whileTap={!isGenerating ? { scale: 0.95 } : {}}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0,
-              transition: { type: "spring", stiffness: 400, damping: 17, delay: 0.2 }
-            }}
-          >
-            {isGenerating ? (
-              <div className="flex items-center gap-3">
-                <div className="relative flex items-center justify-center w-5 h-5">
-                  <motion.span 
-                    className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
-                  <motion.span 
-                    className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
-                    animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                </div>
-                <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">GENERATING</span>
-                <motion.div
-                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
-                  initial={{ x: '-100%' }}
-                  animate={{ x: '200%' }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5, 
-                    ease: "easeInOut"
-                  }}
-                />
-              </div>
-            ) : (
-              <>
-                <ReceiptText className="w-5 h-5" />
-                {t.generateReceipt}
-              </>
-            )}
-          </motion.button>
         </div>
       ) : (
         <div className="text-center flex flex-col items-center justify-center h-full text-[#2d2d2b]/30">
