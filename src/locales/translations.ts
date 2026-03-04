@@ -160,7 +160,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "Welcome back! Kya aapka transaction UPI app mein successfully ho gaya?",
     notYet: "Abhi nahi",
     yesItsDone: "Haan, ho gaya!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "Check karein ki paise aapke account mein aa gaye hain ya nahi."
   },
   hi: {
     subtitle: "पहले से अमाउंट और मैसेज सेट करके अपना खुद का UPI QR कोड बनाएं।",
@@ -234,7 +234,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "वापसी पर स्वागत है! क्या आपका लेन-देन आपके UPI ऐप में सफलतापूर्वक हो गया?",
     notYet: "अभी नहीं",
     yesItsDone: "हाँ, हो गया!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "यह पुष्टि करने के लिए कि धनराशि आपके खाते में जमा कर दी गई है, अपना बैंकिंग ऐप जांचें।"
   },
   bn: {
     subtitle: "আগে থেকে টাকার পরিমাণ আর মেসেজ দিয়ে নিজের UPI QR কোড তৈরি করুন।",
@@ -297,7 +297,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "স্বাগতম! আপনার লেনদেন কি আপনার UPI অ্যাপে সফলভাবে সম্পন্ন হয়েছে?",
     notYet: "এখনো না",
     yesItsDone: "হ্যাঁ, হয়ে গেছে!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "তহবিল আপনার অ্যাকাউন্টে জমা হয়েছে কিনা তা নিশ্চিত করতে আপনার ব্যাঙ্কিং অ্যাপ চেক করুন।"
   },
   mr: {
     subtitle: "आधीच रक्कम आणि मेसेज टाकून तुमचा स्वतःचा UPI QR कोड बनवा.",
@@ -360,7 +360,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "स्वागत आहे! तुमचा व्यवहार तुमच्या UPI ॲपमध्ये यशस्वीरित्या पूर्ण झाला का?",
     notYet: "अजून नाही",
     yesItsDone: "हो, झाले!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "तुमच्या खात्यात निधी जमा झाल्याची पुष्टी करण्यासाठी तुमचे बँकिंग ॲप तपासा."
   },
   ta: {
     subtitle: "முன்பே தொகையையும் மெசேஜையும் செட் செய்து உங்களுக்கான UPI QR கோடை உருவாக்குங்கள்.",
@@ -423,7 +423,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "வரவேற்கிறோம்! உங்கள் UPI ஆப்பில் பரிவர்த்தனை வெற்றிகரமாக முடிந்துவிட்டதா?",
     notYet: "இன்னும் இல்லை",
     yesItsDone: "ஆம், முடிந்துவிட்டது!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "உங்கள் கணக்கில் நிதி வரவு வைக்கப்பட்டுள்ளதா என்பதை உறுதிப்படுத்த உங்கள் வங்கிச் செயலியைச் சரிபார்க்கவும்."
   },
   te: {
     subtitle: "ముందుగానే అమౌంట్ మరియు మెసేజ్ సెట్ చేసి మీ సొంత UPI QR కోడ్‌ను క్రియేట్ చేసుకోండి.",
@@ -486,7 +486,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "స్వాగతం! మీ UPI యాప్‌లో లావాదేవీ విజయవంతంగా పూర్తయిందా?",
     notYet: "ఇంకా లేదు",
     yesItsDone: "అవును, పూర్తయింది!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "మీ ఖాతాలో నిధులు జమ అయ్యాయో లేదో నిర్ధారించడానికి మీ బ్యాంకింగ్ యాప్‌ను తనిఖీ చేయండి."
   },
   kn: {
     subtitle: "ಮೊದಲೇ ಮೊತ್ತ ಮತ್ತು ಮೆಸೇಜ್ ಸೆಟ್ ಮಾಡಿ ನಿಮ್ಮದೇ ಆದ UPI QR ಕೋಡ್ ರಚಿಸಿ.",
@@ -549,7 +549,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "ಸ್ವಾಗತ! ನಿಮ್ಮ UPI ಆಪ್‌ನಲ್ಲಿ ವಹಿವಾಟು ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ?",
     notYet: "ಇನ್ನೂ ಇಲ್ಲ",
     yesItsDone: "ಹೌದು, ಮುಗಿದಿದೆ!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "ನಿಮ್ಮ ಖಾತೆಗೆ ಹಣ ಜಮಾ ಆಗಿದೆಯೇ ಎಂದು ಖಚಿತಪಡಿಸಲು ನಿಮ್ಮ ಬ್ಯಾಂಕಿಂಗ್ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ."
   },
   ne: {
     subtitle: "पहिले नै रकम र म्यासेज सेट गरेर आफ्नो UPI QR कोड बनाउनुहोस्।",
@@ -612,7 +612,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "स्वागत छ! के तपाईंको लेनदेन तपाईंको UPI एपमा सफलतापूर्वक पूरा भयो?",
     notYet: "अझै छैन",
     yesItsDone: "हो, भयो!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "तपाईंको खातामा रकम जम्मा भएको पुष्टि गर्न आफ्नो बैंकिङ एप जाँच गर्नुहोस्।"
   },
   sa: {
     subtitle: "पूर्वं धनं सन्देशं च निश्चित्य स्वस्य UPI QR-सङ्केतं रचयन्तु।",
@@ -675,7 +675,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "स्वागतम्! किं भवतः लेनदेनं भवतः UPI-अनुप्रयोगे साफल्येन पूर्णम् अभवत्?",
     notYet: "अद्यापि न",
     yesItsDone: "आम्, अभवत्!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "भवतः खात्यां धनं जमा जातम् इति पुष्टिं कर्तुं स्वस्य बैंकिङ्ग-एप् पश्यन्तु।"
   },
   gu: {
     subtitle: "પહેલાથી રકમ અને મેસેજ સેટ કરીને તમારો પોતાનો UPI QR કોડ બનાવો.",
@@ -738,7 +738,7 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "સ્વાગત છે! શું તમારો વ્યવહાર તમારી UPI એપમાં સફળતાપૂર્વક પૂરો થયો?",
     notYet: "હજુ નહીં",
     yesItsDone: "હા, થઈ ગયું!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "તમારા ખાતામાં ભંડોળ જમા થયું છે તેની પુષ્ટિ કરવા માટે તમારી બેંકિંગ ઍપ તપાસો."
   },
   or: {
     subtitle: "ଆଗରୁ ଟଙ୍କା ଏବଂ ମେସେଜ୍ ସେଟ୍ କରି ନିଜର UPI QR କୋଡ୍ ତିଆରି କରନ୍ତୁ।",
@@ -801,6 +801,6 @@ export const translations: Record<string, Record<string, string>> = {
     paymentCompletedMessage: "ସ୍ୱାଗତମ! ଆପଣଙ୍କର କାରବାର ଆପଣଙ୍କ UPI ଆପରେ ସଫଳତାର ସହ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା କି?",
     notYet: "ଏପର୍ଯ୍ୟନ୍ତ ନୁହେଁ",
     yesItsDone: "ହଁ, ହୋଇଗଲା!",
-    checkBankingApp: "Check your banking app to confirm the funds have been credited to your account."
+    checkBankingApp: "ଆପଣଙ୍କ ଆକାଉଣ୍ଟରେ ପାଣ୍ଠି ଜମା ହୋଇଛି କି ନାହିଁ ନିଶ୍ଚିତ କରିବାକୁ ଆପଣଙ୍କ ବ୍ୟାଙ୍କିଙ୍ଗ୍ ଆପ୍ ଯାଞ୍ଚ କରନ୍ତୁ।"
   }
 };
