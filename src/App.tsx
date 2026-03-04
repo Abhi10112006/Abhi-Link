@@ -120,7 +120,12 @@ export default function App() {
       remarks: dataRemarks,
       isReceiver,
     });
-    setShowReceiptConfirmation(true);
+    
+    if (isReceiver) {
+      setShowReceiptConfirmation(true);
+    } else {
+      setShowSenderNameInput(true);
+    }
   };
 
   const handleReceiptConfirmed = () => {
@@ -513,70 +518,72 @@ export default function App() {
                   />
                 </div>
                 
-                <div className="flex gap-3 w-full max-w-xs justify-center">
-                  <motion.button
-                    onClick={onBannerShareClick}
-                    disabled={isBannerSharing}
-                    className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
-                    whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
-                    whileTap={!isBannerSharing ? { scale: 0.95 } : {}}
-                  >
-                    {isBannerSharing ? (
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex items-center justify-center w-4 h-4">
-                          <motion.span 
-                            className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          />
-                          <motion.span 
-                            className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
-                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                          />
+                <div className="flex flex-col gap-3 w-full max-w-xs justify-center">
+                  <div className="flex gap-3 w-full">
+                    <motion.button
+                      onClick={onBannerShareClick}
+                      disabled={isBannerSharing}
+                      className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
+                      whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
+                      whileTap={!isBannerSharing ? { scale: 0.95 } : {}}
+                    >
+                      {isBannerSharing ? (
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex items-center justify-center w-4 h-4">
+                            <motion.span 
+                              className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                            <motion.span 
+                              className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
+                              animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                          </div>
+                          <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">WAIT</span>
                         </div>
-                        <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">WAIT</span>
-                      </div>
-                    ) : (
-                      <>
-                        <Share2 className="w-4 h-4" />
-                        {t.share}
-                      </>
-                    )}
-                  </motion.button>
-                  <motion.button
-                    onClick={onBannerDownloadClick}
-                    disabled={isBannerDownloading}
-                    className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
-                    whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
-                    whileTap={!isBannerDownloading ? { scale: 0.95 } : {}}
-                  >
-                    {isBannerDownloading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex items-center justify-center w-4 h-4">
-                          <motion.span 
-                            className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          />
-                          <motion.span 
-                            className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
-                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                          />
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4" />
+                          {t.share}
+                        </>
+                      )}
+                    </motion.button>
+                    <motion.button
+                      onClick={onBannerDownloadClick}
+                      disabled={isBannerDownloading}
+                      className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
+                      whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
+                      whileTap={!isBannerDownloading ? { scale: 0.95 } : {}}
+                    >
+                      {isBannerDownloading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex items-center justify-center w-4 h-4">
+                            <motion.span 
+                              className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                            <motion.span 
+                              className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
+                              animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                          </div>
+                          <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">SAVING</span>
                         </div>
-                        <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">SAVING</span>
-                      </div>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4" />
-                        {t.save}
-                      </>
-                    )}
-                  </motion.button>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          {t.save}
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
                   <motion.button
                     onClick={() => handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false)}
-                    className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white hover:bg-[#f5f5f0] px-4 py-3 rounded-xl border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide mt-3"
+                    className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white hover:bg-[#f5f5f0] px-4 py-3 rounded-xl border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.95 }}
                   >
