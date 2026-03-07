@@ -13,8 +13,10 @@ import { handleDownload, handleShare } from './utils/qrGenerator';
 import { translations } from './locales/translations';
 import { ReceiptConfirmationModal, SenderNameModal, PaymentCompletedModal } from './components/ReceiptModals';
 import { Receipt } from './components/Receipt';
+import { InvoiceModal } from './components/InvoiceModal';
 
 export default function App() {
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [lang, setLang] = useState(() => {
     return localStorage.getItem('abhi-link-lang') || 'en';
@@ -229,6 +231,9 @@ export default function App() {
             doc.save('receipt.pdf');
           }
         } catch (error) {
+          if ((error as Error).name === 'AbortError' || (error as Error).message === 'Share canceled') {
+            return;
+          }
           console.error("Error sharing receipt:", error);
           doc.save('receipt.pdf');
         }
@@ -407,7 +412,7 @@ export default function App() {
   // useEffect(() => { ... }, []);
 
   return (
-    <div className="min-h-screen bg-[#e6e1dc] py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-sans relative select-none">
       {/* Dummy datalist to trick browsers into disabling autocomplete */}
       <datalist id="autocompleteOff"></datalist>
 
@@ -440,7 +445,7 @@ export default function App() {
           href="https://ledger69.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
+          className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -457,255 +462,273 @@ export default function App() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowChangelog(true)}
       >
-        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-[#2d2d2b]/60 hover:text-[#2d2d2b] bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-[#d9d3ce]/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
+        <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-gray-900/60 hover:text-gray-900 bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-gray-200/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
           <span>{t.version}</span>
         </div>
       </motion.div>
 
       <div className="max-w-3xl mx-auto mt-8 sm:mt-0">
         <div className="text-center mb-10">
-          <h1 className="text-6xl md:text-8xl font-black text-[#2d2d2b] tracking-tighter font-display uppercase mb-4">ABHI LINK</h1>
-          <p className="mt-3 text-[#2d2d2b]/70 max-w-xl mx-auto font-medium">
+          <h1 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter font-display uppercase mb-4">ABHI LINK</h1>
+          <p className="mt-3 text-gray-900/70 max-w-xl mx-auto font-medium mb-6">
             {t.subtitle}
           </p>
         </div>
 
         <AnimatePresence mode="popLayout">
           {requestUpiId && isPaymentRequestVisible && (
-            <motion.div 
-              key="payment-request-banner"
-              layout
-              initial={{ opacity: 0, y: 20, height: 0, scale: 0.95, filter: "blur(0px)" }}
-              animate={{ opacity: 1, y: 0, height: 'auto', scale: 1, filter: "blur(0px)" }}
-              exit={{ 
-                opacity: 0,
-                scale: 1.1,
-                filter: "blur(12px) grayscale(100%)",
-                x: 60,
-                y: -20,
-                height: 0,
-                marginBottom: 0,
-                transition: { 
-                  duration: 0.6,
-                  ease: "easeInOut"
-                }
-              }}
-              className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-[#d9d3ce] text-center relative overflow-hidden"
-            >
-              <button 
-                onClick={() => setIsPaymentRequestVisible(false)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-[#faf9f8] transition-colors text-[#2d2d2b]/40 hover:text-[#2d2d2b]"
-                aria-label="Close payment request"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <h2 className="text-2xl font-black text-[#2d2d2b] mb-2 uppercase tracking-tight">{t.paymentRequest}</h2>
-              
-              {(requestPayeeName || requestAmount) && (
-                <div className="mb-6 bg-[#f5f5f0] rounded-2xl p-6 border border-[#d9d3ce]">
-                  {requestPayeeName && (
-                    <div className="mb-2">
-                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">{t.payingTo}</p>
-                      <p className="text-xl font-bold text-[#2d2d2b]">{requestPayeeName}</p>
-                    </div>
-                  )}
-                  
-                  {requestAmount && (
-                    <div className={requestPayeeName ? "mt-4 pt-4 border-t border-[#d9d3ce]/50" : ""}>
-                      <p className="text-xs font-bold text-[#2d2d2b]/50 uppercase tracking-wider">{t.amountLabel}</p>
-                      <p className="text-4xl font-black text-[#2d2d2b] tracking-tight">
-                        ₹{requestAmount}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* QR Code Section in Banner */}
-              <div className="flex flex-col items-center justify-center mb-8">
-                <div className="bg-white p-4 rounded-2xl border border-[#d9d3ce] shadow-sm mb-4">
-                  <QRCodeSVG
-                    value={requestUpiUrl}
-                    size={180}
-                    level="H"
-                    includeMargin={false}
-                    ref={requestQrRef}
-                    className="w-full h-full"
-                    imageSettings={{
-                      src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
-                      x: undefined,
-                      y: undefined,
-                      height: 40,
-                      width: 40,
-                      excavate: true,
-                    }}
-                  />
-                </div>
-                
-                <div className="flex flex-col gap-3 w-full max-w-xs justify-center">
-                  <div className="flex gap-3 w-full">
-                    <motion.button
-                      onClick={onBannerShareClick}
-                      disabled={isBannerSharing}
-                      className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
-                      whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
-                      whileTap={!isBannerSharing ? { scale: 0.95 } : {}}
-                    >
-                      {isBannerSharing ? (
-                        <div className="flex items-center gap-2">
-                          <div className="relative flex items-center justify-center w-4 h-4">
-                            <motion.span 
-                              className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                            <motion.span 
-                              className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
-                              animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                            />
-                          </div>
-                          <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">WAIT</span>
-                        </div>
-                      ) : (
-                        <>
-                          <Share2 className="w-4 h-4" />
-                          {t.share}
-                        </>
-                      )}
-                    </motion.button>
-                    <motion.button
-                      onClick={onBannerDownloadClick}
-                      disabled={isBannerDownloading}
-                      className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f5f5f0] hover:bg-[#e6e1dc] text-[#2d2d2b] rounded-xl font-bold text-sm border border-[#d9d3ce] disabled:opacity-80 disabled:cursor-not-allowed"
-                      whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
-                      whileTap={!isBannerDownloading ? { scale: 0.95 } : {}}
-                    >
-                      {isBannerDownloading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="relative flex items-center justify-center w-4 h-4">
-                            <motion.span 
-                              className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                            <motion.span 
-                              className="absolute w-1 h-1 bg-[#2d2d2b] rounded-full"
-                              animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                            />
-                          </div>
-                          <span className="relative z-10 font-black tracking-widest text-xs text-[#2d2d2b]">SAVING</span>
-                        </div>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4" />
-                          {t.save}
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                  <motion.button
-                    onClick={() => handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false)}
-                    className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white hover:bg-[#f5f5f0] px-4 py-3 rounded-xl border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <ReceiptText className="w-4 h-4" />
-                    {t.generateReceipt}
-                  </motion.button>
-                </div>
-              </div>
-
-              <p className="text-[#2d2d2b]/70 mb-6 font-medium text-sm">
-                {t.onlyNaviCred}
-                <br/>
-                <span className="text-xs opacity-80 mt-2 block">
-                  {t.usingGpay}
-                </span>
-              </p>
-              <motion.a 
-                href={requestUpiUrl}
-                className="relative inline-flex items-center justify-center w-full sm:w-auto bg-[#2d2d2b] text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
-                whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <span className="relative z-10">{t.openInUpi}</span>
-                <motion.div
-                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                  initial={{ x: '-100%' }}
-                  animate={{ x: '200%' }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5, 
-                    ease: "easeInOut", 
-                    repeatDelay: 3 
+                <motion.div 
+                  key="payment-request-banner"
+                  layout
+                  initial={{ opacity: 0, y: 20, height: 0, scale: 0.95, filter: "blur(0px)" }}
+                  animate={{ opacity: 1, y: 0, height: 'auto', scale: 1, filter: "blur(0px)" }}
+                  exit={{ 
+                    opacity: 0,
+                    scale: 1.1,
+                    filter: "blur(12px) grayscale(100%)",
+                    x: 60,
+                    y: -20,
+                    height: 0,
+                    marginBottom: 0,
+                    transition: { 
+                      duration: 0.6,
+                      ease: "easeInOut"
+                    }
                   }}
-                />
-              </motion.a>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-gray-200 text-center relative overflow-hidden"
+                >
+                  <button 
+                    onClick={() => setIsPaymentRequestVisible(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-900/40 hover:text-gray-900"
+                    aria-label="Close payment request"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
 
-        <motion.div layout className="bg-white rounded-3xl shadow-sm border border-[#d9d3ce] overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            
-            {/* Form Section */}
-            <motion.div layout className="h-full">
-              <PaymentForm 
-                upiId={upiId}
-                setUpiId={handleUpiIdChange}
-                payeeName={payeeName}
-                setPayeeName={handlePayeeNameChange}
-                amount={amount}
-                setAmount={setAmount}
-                remarks={remarks}
-                setRemarks={setRemarks}
-                showUpiError={showUpiError}
-                setTouchedUpiId={setTouchedUpiId}
-                recentPayees={recentPayees}
-                onSelectRecent={handleSelectRecent}
-                onRemoveRecent={handleRemoveRecent}
-                onSaveRecent={saveRecentPayee}
-                amountInputRef={amountInputRef}
-                t={t}
-              />
-            </motion.div>
+                  <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">{t.paymentRequest}</h2>
+                  
+                  {(requestPayeeName || requestAmount) && (
+                    <div className="mb-6 bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                      {requestPayeeName && (
+                        <div className="mb-2">
+                          <p className="text-xs font-bold text-gray-900/50 uppercase tracking-wider">{t.payingTo}</p>
+                          <p className="text-xl font-bold text-gray-900">{requestPayeeName}</p>
+                        </div>
+                      )}
+                      
+                      {requestAmount && (
+                        <div className={requestPayeeName ? "mt-4 pt-4 border-t border-gray-200/50" : ""}>
+                          <p className="text-xs font-bold text-gray-900/50 uppercase tracking-wider">{t.amountLabel}</p>
+                          <p className="text-4xl font-black text-gray-900 tracking-tight">
+                            ₹{requestAmount}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-            {/* QR Code Section */}
-            <motion.div layout className="h-full">
-              <QRCodeDisplay 
-                upiId={upiId}
-                isValidUpi={isValidUpi}
-                upiUrl={upiUrl}
-                amount={amount}
-                payeeName={payeeName}
-                remarks={remarks}
-                qrRef={qrRef}
-                onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
-                onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
-                onGenerateReceipt={async () => handleGenerateReceiptClick(payeeName, upiId, amount, remarks, true)}
-                t={t}
-              />
+                  {/* QR Code Section in Banner */}
+                  <div className="flex flex-col items-center justify-center mb-8">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm mb-4">
+                      <QRCodeSVG
+                        value={requestUpiUrl}
+                        size={180}
+                        level="H"
+                        includeMargin={false}
+                        ref={requestQrRef}
+                        className="w-full h-full"
+                        imageSettings={{
+                          src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
+                          x: undefined,
+                          y: undefined,
+                          height: 40,
+                          width: 40,
+                          excavate: true,
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 w-full max-w-xs justify-center">
+                      <div className="flex gap-3 w-full">
+                        <motion.button
+                          onClick={onBannerShareClick}
+                          disabled={isBannerSharing}
+                          className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl font-bold text-sm border border-gray-200 disabled:opacity-80 disabled:cursor-not-allowed"
+                          whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
+                          whileTap={!isBannerSharing ? { scale: 0.95 } : {}}
+                        >
+                          {isBannerSharing ? (
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex items-center justify-center w-4 h-4">
+                                <motion.span 
+                                  className="absolute w-full h-full border border-gray-900/20 border-t-gray-900 rounded-full"
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                />
+                                <motion.span 
+                                  className="absolute w-1 h-1 bg-gray-900 rounded-full"
+                                  animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                                />
+                              </div>
+                              <span className="relative z-10 font-black tracking-widest text-xs text-gray-900">WAIT</span>
+                            </div>
+                          ) : (
+                            <>
+                              <Share2 className="w-4 h-4" />
+                              {t.share}
+                            </>
+                          )}
+                        </motion.button>
+                        <motion.button
+                          onClick={onBannerDownloadClick}
+                          disabled={isBannerDownloading}
+                          className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl font-bold text-sm border border-gray-200 disabled:opacity-80 disabled:cursor-not-allowed"
+                          whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
+                          whileTap={!isBannerDownloading ? { scale: 0.95 } : {}}
+                        >
+                          {isBannerDownloading ? (
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex items-center justify-center w-4 h-4">
+                                <motion.span 
+                                  className="absolute w-full h-full border border-gray-900/20 border-t-gray-900 rounded-full"
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                />
+                                <motion.span 
+                                  className="absolute w-1 h-1 bg-gray-900 rounded-full"
+                                  animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                                />
+                              </div>
+                              <span className="relative z-10 font-black tracking-widest text-xs text-gray-900">SAVING</span>
+                            </div>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              {t.save}
+                            </>
+                          )}
+                        </motion.button>
+                      </div>
+                      <motion.button
+                        onClick={() => handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false)}
+                        className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white hover:bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {t.generateReceipt}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-900/70 mb-6 font-medium text-sm">
+                    {t.onlyNaviCred}
+                    <br/>
+                    <span className="text-xs opacity-80 mt-2 block">
+                      {t.usingGpay}
+                    </span>
+                  </p>
+                  <motion.a 
+                    href={requestUpiUrl}
+                    className="relative inline-flex items-center justify-center w-full sm:w-auto bg-gray-900 text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
+                    whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className="relative z-10">{t.openInUpi}</span>
+                    <motion.div
+                      className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '200%' }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        duration: 1.5, 
+                        ease: "easeInOut", 
+                        repeatDelay: 3 
+                      }}
+                    />
+                  </motion.a>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-end">
+              <motion.button
+                onClick={() => setShowInvoiceModal(true)}
+                className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ReceiptText className="w-4 h-4" /> Create Invoice
+              </motion.button>
+            </div>
+
+            <motion.div layout className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                
+                {/* Form Section */}
+                <motion.div layout className="h-full">
+                  <PaymentForm 
+                    upiId={upiId}
+                    setUpiId={handleUpiIdChange}
+                    payeeName={payeeName}
+                    setPayeeName={handlePayeeNameChange}
+                    amount={amount}
+                    setAmount={setAmount}
+                    remarks={remarks}
+                    setRemarks={setRemarks}
+                    showUpiError={showUpiError}
+                    setTouchedUpiId={setTouchedUpiId}
+                    recentPayees={recentPayees}
+                    onSelectRecent={handleSelectRecent}
+                    onRemoveRecent={handleRemoveRecent}
+                    onSaveRecent={saveRecentPayee}
+                    amountInputRef={amountInputRef}
+                    t={t}
+                  />
+                </motion.div>
+
+                {/* QR Code Section */}
+                <motion.div layout className="h-full">
+                  <QRCodeDisplay 
+                    upiId={upiId}
+                    isValidUpi={isValidUpi}
+                    upiUrl={upiUrl}
+                    amount={amount}
+                    payeeName={payeeName}
+                    remarks={remarks}
+                    qrRef={qrRef}
+                    onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
+                    onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
+                    onGenerateReceipt={async () => handleGenerateReceiptClick(payeeName, upiId, amount, remarks, true)}
+                    t={t}
+                  />
+                </motion.div>
+                
+              </div>
             </motion.div>
             
-          </div>
-        </motion.div>
-        
-        <div className="mt-8 text-center text-sm font-bold text-[#2d2d2b]/50 uppercase tracking-wide">
-          <p>{t.scanInstruction}</p>
-          <p className="mt-2 text-sm normal-case text-[#2d2d2b]/70" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive', fontWeight: 'bold' }}>
-            {t.developer}
-          </p>
-        </div>
+            <div className="mt-8 text-center text-sm font-bold text-gray-900/50 uppercase tracking-wide">
+              <p>{t.scanInstruction}</p>
+              <p className="mt-2 text-sm normal-case text-gray-900/70" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive', fontWeight: 'bold' }}>
+                {t.developer}
+              </p>
+            </div>
       </div>
 
       <AnimatePresence>
         {showChangelog && <Changelog onClose={() => setShowChangelog(false)} t={t} />}
+        {showInvoiceModal && (
+          <InvoiceModal 
+            onClose={() => setShowInvoiceModal(false)} 
+            t={t} 
+            lang={lang}
+            onLanguageChange={setLang}
+          />
+        )}
       </AnimatePresence>
 
       {/* Hidden Receipt Component for PDF Generation */}

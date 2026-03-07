@@ -237,7 +237,9 @@ export const handleShare = async (
 
           await navigator.share(shareData);
         } catch (error) {
-          console.error('Error sharing:', error);
+          if ((error as Error).name !== 'AbortError' && (error as Error).message !== 'Share canceled') {
+            console.error('Error sharing:', error);
+          }
         }
       } else {
         alert('Sharing is not supported on this device/browser.');

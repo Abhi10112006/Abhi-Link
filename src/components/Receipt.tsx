@@ -17,10 +17,12 @@ interface ReceiptProps {
 
 // 'A' Logo SVG
 const ALogo = () => (
-  <svg viewBox="0 0 100 100" className="w-10 h-10">
-    <rect width="100" height="100" rx="20" fill="#2d2d2b" />
-    <text x="50" y="50" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="60" fill="#e6e1dc" textAnchor="middle" dominantBaseline="central">A</text>
-  </svg>
+  <div className="mt-[13px]">
+    <svg viewBox="0 0 100 100" className="w-10 h-10">
+      <rect width="100" height="100" rx="20" fill="#2d2d2b" />
+      <text x="50" y="50" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="60" fill="#e6e1dc" textAnchor="middle" dominantBaseline="central">A</text>
+    </svg>
+  </div>
 );
 
 // Correct Wavy Verified Badge SVG
@@ -66,7 +68,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data, lang },
           <p className="text-sm text-[#6b7280] uppercase tracking-widest mb-1 font-medium">{getTrans('amount')}</p>
           <div className="text-5xl font-bold text-[#2d2d2b] tracking-tight flex items-center justify-center gap-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             <span>₹{data.amount}</span>
-            <div className="scale-[2.2] origin-left translate-y-[17px]">
+            <div className="scale-[2.2] origin-left translate-y-[19px]">
               <WavyVerifiedBadge />
             </div>
           </div>
@@ -125,7 +127,7 @@ export const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ data, lang },
             </div>
             <div className="text-right">
               <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-wide">
-                <a href="https://abhi-link.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-[#2563eb] underline">ABHI LINK</a> - SIMPLIFY YOUR UPI PAYMENTS
+                <a href="https://abhi-link.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-[#9ca3af] underline">ABHI LINK</a> - SIMPLIFY YOUR UPI PAYMENTS
               </p>
             </div>
           </div>

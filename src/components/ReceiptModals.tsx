@@ -179,12 +179,12 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
                   autoFocus
                   disabled={isLoading}
                   autoComplete={`nope-${inputId}`}
+                  aria-autocomplete="none"
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck={false}
                   data-lpignore="true"
                   data-form-type="other"
-                  list="autocompleteOff"
                 />
               </div>
               <motion.button

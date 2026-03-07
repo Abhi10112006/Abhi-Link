@@ -235,12 +235,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <div className="p-8 border-b md:border-b-0 md:border-r border-[#d9d3ce]">
+    <div className="p-8 border-b md:border-b-0 md:border-r border-gray-200">
       <motion.h2 
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-lg font-bold text-[#2d2d2b] mb-6 uppercase tracking-wide"
+        className="text-lg font-bold text-gray-900 mb-6 uppercase tracking-wide"
       >
         {t.paymentDetails}
       </motion.h2>
@@ -260,7 +260,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         
         {recentPayees.length > 0 && (
           <motion.div variants={itemVariants} className="mb-6">
-            <p className="text-[11px] font-bold text-[#2d2d2b]/50 uppercase tracking-widest mb-3">
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">
               {recentPayees.length > 1 ? t.recentUsers : t.recentUser}
             </p>
             <div className="grid grid-cols-2 gap-2 w-full">
@@ -269,15 +269,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   key={payee.upiId}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border-2 border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
+                  className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
                   onClick={() => onSelectRecent(payee)}
                 >
                   <div className="flex flex-col mr-2 overflow-hidden">
-                    {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
-                    <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-[#2d2d2b]/60' : 'text-[#2d2d2b]'}`}>{payee.upiId}</span>
+                    {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
+                    <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-gray-600' : 'text-gray-900'}`}>{payee.upiId}</span>
                   </div>
                   <button 
-                    className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                    className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveRecent(payee.upiId);
@@ -293,8 +293,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         )}
 
         <motion.div variants={itemVariants} className={showAutocomplete ? "relative z-50" : "relative z-10"}>
-          <label htmlFor={randomUpiId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
-            {t.upiIdLabel} <span className="text-red-500">*</span>
+          <label htmlFor={randomUpiId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
+            {t.upiIdLabel} <span className="text-gray-900">*</span>
           </label>
           <motion.div 
             className="relative"
@@ -303,23 +303,23 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             ref={autocompleteRef}
           >
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <User className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomUpiId ? 'text-[#2d2d2b]' : 'text-[#2d2d2b]/40'}`} />
+              <User className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomUpiId ? 'text-gray-900' : 'text-gray-400'}`} />
             </div>
             <input
               type="search"
               id={randomUpiId}
               name={randomUpiId}
-              autoComplete={`nope-${randomUpiId}`}
+              autoComplete="new-password"
+              aria-autocomplete="none"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              list="autocompleteOff"
-              className={`block w-full pl-10 pr-12 py-3 border-2 rounded-xl outline-none sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
+              className={`block w-full pl-10 pr-12 py-3 border rounded-xl outline-none sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 ${
                 showUpiError
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                  : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 shadow-sm hover:shadow-md'
+                  : 'border-gray-200 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 shadow-sm hover:shadow-md'
               }`}
               placeholder={t.upiIdPlaceholder}
               value={upiId}
@@ -376,8 +376,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   }}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer transition-all z-20 ${
                     detectedClipboardUpi 
-                      ? 'text-[#2d2d2b] drop-shadow-[0_0_8px_rgba(45,45,43,0.4)] animate-pulse scale-110' 
-                      : 'text-[#2d2d2b]/40 hover:text-[#2d2d2b]'
+                      ? 'text-gray-900 drop-shadow-[0_0_8px_rgba(45,45,43,0.4)] animate-pulse scale-110' 
+                      : 'text-gray-400 hover:text-gray-900'
                   }`}
                   title={detectedClipboardUpi ? "Paste detected UPI ID" : "Paste from clipboard"}
                 >
@@ -393,11 +393,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className={`absolute top-full mt-2 right-0 z-50 bg-[#2d2d2b] text-white text-xs font-medium rounded-lg shadow-xl overflow-hidden pointer-events-auto max-w-[250px] border border-white/5 ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
+                  className={`absolute top-full mt-2 right-0 z-50 bg-gray-900 text-white text-xs font-medium rounded-lg shadow-xl overflow-hidden pointer-events-auto max-w-[250px] border border-white/5 ${multipleUpiOptions.length > 0 ? 'p-0' : 'px-3 py-2 flex items-center gap-2'}`}
                 >
                   {multipleUpiOptions.length > 0 ? (
                     <div className="flex flex-col min-w-[200px]">
-                      <div className="px-3 py-2 bg-[#2d2d2b] border-b border-white/10 flex items-center justify-between">
+                      <div className="px-3 py-2 bg-gray-900 border-b border-white/10 flex items-center justify-between">
                         <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">Select UPI ID</span>
                         <button 
                           onClick={() => {
@@ -472,7 +472,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   initial="hidden"
                   animate="show"
                   exit="exit"
-                  className="absolute z-10 w-full mt-2 bg-white border-2 border-[#d9d3ce] rounded-xl shadow-xl overflow-hidden"
+                  className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                 >
                   <ul className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     {getFilteredHandles().map((handle, index) => (
@@ -486,7 +486,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       >
                         <button
                           type="button"
-                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-[#2d2d2b] hover:bg-[#faf9f8] hover:text-blue-600 transition-all rounded-lg flex items-center gap-1 group"
+                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-50 hover:text-gray-900 transition-all rounded-lg flex items-center gap-1 group"
                           onMouseDown={(e) => {
                             e.preventDefault(); // Prevents input from losing focus
                             selectHandle(handle);
@@ -503,8 +503,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </AnimatePresence>
           </motion.div>
           <div className="flex items-start gap-1.5 mt-2 px-1">
-            <Info className="w-3.5 h-3.5 text-[#2d2d2b]/40 mt-0.5 flex-shrink-0" />
-            <p className="text-xs font-medium text-[#2d2d2b]/50 leading-tight">
+            <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs font-medium text-gray-500 leading-tight">
               Format: username@bank (e.g. john@oksbi)
             </p>
           </div>
@@ -523,7 +523,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomPayeeId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomPayeeId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
             {t.nameLabel}
           </label>
           <motion.div
@@ -535,13 +535,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               id={randomPayeeId}
               name={randomPayeeId}
               autoComplete={`nope-${randomPayeeId}`}
+              aria-autocomplete="none"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              list="autocompleteOff"
-              className="block w-full px-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
+              className="block w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
               placeholder={t.namePlaceholder}
               value={payeeName}
               onChange={(e) => setPayeeName(e.target.value)}
@@ -555,7 +555,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomAmountId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomAmountId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
             {t.amountLabel}
           </label>
           <motion.div 
@@ -564,7 +564,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IndianRupee className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomAmountId ? 'text-[#2d2d2b]' : 'text-[#2d2d2b]/40'}`} />
+              <IndianRupee className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomAmountId ? 'text-gray-900' : 'text-gray-400'}`} />
             </div>
             <input
               type="search"
@@ -574,10 +574,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               min="1"
               step="any"
               autoComplete={`nope-${randomAmountId}`}
+              aria-autocomplete="none"
               data-lpignore="true"
               data-form-type="other"
-              list="autocompleteOff"
-              className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
+              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
               placeholder={t.amountPlaceholder}
               value={amount}
               ref={amountInputRef}
@@ -616,7 +616,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomRemarksId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomRemarksId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
             {t.remarksLabel}
           </label>
           <motion.div 
@@ -625,7 +625,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MessageSquare className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomRemarksId ? 'text-[#2d2d2b]' : 'text-[#2d2d2b]/40'}`} />
+              <MessageSquare className={`h-5 w-5 transition-colors duration-300 ${focusedField === randomRemarksId ? 'text-gray-900' : 'text-gray-400'}`} />
             </div>
             <input
               type="search"
@@ -633,13 +633,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               name={randomRemarksId}
               maxLength={30}
               autoComplete={`nope-${randomRemarksId}`}
+              aria-autocomplete="none"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              list="autocompleteOff"
-              className="block w-full pl-10 pr-3 py-3 border-2 border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-[#faf9f8] text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
+              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
               placeholder={t.remarksPlaceholder}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
@@ -648,10 +648,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             />
           </motion.div>
           <div className="flex justify-between items-center mt-2 px-1">
-            <p className="text-xs font-medium text-[#2d2d2b]/50">
+            <p className="text-xs font-medium text-gray-500">
               {t.remarksNote}
             </p>
-            <p className={`text-xs font-bold transition-colors ${remarks.length >= 30 ? 'text-red-500' : 'text-[#2d2d2b]/40'}`}>
+            <p className={`text-xs font-bold transition-colors ${remarks.length >= 30 ? 'text-red-500' : 'text-gray-400'}`}>
               {remarks.length}/30
             </p>
           </div>
@@ -668,7 +668,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 <motion.button
                   type="button"
                   onClick={handleClear}
-                  className="flex items-center gap-2 text-xs font-bold text-[#2d2d2b] uppercase tracking-wider bg-[#f5f5f0] hover:bg-[#e6e1dc] px-4 py-2 rounded-xl transition-colors border border-[#d9d3ce] shadow-sm"
+                  className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
