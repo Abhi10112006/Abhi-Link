@@ -159,7 +159,7 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
               <h3 className="text-xl font-bold text-[#2d2d2b]">
                 {t.senderNameTitle}
               </h3>
-              <button onClick={onClose} className="text-[#2d2d2b]/50 hover:text-[#2d2d2b]" disabled={isLoading}>
+              <button onClick={onClose} className="text-[#2d2d2b]/50 hover:text-[#2d2d2b]">
                 <X className="w-6 h-6" />
               </button>
             </div>

@@ -164,6 +164,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Toast Auto-hide
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
   // UPI Logic
   const handleUpiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
@@ -188,21 +196,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
 
     const prefix = upiId.split('@')[0];
-    const fullTarget = prefix + handle;
-    let currentLength = prefix.length + 1; 
-    
-    setUpiId(prefix + '@');
+    setUpiId(prefix + handle);
     setShowAutocomplete(false);
-    
-    handleTypewriterRef.current = window.setInterval(() => {
-      if (currentLength < fullTarget.length) {
-        currentLength++;
-        setUpiId(fullTarget.substring(0, currentLength));
-      } else {
-        if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
-        setTouchedUpiId(true);
-      }
-    }, 40);
+    setTouchedUpiId(true);
+    setShowUpiError(false);
   };
 
   const getFilteredHandles = () => {
@@ -390,7 +387,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const data = await getInvoiceData();
+      // Minimum loading time of 1.5s for better UX
+      const minLoadTime = new Promise(resolve => setTimeout(resolve, 1500));
+      const [data] = await Promise.all([
+        getInvoiceData(),
+        minLoadTime
+      ]);
       await downloadInvoicePdf(data);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -402,7 +404,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const handleShare = async () => {
     setIsSharing(true);
     try {
-      const data = await getInvoiceData();
+      // Minimum loading time of 1.5s for better UX
+      const minLoadTime = new Promise(resolve => setTimeout(resolve, 1500));
+      const [data] = await Promise.all([
+        getInvoiceData(),
+        minLoadTime
+      ]);
       await shareInvoicePdf(data);
     } catch (error) {
       console.error('Error sharing PDF:', error);
@@ -1035,32 +1042,47 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               </AnimatePresence>
 
               {/* Remarks Clips */}
-              <div className="flex flex-wrap gap-2 mt-4">
+              <motion.div layout className="flex flex-wrap gap-2 mt-4 relative z-0">
+                <AnimatePresence mode='popLayout'>
                 {allRemarksClips.map((clip, idx) => {
                   const isCustom = customRemarks.includes(clip);
                   return (
-                    <div key={idx} className="relative group flex items-center">
-                      <button
+                    <motion.div 
+                      layout
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      key={clip}
+                      className="relative group flex items-center"
+                    >
+                      <motion.button
+                        layout
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => setRemarks(clip)}
                         className={`text-xs font-medium text-gray-900 bg-white border border-gray-200 hover:border-gray-900 hover:bg-gray-50 py-1.5 rounded-full transition-colors shadow-sm flex items-center ${isCustom ? 'pl-3 pr-8' : 'px-3'}`}
                       >
                         {clip.length > 30 ? clip.substring(0, 30) + '...' : clip}
-                      </button>
+                      </motion.button>
                       {isCustom && (
-                        <button
+                        <motion.button
+                          layout
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                           type="button"
                           onClick={(e) => handleRemoveCustomRemark(clip, e)}
                           className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
                           title="Remove clip"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </button>
+                          <X className="w-3 h-3" />
+                        </motion.button>
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
-              </div>
+                </AnimatePresence>
+              </motion.div>
             </motion.div>
 
             {/* Items Section */}
@@ -1214,7 +1236,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
             {/* Summary & Actions - Moved to Bottom of Form */}
             <motion.div layout className="mt-12 pt-8 border-t-2 border-gray-200">
-                <div className="bg-gray-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl">
+                <div className="bg-[#2d2d2b] text-white p-6 sm:p-8 rounded-3xl shadow-xl">
                     <h3 className="text-xl font-bold uppercase tracking-wide mb-6 text-white/80">Summary</h3>
                     
                     <div className="bg-white/10 rounded-2xl p-6 backdrop-blur-sm border border-white/10 mb-8 flex justify-between items-center">
@@ -1224,7 +1246,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
                     {upiId && (
                         <div className="flex flex-col items-center bg-white p-6 rounded-2xl mb-8">
-                            <div className="text-gray-900 font-bold mb-4 uppercase tracking-wide text-sm">{t.scanToPay}</div>
+                            <div className="text-[#2d2d2b] font-bold mb-4 uppercase tracking-wide text-sm">{t.scanToPay}</div>
                             <div className="hidden">
                                 <QRCodeSVG
                                     id="hidden-qr-code"
@@ -1266,7 +1288,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         <motion.button
                             onClick={handleDownload}
                             disabled={isDownloading}
-                            className="relative flex-1 flex items-center justify-center gap-2 bg-white text-gray-900 px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg hover:bg-gray-50 transition-colors overflow-hidden group disabled:opacity-90 disabled:cursor-not-allowed"
+                            className="relative flex-1 flex items-center justify-center gap-2 bg-white text-[#2d2d2b] px-6 py-4 rounded-xl font-bold uppercase tracking-wide shadow-lg hover:bg-gray-50 transition-colors overflow-hidden group disabled:opacity-90 disabled:cursor-not-allowed"
                             whileHover={!isDownloading ? { 
                                 scale: 1.02, 
                                 boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)",
@@ -1287,19 +1309,19 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex items-center justify-center w-5 h-5">
                                         <motion.span 
-                                            className="absolute w-full h-full border border-gray-900/20 border-t-gray-900 rounded-full"
+                                            className="absolute w-full h-full border border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
                                             animate={{ rotate: 360 }}
                                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                         />
                                         <motion.span 
-                                            className="absolute w-1.5 h-1.5 bg-gray-900 rounded-full"
+                                            className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
                                             animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
                                             transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
                                         />
                                     </div>
-                                    <span className="relative z-10 font-semibold tracking-widest text-sm text-gray-900">SAVING</span>
+                                    <span className="relative z-10 font-semibold tracking-widest text-sm text-[#2d2d2b]">SAVING</span>
                                     <motion.div
-                                        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-gray-900/5 to-transparent -skew-x-12"
+                                        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/5 to-transparent -skew-x-12"
                                         initial={{ x: '-100%' }}
                                         animate={{ x: '200%' }}
                                         transition={{ 
@@ -1316,7 +1338,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                                         {t.downloadInvoice}
                                     </span>
                                     <motion.div
-                                        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-gray-900/5 to-transparent -skew-x-12"
+                                        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/5 to-transparent -skew-x-12"
                                         initial={{ x: '-100%' }}
                                         animate={{ x: '200%' }}
                                         transition={{ 
@@ -1389,6 +1411,62 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
           </motion.form>
           </LayoutGroup>
+        {/* Toast Notification */}
+        <AnimatePresence>
+          {showToast && (
+            <motion.div
+              initial={{ opacity: 0, y: 50, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: 50, x: '-50%' }}
+              className="fixed bottom-10 left-1/2 bg-[#2d2d2b] text-white px-6 py-3 rounded-full shadow-xl z-[100] flex items-center gap-3 whitespace-nowrap"
+            >
+              <Info className="w-5 h-5 text-yellow-400" />
+              <div className="flex flex-col">
+                <span className="font-bold text-sm">
+                  {multipleUpiOptions.length > 0 
+                    ? `${multipleUpiOptions.length} UPI IDs found` 
+                    : 'No UPI ID found'}
+                </span>
+                {multipleUpiOptions.length > 0 && (
+                  <span className="text-xs text-gray-400">Select one below</span>
+                )}
+              </div>
+              <button onClick={() => setShowToast(false)} className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {/* Multiple UPI Selection Modal/List */}
+        <AnimatePresence>
+          {showToast && multipleUpiOptions.length > 0 && (
+             <motion.div
+               initial={{ opacity: 0, scale: 0.9, x: '-50%' }}
+               animate={{ opacity: 1, scale: 1, x: '-50%' }}
+               exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
+               className="fixed bottom-24 left-1/2 bg-white border border-gray-200 rounded-2xl shadow-2xl z-[100] p-4 w-64"
+             >
+               <h4 className="text-sm font-bold text-[#2d2d2b] mb-2 uppercase tracking-wide">Select UPI ID</h4>
+               <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                 {multipleUpiOptions.map((id) => (
+                   <button
+                     key={id}
+                     onClick={() => {
+                       setUpiId(id);
+                       setShowToast(false);
+                       setMultipleUpiOptions([]);
+                     }}
+                     className="text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium text-[#2d2d2b] transition-colors border border-transparent hover:border-gray-200"
+                   >
+                     {id}
+                   </button>
+                 ))}
+               </div>
+             </motion.div>
+          )}
+        </AnimatePresence>
+
         </div>
       </motion.div>
     </motion.div>

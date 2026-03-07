@@ -231,11 +231,12 @@ export default function App() {
             doc.save('receipt.pdf');
           }
         } catch (error) {
-          if ((error as Error).name === 'AbortError' || (error as Error).message === 'Share canceled') {
-            return;
+          // If share is canceled or fails, we still want to save/download if it wasn't an abort
+          if ((error as Error).name !== 'AbortError' && (error as Error).message !== 'Share canceled') {
+            console.error("Error sharing receipt:", error);
+            doc.save('receipt.pdf');
           }
-          console.error("Error sharing receipt:", error);
-          doc.save('receipt.pdf');
+          // Fall through to cleanup
         }
       } catch (err) {
         console.error("Error generating receipt:", err);
