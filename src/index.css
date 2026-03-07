@@ -17,6 +17,10 @@
   .delay-400 { animation-delay: 400ms; }
 }
 
+body {
+  background-color: #e6e1dc;
+}
+
 @keyframes fade-in-up {
   0% {
     opacity: 0;

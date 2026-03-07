@@ -240,7 +240,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-lg font-bold text-gray-900 mb-6 uppercase tracking-wide"
+        className="text-lg font-bold text-[#2d2d2b] mb-6 uppercase tracking-wide"
       >
         {t.paymentDetails}
       </motion.h2>
@@ -269,12 +269,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   key={payee.upiId}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
+                  className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
                   onClick={() => onSelectRecent(payee)}
                 >
                   <div className="flex flex-col mr-2 overflow-hidden">
-                    {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
-                    <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-gray-600' : 'text-gray-900'}`}>{payee.upiId}</span>
+                    {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
+                    <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-[#2d2d2b]/60' : 'text-[#2d2d2b]'}`}>{payee.upiId}</span>
                   </div>
                   <button 
                     className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
@@ -293,8 +293,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         )}
 
         <motion.div variants={itemVariants} className={showAutocomplete ? "relative z-50" : "relative z-10"}>
-          <label htmlFor={randomUpiId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
-            {t.upiIdLabel} <span className="text-gray-900">*</span>
+          <label htmlFor={randomUpiId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
+            {t.upiIdLabel} <span className="text-[#2d2d2b]">*</span>
           </label>
           <motion.div 
             className="relative"
@@ -316,10 +316,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              className={`block w-full pl-10 pr-12 py-3 border rounded-xl outline-none sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 ${
+              className={`block w-full pl-10 pr-12 py-3 border rounded-xl outline-none sm:text-sm transition-all duration-300 bg-white text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 ${
                 showUpiError
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                  : 'border-gray-200 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 shadow-sm hover:shadow-md'
+                  : 'border-[#d9d3ce] focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 shadow-sm hover:shadow-md'
               }`}
               placeholder={t.upiIdPlaceholder}
               value={upiId}
@@ -523,7 +523,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomPayeeId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomPayeeId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
             {t.nameLabel}
           </label>
           <motion.div
@@ -541,7 +541,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              className="block w-full px-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
+              className="block w-full px-3 py-3 border border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-white text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
               placeholder={t.namePlaceholder}
               value={payeeName}
               onChange={(e) => setPayeeName(e.target.value)}
@@ -555,7 +555,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomAmountId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomAmountId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
             {t.amountLabel}
           </label>
           <motion.div 
@@ -577,7 +577,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               aria-autocomplete="none"
               data-lpignore="true"
               data-form-type="other"
-              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
+              className="block w-full pl-10 pr-3 py-3 border border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-white text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
               placeholder={t.amountPlaceholder}
               value={amount}
               ref={amountInputRef}
@@ -616,7 +616,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <label htmlFor={randomRemarksId} className="block text-sm font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
+          <label htmlFor={randomRemarksId} className="block text-sm font-bold text-[#2d2d2b] mb-1.5 uppercase tracking-wide">
             {t.remarksLabel}
           </label>
           <motion.div 
@@ -639,7 +639,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               spellCheck={false}
               data-lpignore="true"
               data-form-type="other"
-              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl outline-none focus:border-gray-900 focus:ring-4 focus:ring-gray-900/10 sm:text-sm transition-all duration-300 bg-gray-50 text-gray-900 font-medium placeholder:text-gray-400 shadow-sm hover:shadow-md"
+              className="block w-full pl-10 pr-3 py-3 border border-[#d9d3ce] rounded-xl outline-none focus:border-[#2d2d2b] focus:ring-4 focus:ring-[#2d2d2b]/10 sm:text-sm transition-all duration-300 bg-white text-[#2d2d2b] font-medium placeholder:text-[#2d2d2b]/40 shadow-sm hover:shadow-md"
               placeholder={t.remarksPlaceholder}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
@@ -668,7 +668,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 <motion.button
                   type="button"
                   onClick={handleClear}
-                  className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-100 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm"
+                  className="flex items-center gap-2 text-xs font-bold text-[#2d2d2b] uppercase tracking-wider bg-[#f5f5f0] hover:bg-[#e6e1dc] px-4 py-2 rounded-xl transition-colors border border-[#d9d3ce] shadow-sm"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

@@ -468,7 +468,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-50 overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#e6e1dc] overflow-hidden"
       initial="hidden"
       animate="show"
       exit="exit"
@@ -477,7 +477,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
       <motion.div 
         variants={itemAnim} 
         onScroll={handleScroll}
-        className="w-full h-full bg-gray-50 overflow-y-auto relative flex flex-col"
+        className="w-full h-full bg-[#e6e1dc] overflow-y-auto relative flex flex-col"
       >
         {/* Close Button - Scrolls with content */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
