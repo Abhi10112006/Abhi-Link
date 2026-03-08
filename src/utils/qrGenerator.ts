@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const generateCanvas = async (
-  qrRef: React.RefObject<SVGSVGElement>,
+  qrRef: React.RefObject<any>,
   amount: string,
   payeeName: string,
   remarks: string
@@ -98,7 +98,26 @@ export const generateCanvas = async (
   }
 
   // 4. Draw QR Code
-  const svgData = new XMLSerializer().serializeToString(qrRef.current);
+  let svgElement = qrRef.current as Element;
+  if (svgElement.tagName.toLowerCase() !== 'svg') {
+    const foundSvg = svgElement.querySelector('svg');
+    if (foundSvg) {
+      svgElement = foundSvg;
+    } else {
+      const foundCanvas = svgElement.querySelector('canvas');
+      if (foundCanvas) {
+        // If it's a canvas, we can draw it directly
+        const qrSize = 400;
+        ctx.drawImage(foundCanvas, 540 - qrSize / 2, 290, qrSize, qrSize);
+        
+        // Skip the SVG drawing part
+        return drawDetailsAndFooter(ctx, canvas, amount, remarks);
+      }
+      return null;
+    }
+  }
+
+  const svgData = new XMLSerializer().serializeToString(svgElement);
   const img = new Image();
   
   await new Promise((resolve, reject) => {
@@ -110,6 +129,15 @@ export const generateCanvas = async (
   const qrSize = 400;
   ctx.drawImage(img, 540 - qrSize / 2, 290, qrSize, qrSize);
 
+  return drawDetailsAndFooter(ctx, canvas, amount, remarks);
+};
+
+const drawDetailsAndFooter = (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  amount: string,
+  remarks: string
+) => {
   // 5. Draw Details
   let remarksY = 780; // Centered between QR and footer if no amount
   
@@ -140,7 +168,7 @@ export const generateCanvas = async (
 };
 
 export const handleDownload = async (
-  qrRef: React.RefObject<SVGSVGElement>,
+  qrRef: React.RefObject<any>,
   amount: string,
   payeeName: string,
   remarks: string
@@ -162,7 +190,7 @@ export const handleDownload = async (
 };
 
 export const handleShare = async (
-  qrRef: React.RefObject<SVGSVGElement>,
+  qrRef: React.RefObject<any>,
   amount: string,
   payeeName: string,
   remarks: string,

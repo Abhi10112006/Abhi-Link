@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, X, Download, Share2, ReceiptText } from 'lucide-react';
+import { ExternalLink, X, Download, Share2, ReceiptText, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { motion, AnimatePresence } from "motion/react";
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import { PaymentForm } from './components/PaymentForm';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { Changelog } from './components/Changelog';
@@ -88,6 +88,12 @@ export default function App() {
   const [showPaymentCompletedModal, setShowPaymentCompletedModal] = useState(false);
   const [showSenderNameInput, setShowSenderNameInput] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
+
+  // QR Code Styling State
+  const [dotType, setDotType] = useState<DotType>('square');
+  const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
+  const [cornerDotType, setCornerDotType] = useState<CornerDotType>('square');
+
   const [pendingReceiptData, setPendingReceiptData] = useState<{
     payee: string;
     upiId: string;
@@ -267,8 +273,8 @@ export default function App() {
     }
   });
 
-  const qrRef = useRef<SVGSVGElement>(null);
-  const requestQrRef = useRef<SVGSVGElement>(null);
+  const qrRef = useRef<any>(null);
+  const requestQrRef = useRef<any>(null);
   const typewriterRef = useRef<number | null>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
@@ -276,6 +282,80 @@ export default function App() {
   const upiRegex = /^[\w.-]+@[\w.-]+$/;
   const isValidUpi = upiId === '' || upiRegex.test(upiId);
   const showUpiError = touchedUpiId && !isValidUpi && upiId.length > 0;
+
+  const generateRequestUpiUrl = () => {
+    if (!requestUpiId) return '';
+    
+    // Clean the data (Crucial for GPay/PhonePe)
+    const cleanUpiId = decodeURIComponent(requestUpiId).trim();
+    const cleanName = requestPayeeName ? requestPayeeName.replace(/\+/g, ' ').trim() : '';
+    const cleanAmount = requestAmount ? requestAmount.trim() : '';
+    const cleanRemarks = requestRemarks ? requestRemarks.trim() : '';
+    const trId = "ABHI" + Date.now();
+
+    // Build the flawless UPI Intent Link
+    let link = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
+    
+    if (cleanAmount) {
+      link += `&am=${cleanAmount}`;
+    }
+    
+    if (cleanRemarks) {
+      link += `&tn=${encodeURIComponent(cleanRemarks)}`;
+    }
+
+    return link;
+  };
+
+  const requestUpiUrl = generateRequestUpiUrl();
+
+  const requestQrCode = useRef<QRCodeStyling | null>(null);
+
+  useEffect(() => {
+    if (!requestUpiUrl) return;
+
+    const qrOptions = {
+      width: 180,
+      height: 180,
+      data: requestUpiUrl,
+      margin: 0,
+      type: "svg" as const,
+      qrOptions: {
+        typeNumber: 0 as const,
+        mode: "Byte" as const,
+        errorCorrectionLevel: "H" as const
+      },
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.4,
+        margin: 0
+      },
+      dotsOptions: {
+        type: dotType,
+        color: "#2d2d2b"
+      },
+      cornersSquareOptions: {
+        type: cornerSquareType,
+        color: "#2d2d2b"
+      },
+      cornersDotOptions: {
+        type: cornerDotType,
+        color: "#2d2d2b"
+      },
+      image: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E"
+    };
+
+    if (!requestQrCode.current) {
+      requestQrCode.current = new QRCodeStyling(qrOptions);
+    } else {
+      requestQrCode.current.update(qrOptions);
+    }
+
+    if (requestQrRef.current && requestQrRef.current.children.length === 0) {
+      requestQrRef.current.innerHTML = '';
+      requestQrCode.current.append(requestQrRef.current);
+    }
+  }, [requestUpiUrl, dotType, cornerSquareType, cornerDotType]);
 
   const saveRecentPayee = () => {
     if (isValidUpi && upiId) {
@@ -382,33 +462,6 @@ export default function App() {
 
   const upiUrl = generateUpiUrl();
 
-  // Construct Request UPI URL (for the top banner)
-  const generateRequestUpiUrl = () => {
-    if (!requestUpiId) return '';
-    
-    // Clean the data (Crucial for GPay/PhonePe)
-    const cleanUpiId = decodeURIComponent(requestUpiId).trim();
-    const cleanName = requestPayeeName ? requestPayeeName.replace(/\+/g, ' ').trim() : '';
-    const cleanAmount = requestAmount ? requestAmount.trim() : '';
-    const cleanRemarks = requestRemarks ? requestRemarks.trim() : '';
-    const trId = "ABHI" + Date.now();
-
-    // Build the flawless UPI Intent Link
-    let link = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
-    
-    if (cleanAmount) {
-      link += `&am=${cleanAmount}`;
-    }
-    
-    if (cleanRemarks) {
-      link += `&tn=${encodeURIComponent(cleanRemarks)}`;
-    }
-
-    return link;
-  };
-
-  const requestUpiUrl = generateRequestUpiUrl();
-
   // Automatic redirect removed as per user request to prevent security blocks
   // useEffect(() => { ... }, []);
 
@@ -498,13 +551,15 @@ export default function App() {
                   }}
                   className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-gray-200 text-center relative overflow-hidden"
                 >
-                  <button 
+                  <motion.button 
                     onClick={() => setIsPaymentRequestVisible(false)}
                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-900/40 hover:text-gray-900"
                     aria-label="Close payment request"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <X className="w-5 h-5" />
-                  </button>
+                  </motion.button>
 
                   <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">{t.paymentRequest}</h2>
                   
@@ -531,22 +586,7 @@ export default function App() {
                   {/* QR Code Section in Banner */}
                   <div className="flex flex-col items-center justify-center mb-8">
                     <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm mb-4">
-                      <QRCodeSVG
-                        value={requestUpiUrl}
-                        size={180}
-                        level="H"
-                        includeMargin={false}
-                        ref={requestQrRef}
-                        className="w-full h-full"
-                        imageSettings={{
-                          src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
-                          x: undefined,
-                          y: undefined,
-                          height: 40,
-                          width: 40,
-                          excavate: true,
-                        }}
-                      />
+                      <div ref={requestQrRef} className="w-[180px] h-[180px]" />
                     </div>
                     
                     <div className="flex flex-col gap-3 w-full max-w-xs justify-center">
@@ -560,18 +600,12 @@ export default function App() {
                         >
                           {isBannerSharing ? (
                             <div className="flex items-center gap-2">
-                              <div className="relative flex items-center justify-center w-4 h-4">
-                                <motion.span 
-                                  className="absolute w-full h-full border border-gray-900/20 border-t-gray-900 rounded-full"
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                />
-                                <motion.span 
-                                  className="absolute w-1 h-1 bg-gray-900 rounded-full"
-                                  animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                                />
-                              </div>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                              >
+                                <Loader2 className="w-4 h-4 text-gray-900" />
+                              </motion.div>
                               <span className="relative z-10 font-black tracking-widest text-xs text-gray-900">WAIT</span>
                             </div>
                           ) : (
@@ -590,18 +624,12 @@ export default function App() {
                         >
                           {isBannerDownloading ? (
                             <div className="flex items-center gap-2">
-                              <div className="relative flex items-center justify-center w-4 h-4">
-                                <motion.span 
-                                  className="absolute w-full h-full border border-gray-900/20 border-t-gray-900 rounded-full"
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                />
-                                <motion.span 
-                                  className="absolute w-1 h-1 bg-gray-900 rounded-full"
-                                  animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                                />
-                              </div>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                              >
+                                <Loader2 className="w-4 h-4 text-gray-900" />
+                              </motion.div>
                               <span className="relative z-10 font-black tracking-widest text-xs text-gray-900">SAVING</span>
                             </div>
                           ) : (
@@ -702,6 +730,12 @@ export default function App() {
                     payeeName={payeeName}
                     remarks={remarks}
                     qrRef={qrRef}
+                    dotType={dotType}
+                    setDotType={setDotType}
+                    cornerSquareType={cornerSquareType}
+                    setCornerSquareType={setCornerSquareType}
+                    cornerDotType={cornerDotType}
+                    setCornerDotType={setCornerDotType}
                     onDownload={() => handleDownload(qrRef, amount, payeeName, remarks)}
                     onShare={() => handleShare(qrRef, amount, payeeName, remarks, upiId)}
                     onGenerateReceipt={async () => handleGenerateReceiptClick(payeeName, upiId, amount, remarks, true)}
@@ -728,6 +762,9 @@ export default function App() {
             t={t} 
             lang={lang}
             onLanguageChange={setLang}
+            dotType={dotType}
+            cornerSquareType={cornerSquareType}
+            cornerDotType={cornerDotType}
           />
         )}
       </AnimatePresence>

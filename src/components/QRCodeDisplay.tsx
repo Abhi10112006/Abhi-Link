@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
-import { Download, QrCode, Share2, Loader2, ReceiptText } from 'lucide-react';
-import { motion } from "motion/react";
+import React, { useState, useEffect, useRef } from 'react';
+import { Download, QrCode, Share2, Loader2, ReceiptText, Palette } from 'lucide-react';
+import { motion, AnimatePresence } from "motion/react";
+import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 
 interface QRCodeDisplayProps {
   upiId: string;
@@ -10,7 +10,13 @@ interface QRCodeDisplayProps {
   amount: string;
   payeeName: string;
   remarks: string;
-  qrRef: React.RefObject<SVGSVGElement>;
+  qrRef: React.RefObject<any>;
+  dotType: DotType;
+  setDotType: (type: DotType) => void;
+  cornerSquareType: CornerSquareType;
+  setCornerSquareType: (type: CornerSquareType) => void;
+  cornerDotType: CornerDotType;
+  setCornerDotType: (type: CornerDotType) => void;
   onDownload: () => Promise<void>;
   onShare: () => Promise<void>;
   onGenerateReceipt: () => Promise<void>;
@@ -25,6 +31,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   payeeName,
   remarks,
   qrRef,
+  dotType,
+  setDotType,
+  cornerSquareType,
+  setCornerSquareType,
+  cornerDotType,
+  setCornerDotType,
   onDownload,
   onShare,
   onGenerateReceipt,
@@ -33,6 +45,64 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [showStyles, setShowStyles] = useState(false);
+
+  const qrCode = useRef<QRCodeStyling | null>(null);
+
+  useEffect(() => {
+    qrCode.current = new QRCodeStyling({
+      width: 200,
+      height: 200,
+      data: upiUrl,
+      margin: 0,
+      type: "svg",
+      qrOptions: {
+        typeNumber: 0,
+        mode: "Byte",
+        errorCorrectionLevel: "H"
+      },
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.4,
+        margin: 0
+      },
+      dotsOptions: {
+        type: dotType,
+        color: "#2d2d2b"
+      },
+      cornersSquareOptions: {
+        type: cornerSquareType,
+        color: "#2d2d2b"
+      },
+      cornersDotOptions: {
+        type: cornerDotType,
+        color: "#2d2d2b"
+      },
+      image: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E"
+    });
+    
+    if (qrRef.current) {
+      qrRef.current.innerHTML = '';
+      qrCode.current.append(qrRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (qrCode.current) {
+      qrCode.current.update({
+        data: upiUrl,
+        dotsOptions: { type: dotType },
+        cornersSquareOptions: { type: cornerSquareType },
+        cornersDotOptions: { type: cornerDotType }
+      });
+      
+      if (qrRef.current && qrRef.current.children.length === 0) {
+        qrRef.current.innerHTML = '';
+        qrCode.current.append(qrRef.current);
+      }
+    }
+  }, [upiUrl, dotType, cornerSquareType, cornerDotType]);
 
   const handleShareClick = async () => {
     setIsSharing(true);
@@ -54,11 +124,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
   const handleGenerateClick = async () => {
     setIsGenerating(true);
-    // Add a small delay to allow the UI to update (show "Generating..." state)
-    // before any potential blocking alerts (confirm/prompt) in onGenerateReceipt
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
-      console.log("Calling onGenerateReceipt");
       await onGenerateReceipt();
     } catch (error) {
       console.error("Error in onGenerateReceipt:", error);
@@ -81,27 +148,79 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               </div>
             </div>
           )}
-          <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 border-2 border-[#d9d3ce] mb-6">
-            <QRCodeSVG
-              id="upi-qr-code"
-              value={upiUrl}
-              size={200}
-              level="H"
-              includeMargin={false}
-              ref={qrRef}
-              fgColor="#2d2d2b"
-              imageSettings={{
-                src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3EA%3C/text%3E%3C/svg%3E",
-                x: undefined,
-                y: undefined,
-                height: 48,
-                width: 48,
-                excavate: true,
-              }}
-            />
-          </div>
           
-          <div className="text-center mb-6 w-full">
+          <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-shadow duration-300 border-2 border-[#d9d3ce] mb-6" ref={qrRef} />
+          
+          <div className="w-full mb-2">
+            <div className="flex justify-center mb-2">
+              <motion.button
+                onClick={() => setShowStyles(!showStyles)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${showStyles ? 'bg-[#2d2d2b] text-[#e6e1dc]' : 'bg-[#e6e1dc] text-[#2d2d2b] hover:bg-[#d9d3ce]'}`}
+              >
+                <Palette className="w-4 h-4" />
+                Style
+              </motion.button>
+            </div>
+            
+            <AnimatePresence>
+              {showStyles && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="bg-white p-4 rounded-xl border-2 border-[#d9d3ce] shadow-sm space-y-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Dots</label>
+                      <div className="flex gap-2">
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('square')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/></div>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('rounded')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/></div>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('dots')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'dots' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/></div>
+                        </motion.button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Marker border</label>
+                      <div className="flex gap-2">
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('square')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 border-4 border-current" />
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('extra-rounded')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'extra-rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 border-4 border-current rounded-lg" />
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('dot')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 border-4 border-current rounded-full" />
+                        </motion.button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Marker center</label>
+                      <div className="flex gap-2">
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerDotType('square')} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 flex items-center justify-center"><div className="w-3 h-3 bg-current" /></div>
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerDotType('dot')} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                          <div className="w-6 h-6 flex items-center justify-center"><div className="w-3 h-3 bg-current rounded-full" /></div>
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="text-center mb-2 w-full">
             {amount && (
               <div className="text-3xl font-black text-[#2d2d2b] mb-1">
                 ₹{amount}
@@ -137,18 +256,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             >
               {isSharing ? (
                 <div className="flex items-center gap-3">
-                  <div className="relative flex items-center justify-center w-5 h-5">
-                    <motion.span 
-                      className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <motion.span 
-                      className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
-                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  </div>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="w-5 h-5 text-[#2d2d2b]" />
+                  </motion.div>
                   <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">PROCESSING</span>
                   <motion.div
                     className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"
@@ -191,18 +304,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             >
               {isDownloading ? (
                 <div className="flex items-center gap-3">
-                  <div className="relative flex items-center justify-center w-5 h-5">
-                    <motion.span 
-                      className="absolute w-full h-full border-2 border-[#e6e1dc]/20 border-t-[#e6e1dc] rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <motion.span 
-                      className="absolute w-1.5 h-1.5 bg-[#e6e1dc] rounded-full"
-                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  </div>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="w-5 h-5 text-[#e6e1dc]" />
+                  </motion.div>
                   <span className="relative z-10 font-black tracking-widest text-sm text-[#e6e1dc]">SAVING</span>
                   <motion.div
                     className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
@@ -251,18 +358,12 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             >
               {isGenerating ? (
                 <div className="flex items-center gap-3">
-                  <div className="relative flex items-center justify-center w-5 h-5">
-                    <motion.span 
-                      className="absolute w-full h-full border-2 border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
-                    <motion.span 
-                      className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
-                      animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  </div>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="w-5 h-5 text-[#2d2d2b]" />
+                  </motion.div>
                   <span className="relative z-10 font-black tracking-widest text-sm text-[#2d2d2b]">GENERATING</span>
                   <motion.div
                     className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/10 to-transparent -skew-x-12"

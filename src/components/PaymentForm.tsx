@@ -276,16 +276,18 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
                     <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-[#2d2d2b]/60' : 'text-[#2d2d2b]'}`}>{payee.upiId}</span>
                   </div>
-                  <button 
+                  <motion.button 
                     className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveRecent(payee.upiId);
                     }}
                     aria-label="Remove recent payee"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
+                  </motion.button>
                 </motion.div>
               ))}
             </div>
@@ -399,15 +401,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     <div className="flex flex-col min-w-[200px]">
                       <div className="px-3 py-2 bg-gray-900 border-b border-white/10 flex items-center justify-between">
                         <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">Select UPI ID</span>
-                        <button 
+                        <motion.button 
                           onClick={() => {
                             setShowToast(false);
                             setMultipleUpiOptions([]);
                           }}
                           className="text-white/40 hover:text-white transition-colors"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
                           <X className="h-3 w-3" />
-                        </button>
+                        </motion.button>
                       </div>
                       <div className="max-h-[200px] overflow-y-auto">
                         {multipleUpiOptions.map((id, index) => (
@@ -484,17 +488,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         layout="position"
                         transition={{ delay: index * 0.03 }}
                       >
-                        <button
+                        <motion.button
                           type="button"
                           className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-50 hover:text-gray-900 transition-all rounded-lg flex items-center gap-1 group"
                           onMouseDown={(e) => {
                             e.preventDefault(); // Prevents input from losing focus
                             selectHandle(handle);
                           }}
+                          whileHover={{ scale: 1.02, backgroundColor: "#f9fafb" }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <span className="opacity-40 group-hover:opacity-60 transition-opacity truncate max-w-[50%]">{upiId.split('@')[0]}</span>
                           <span className="font-bold text-base">{handle}</span>
-                        </button>
+                        </motion.button>
                       </motion.li>
                     ))}
                   </ul>

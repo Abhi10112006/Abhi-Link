@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
-import { X, Plus, Trash2, Download, Share2, Briefcase, GraduationCap, ShoppingBag, User, IndianRupee, MessageSquare, Info, Eraser, Clipboard, Check, ChevronDown, Loader2 } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { X, Plus, Trash2, Download, Share2, Briefcase, GraduationCap, ShoppingBag, User, IndianRupee, MessageSquare, Info, Eraser, Clipboard, Check, ChevronDown, Loader2, Palette } from 'lucide-react';
+import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import { BusinessType, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
 
@@ -32,9 +32,12 @@ interface InvoiceModalProps {
   t: Record<string, string>;
   lang: string;
   onLanguageChange: (lang: string) => void;
+  dotType: DotType;
+  cornerSquareType: CornerSquareType;
+  cornerDotType: CornerDotType;
 }
 
-export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, onLanguageChange }) => {
+export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, onLanguageChange, dotType, cornerSquareType, cornerDotType }) => {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -51,6 +54,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const [upiId, setUpiId] = useState('');
   const [payeeName, setPayeeName] = useState('');
   const [qrCenterText, setQrCenterText] = useState('A');
+  
+  const qrCode = useRef<QRCodeStyling | null>(null);
+  // hiddenQrCode removed
+
   const [remarks, setRemarks] = useState('');
   
   // New Fields
@@ -78,7 +85,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
-  const qrRef = useRef<SVGSVGElement>(null);
+  // qrRef removed
+  const visibleQrRef = useRef<any>(null);
 
   const totalAmount = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
 
@@ -306,31 +314,51 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
   const upiUrl = generateUpiUrl();
 
-  const getQrDataUrl = async (): Promise<string | null> => {
-    if (!qrRef.current) return null;
-    const svgData = new XMLSerializer().serializeToString(qrRef.current);
-    const svgUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+  useEffect(() => {
+    if (!upiUrl) return;
+
+    const qrOptions = {
+      width: 200,
+      height: 200,
+      data: upiUrl,
+      margin: 0,
+      type: "svg" as const,
+      qrOptions: {
+        typeNumber: 0 as const,
+        mode: "Byte" as const,
+        errorCorrectionLevel: "H" as const
+      },
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.4,
+        margin: 0
+      },
+      dotsOptions: {
+        type: dotType,
+        color: "#2d2d2b"
+      },
+      cornersSquareOptions: {
+        type: cornerSquareType,
+        color: "#2d2d2b"
+      },
+      cornersDotOptions: {
+        type: cornerDotType,
+        color: "#2d2d2b"
+      },
+      image: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`
+    };
+
+    if (!qrCode.current) {
+      qrCode.current = new QRCodeStyling({ ...qrOptions, width: 180, height: 180 });
+    } else {
+      qrCode.current.update({ ...qrOptions, width: 180, height: 180 });
+    }
     
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width || 200;
-        canvas.height = img.height || 200;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        } else {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = svgUrl;
-    });
-  };
+    if (visibleQrRef.current && visibleQrRef.current.children.length === 0) {
+      visibleQrRef.current.innerHTML = '';
+      qrCode.current.append(visibleQrRef.current);
+    }
+  }, [upiUrl, dotType, cornerSquareType, cornerDotType, qrCenterText]);
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -358,7 +386,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   };
 
   const getInvoiceData = async (): Promise<InvoiceData> => {
-    const qrDataUrl = await getQrDataUrl();
     return {
       invoiceNumber,
       businessName,
@@ -373,7 +400,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
       upiId,
       payeeName,
       qrCenterText,
-      qrDataUrl,
+      qrDataUrl: null,
+      qrStyle: {
+        dotType,
+        cornerSquareType,
+        cornerDotType
+      },
       remarks,
       businessType,
       dueDate,
@@ -674,40 +706,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
             {/* Dynamic Fields based on Type */}
             <AnimatePresence>
-            {businessType === 'tuition' && (
-                <motion.div
-                  key="tuition-month"
-                  initial={{ opacity: 0, height: 0, scale: 0.95, marginBottom: 0, overflow: 'hidden' }}
-                  animate={{ opacity: 1, height: 'auto', scale: 1, marginBottom: 24, overflow: 'visible' }}
-                  exit={{ opacity: 0, height: 0, scale: 0.95, marginBottom: 0, overflow: 'hidden' }}
-                  transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
-                >
-                    <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">{t.monthYear}</label>
-                    <motion.div
-                      animate={{ scale: focusedField === 'month' ? 1.02 : 1 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    >
-                      <input
-                          type="search"
-                          id={randomMonthId}
-                          name={randomMonthId}
-                          value={month}
-                          onChange={(e) => setMonth(e.target.value)}
-                          onFocus={() => setFocusedField('month')}
-                          onBlur={() => setFocusedField(null)}
-                          placeholder="Month Year"
-                          autoComplete={`nope-${randomMonthId}`}
-                          aria-autocomplete="none"
-                          spellCheck={false}
-                          autoCorrect="off"
-                          data-lpignore="true"
-                          data-form-type="other"
-                          className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/10 font-bold text-gray-900 transition-all shadow-sm hover:shadow-md"
-                      />
-                    </motion.div>
-                </motion.div>
-            )}
-
             {businessType === 'freelancer' && (
                 <motion.div 
                   key="freelancer-fields"
@@ -978,7 +976,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               />
             </motion.div>
 
-            {/* Remarks */}
             <motion.div layout className="mb-6">
               <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Remarks</label>
               <motion.div
@@ -1007,13 +1004,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               <AnimatePresence>
                 {(businessName || customerName || items.some(i => i.name || Number(i.quantity) > 0 || Number(i.price) > 0) || upiId || payeeName || remarks || classesName) && (
                   <motion.div
-                    layout
                     initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                    animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                    animate={{ opacity: 1, height: 'auto', overflow: 'hidden' }}
                     exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
                     transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                   >
-                    <div className="flex justify-between items-center mt-4">
+                    <div className="flex justify-between items-center pt-4">
                       <motion.button
                         type="button"
                         onClick={handleSaveCustomRemark}
@@ -1042,7 +1038,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               </AnimatePresence>
 
               {/* Remarks Clips */}
-              <motion.div layout className="flex flex-wrap gap-2 mt-4 relative z-0">
+              <motion.div className="flex flex-wrap gap-2 mt-4 relative z-0">
                 <AnimatePresence mode='popLayout'>
                 {allRemarksClips.map((clip, idx) => {
                   const isCustom = customRemarks.includes(clip);
@@ -1246,41 +1242,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
                     {upiId && (
                         <div className="flex flex-col items-center bg-white p-6 rounded-2xl mb-8">
-                            <div className="text-[#2d2d2b] font-bold mb-4 uppercase tracking-wide text-sm">{t.scanToPay}</div>
-                            <div className="hidden">
-                                <QRCodeSVG
-                                    id="hidden-qr-code"
-                                    value={upiUrl}
-                                    size={200}
-                                    level="H"
-                                    includeMargin={false}
-                                    ref={qrRef}
-                                    fgColor="#2d2d2b"
-                                    imageSettings={{
-                                        src: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`,
-                                        x: undefined,
-                                        y: undefined,
-                                        height: 48,
-                                        width: 48,
-                                        excavate: true,
-                                    }}
-                                />
-                            </div>
-                            <QRCodeSVG
-                                value={upiUrl}
-                                size={180}
-                                level="H"
-                                includeMargin={false}
-                                fgColor="#2d2d2b"
-                                imageSettings={{
-                                    src: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`,
-                                    x: undefined,
-                                    y: undefined,
-                                    height: 48,
-                                    width: 48,
-                                    excavate: true,
-                                }}
-                            />
+                            <div ref={visibleQrRef} />
                         </div>
                     )}
 
@@ -1307,18 +1269,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         >
                             {isDownloading ? (
                                 <div className="flex items-center gap-3">
-                                    <div className="relative flex items-center justify-center w-5 h-5">
-                                        <motion.span 
-                                            className="absolute w-full h-full border border-[#2d2d2b]/20 border-t-[#2d2d2b] rounded-full"
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                        />
-                                        <motion.span 
-                                            className="absolute w-1.5 h-1.5 bg-[#2d2d2b] rounded-full"
-                                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                                        />
-                                    </div>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    >
+                                        <Loader2 className="w-5 h-5 text-[#2d2d2b]" />
+                                    </motion.div>
                                     <span className="relative z-10 font-semibold tracking-widest text-sm text-[#2d2d2b]">SAVING</span>
                                     <motion.div
                                         className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-[#2d2d2b]/5 to-transparent -skew-x-12"
@@ -1374,18 +1330,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         >
                             {isSharing ? (
                                 <div className="flex items-center gap-3">
-                                    <div className="relative flex items-center justify-center w-5 h-5">
-                                        <motion.span 
-                                            className="absolute w-full h-full border border-white/20 border-t-white rounded-full"
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                        />
-                                        <motion.span 
-                                            className="absolute w-1.5 h-1.5 bg-white rounded-full"
-                                            animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                                        />
-                                    </div>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    >
+                                        <Loader2 className="w-5 h-5 text-white" />
+                                    </motion.div>
                                     <span className="relative z-10 font-semibold tracking-widest text-sm text-white">PROCESSING</span>
                                     <motion.div
                                         className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"

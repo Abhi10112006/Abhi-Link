@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 
 export type BusinessType = 'shop' | 'freelancer' | 'tuition' | 'custom';
 
@@ -21,7 +22,12 @@ export interface InvoiceData {
   upiId: string;
   payeeName: string;
   qrCenterText: string;
-  qrDataUrl: string | null;
+  qrDataUrl?: string | null;
+  qrStyle?: {
+    dotType: DotType;
+    cornerSquareType: CornerSquareType;
+    cornerDotType: CornerDotType;
+  };
   remarks?: string;
   businessType: BusinessType;
   dueDate?: string;
@@ -29,7 +35,80 @@ export interface InvoiceData {
   projectTitle?: string;
 }
 
+const generateQrCodeImage = async (data: InvoiceData): Promise<string | null> => {
+  if (!data.upiId) return null;
+
+  // Generate UPI URL
+  const cleanUpiId = data.upiId.trim();
+  const cleanName = data.payeeName.trim();
+  const trId = data.invoiceNumber;
+  let upiUrl = `upi://pay?pa=${encodeURIComponent(cleanUpiId).replace(/%40/g, '@')}&pn=${encodeURIComponent(cleanName)}&cu=INR&tr=${trId}`;
+  if (data.totalAmount > 0) upiUrl += `&am=${data.totalAmount.toFixed(2)}`;
+
+  const { dotType = 'dots', cornerSquareType = 'extra-rounded', cornerDotType = 'dot' } = data.qrStyle || {};
+
+  const qrOptions = {
+    width: 200,
+    height: 200,
+    data: upiUrl,
+    margin: 0,
+    type: "svg" as const,
+    qrOptions: {
+      typeNumber: 0 as const,
+      mode: "Byte" as const,
+      errorCorrectionLevel: "H" as const
+    },
+    imageOptions: {
+      hideBackgroundDots: true,
+      imageSize: 0.4,
+      margin: 0
+    },
+    dotsOptions: {
+      type: dotType,
+      color: "#2d2d2b"
+    },
+    cornersSquareOptions: {
+      type: cornerSquareType,
+      color: "#2d2d2b"
+    },
+    cornersDotOptions: {
+      type: cornerDotType,
+      color: "#2d2d2b"
+    },
+    image: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(data.qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`
+  };
+
+  const qrCode = new QRCodeStyling(qrOptions);
+  
+  try {
+    // Get the raw image data as a Blob
+    const blob = await qrCode.getRawData('png');
+    if (!blob) return null;
+
+    // Ensure it's a Blob (browser environment)
+    if (!(blob instanceof Blob)) return null;
+
+    // Convert Blob to Base64 Data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error generating QR code image:', error);
+    return null;
+  }
+};
+
 export const generateInvoicePdf = async (data: InvoiceData): Promise<jsPDF> => {
+  // Generate QR Code if not provided but style is available or just always generate if upiId exists
+  let qrDataUrl = data.qrDataUrl;
+  if (!qrDataUrl && data.upiId) {
+    qrDataUrl = await generateQrCodeImage(data);
+  }
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -273,7 +352,7 @@ export const generateInvoicePdf = async (data: InvoiceData): Promise<jsPDF> => {
     leftY += remarksHeight;
   }
 
-  if (data.qrDataUrl && data.upiId) {
+  if (qrDataUrl && data.upiId) {
     if (leftY + 50 > pageHeight - 30) {
         doc.addPage();
         leftY = 20;
@@ -283,7 +362,7 @@ export const generateInvoicePdf = async (data: InvoiceData): Promise<jsPDF> => {
     doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
     doc.roundedRect(margin, leftY, 110, 45, 3, 3, 'F');
 
-    doc.addImage(data.qrDataUrl, 'PNG', margin + 5, leftY + 5, 35, 35);
+    doc.addImage(qrDataUrl, 'PNG', margin + 5, leftY + 5, 35, 35);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
