@@ -131,7 +131,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "Generating...",
     invoiceNumber: "Invoice No.",
     receiptNumber: "Receipt No.",
-    unit: "Unit"
+    unit: "Unit",
+    copyLink: "Copy Link",
+    linkCopied: "Copied!",
+    whatsapp: "WhatsApp",
+    history: "History",
+    transactionHistory: "Transaction History",
+    noTransactions: "No transactions yet",
+    transactionsAppearHere: "Your receipts will appear here",
+    txReceived: "Received",
+    txPaid: "Paid"
   },
   hi_en: {
     subtitle: "Apne hisaab se amount aur message set karke apna UPI QR code banayein.",
@@ -250,7 +259,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "Generating...",
     invoiceNumber: "Invoice No.",
     receiptNumber: "Receipt No.",
-    unit: "Unit"
+    unit: "Unit",
+    copyLink: "Link Copy Karein",
+    linkCopied: "Copy Ho Gaya!",
+    whatsapp: "WhatsApp",
+    history: "History",
+    transactionHistory: "Transaction History",
+    noTransactions: "Koi transaction nahi",
+    transactionsAppearHere: "Aapki receipts yahan dikhegi",
+    txReceived: "Mila",
+    txPaid: "Diya"
   },
   hi: {
     subtitle: "पहले से अमाउंट और मैसेज सेट करके अपना खुद का UPI QR कोड बनाएं।",
@@ -368,7 +386,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "जेनरेट हो रहा है...",
     invoiceNumber: "इनवॉइस नंबर",
     receiptNumber: "रसीद नंबर",
-    unit: "इकाई"
+    unit: "इकाई",
+    copyLink: "लिंक कॉपी करें",
+    linkCopied: "कॉपी हो गया!",
+    whatsapp: "WhatsApp",
+    history: "इतिहास",
+    transactionHistory: "लेन-देन इतिहास",
+    noTransactions: "अभी कोई लेन-देन नहीं",
+    transactionsAppearHere: "आपकी रसीदें यहाँ दिखेंगी",
+    txReceived: "मिला",
+    txPaid: "दिया"
   },
   bn: {
     subtitle: "আগে থেকে টাকার পরিমাণ আর মেসেজ দিয়ে নিজের UPI QR কোড তৈরি করুন।",
@@ -475,7 +502,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "তৈরি হচ্ছে...",
     invoiceNumber: "ইনভয়েস নম্বর",
     receiptNumber: "রসিদ নম্বর",
-    unit: "ইউনিট"
+    unit: "ইউনিট",
+    copyLink: "লিঙ্ক কপি করুন",
+    linkCopied: "কপি হয়েছে!",
+    whatsapp: "WhatsApp",
+    history: "ইতিহাস",
+    transactionHistory: "লেনদেনের ইতিহাস",
+    noTransactions: "কোনো লেনদেন নেই",
+    transactionsAppearHere: "আপনার রসিদগুলো এখানে দেখাবে",
+    txReceived: "পেয়েছি",
+    txPaid: "দিয়েছি"
   },
   mr: {
     subtitle: "आधीच रक्कम आणि मेसेज टाकून तुमचा स्वतःचा UPI QR कोड बनवा.",
@@ -582,7 +618,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "तयार होत आहे...",
     invoiceNumber: "इनव्हॉइस क्रमांक",
     receiptNumber: "पावती क्रमांक",
-    unit: "एकक"
+    unit: "एकक",
+    copyLink: "लिंक कॉपी करा",
+    linkCopied: "कॉपी झाले!",
+    whatsapp: "WhatsApp",
+    history: "इतिहास",
+    transactionHistory: "व्यवहाराचा इतिहास",
+    noTransactions: "अद्याप कोणताही व्यवहार नाही",
+    transactionsAppearHere: "आपल्या पावत्या येथे दिसतील",
+    txReceived: "मिळाले",
+    txPaid: "दिले"
   },
   ta: {
     subtitle: "முன்பே தொகையையும் மெசேஜையும் செட் செய்து உங்களுக்கான UPI QR கோடை உருவாக்குங்கள்.",
@@ -689,7 +734,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "உருவாக்கப்படுகிறது...",
     invoiceNumber: "விலைப்பட்டியல் எண்",
     receiptNumber: "ரசீது எண்",
-    unit: "அலகு"
+    unit: "அலகு",
+    copyLink: "இணைப்பை நகலெடு",
+    linkCopied: "நகலெடுக்கப்பட்டது!",
+    whatsapp: "WhatsApp",
+    history: "வரலாறு",
+    transactionHistory: "பரிவர்த்தனை வரலாறு",
+    noTransactions: "இன்னும் பரிவர்த்தனைகள் இல்லை",
+    transactionsAppearHere: "உங்கள் ரசீதுகள் இங்கே தோன்றும்",
+    txReceived: "பெற்றது",
+    txPaid: "செலுத்தியது"
   },
   te: {
     subtitle: "ముందుగానే అమౌంట్ మరియు మెసేజ్ సెట్ చేసి మీ సొంత UPI QR కోడ్‌ను క్రియేట్ చేసుకోండి.",
@@ -796,7 +850,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "సృష్టించబడుతోంది...",
     invoiceNumber: "ఇన్‌వాయిస్ నంబర్",
     receiptNumber: "రసీదు నంబర్",
-    unit: "యూనిట్"
+    unit: "యూనిట్",
+    copyLink: "లింక్ కాపీ చేయి",
+    linkCopied: "కాపీ అయింది!",
+    whatsapp: "WhatsApp",
+    history: "చరిత్ర",
+    transactionHistory: "లావాదేవీల చరిత్ర",
+    noTransactions: "ఇంకా లావాదేవీలు లేవు",
+    transactionsAppearHere: "మీ రసీదులు ఇక్కడ కనిపిస్తాయి",
+    txReceived: "అందింది",
+    txPaid: "చెల్లించారు"
   },
   kn: {
     subtitle: "ಮೊದಲೇ ಮೊತ್ತ ಮತ್ತು ಮೆಸೇಜ್ ಸೆಟ್ ಮಾಡಿ ನಿಮ್ಮದೇ ಆದ UPI QR ಕೋಡ್ ರಚಿಸಿ.",
@@ -903,7 +966,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "ರಚಿಸಲಾಗುತ್ತಿದೆ...",
     invoiceNumber: "ಇನ್‌ವಾಯ್ಸ್ ಸಂಖ್ಯೆ",
     receiptNumber: "ರಶೀದಿ ಸಂಖ್ಯೆ",
-    unit: "ಘಟಕ"
+    unit: "ಘಟಕ",
+    copyLink: "ಲಿಂಕ್ ನಕಲಿಸಿ",
+    linkCopied: "ನಕಲಿಸಲಾಗಿದೆ!",
+    whatsapp: "WhatsApp",
+    history: "ಇತಿಹಾಸ",
+    transactionHistory: "ವಹಿವಾಟು ಇತಿಹಾಸ",
+    noTransactions: "ಇನ್ನೂ ವಹಿವಾಟುಗಳಿಲ್ಲ",
+    transactionsAppearHere: "ನಿಮ್ಮ ರಶೀದಿಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ",
+    txReceived: "ಸ್ವೀಕರಿಸಿದೆ",
+    txPaid: "ಪಾವತಿಸಿದೆ"
   },
   ne: {
     subtitle: "पहिले नै रकम र म्यासेज सेट गरेर आफ्नो UPI QR कोड बनाउनुहोस्।",
@@ -1010,7 +1082,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "सिर्जना हुँदैछ...",
     invoiceNumber: "इनभ्वाइस नम्बर",
     receiptNumber: "रसिद नम्बर",
-    unit: "एकाइ"
+    unit: "एकाइ",
+    copyLink: "लिंक कपी गर्नुस्",
+    linkCopied: "कपी भयो!",
+    whatsapp: "WhatsApp",
+    history: "इतिहास",
+    transactionHistory: "कारोबार इतिहास",
+    noTransactions: "अहिलेसम्म कुनै कारोबार छैन",
+    transactionsAppearHere: "तपाईंका रसिदहरू यहाँ देखिनेछन्",
+    txReceived: "प्राप्त",
+    txPaid: "तिरियो"
   },
   sa: {
     subtitle: "पूर्वं धनं सन्देशं च निश्चित्य स्वस्य UPI QR-सङ्केतं रचयन्तु।",
@@ -1117,7 +1198,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "निर्मितं भवति...",
     invoiceNumber: "बीजक सङ्ख्या",
     receiptNumber: "रसीद सङ्ख्या",
-    unit: "एककम्"
+    unit: "एककम्",
+    copyLink: "सम्पर्कसूत्रं प्रतिलिपयतु",
+    linkCopied: "प्रतिलिपिकृतम्!",
+    whatsapp: "WhatsApp",
+    history: "इतिहासः",
+    transactionHistory: "व्यवहारेतिहासः",
+    noTransactions: "अद्यापि व्यवहाराः नास्ति",
+    transactionsAppearHere: "भवतः रसीदाः अत्र दृश्यन्ते",
+    txReceived: "प्राप्तम्",
+    txPaid: "दत्तम्"
   },
   gu: {
     subtitle: "પહેલાથી રકમ અને મેસેજ સેટ કરીને તમારો પોતાનો UPI QR કોડ બનાવો.",
@@ -1224,7 +1314,16 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "જનરેટ થઈ રહ્યું છે...",
     invoiceNumber: "ઇન્વૉઇસ નંબર",
     receiptNumber: "રસીદ નંબર",
-    unit: "એકમ"
+    unit: "એકમ",
+    copyLink: "લિંક કૉપિ કરો",
+    linkCopied: "કૉપિ થઈ ગઈ!",
+    whatsapp: "WhatsApp",
+    history: "ઇતિહાસ",
+    transactionHistory: "વ્યવહારનો ઇતિહાસ",
+    noTransactions: "હજુ સુધી કોઈ વ્યવહાર નથી",
+    transactionsAppearHere: "તમારી રસીદો અહીં દેખાશે",
+    txReceived: "મળ્યું",
+    txPaid: "ચૂકવ્યું"
   },
   or: {
     subtitle: "ଆଗରୁ ଟଙ୍କା ଏବଂ ମେସେଜ୍ ସେଟ୍ କରି ନିଜର UPI QR କୋଡ୍ ତିଆରି କରନ୍ତୁ।",
@@ -1331,6 +1430,15 @@ export const translations: Record<string, Record<string, string>> = {
     generating: "ପ୍ରସ୍ତୁତ ହେଉଛି...",
     invoiceNumber: "ଇନଭଏସ୍ ନମ୍ବର",
     receiptNumber: "ରସିଦ ନମ୍ବର",
-    unit: "ୟୁନିଟ୍"
+    unit: "ୟୁନିଟ୍",
+    copyLink: "ଲିଙ୍କ କପି କରନ୍ତୁ",
+    linkCopied: "କପି ହୋଇଗଲା!",
+    whatsapp: "WhatsApp",
+    history: "ଇତିହାସ",
+    transactionHistory: "ଲେନଦେନ ଇତିହାସ",
+    noTransactions: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଲେନଦେନ ନାହିଁ",
+    transactionsAppearHere: "ଆପଣଙ୍କ ରସିଦ ଏଠାରେ ଦେଖିବ",
+    txReceived: "ମିଳିଲା",
+    txPaid: "ଦିଆଗଲା"
   }
 };

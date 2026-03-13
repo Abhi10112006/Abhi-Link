@@ -16,6 +16,13 @@ const COMMON_UPI_HANDLES = [
   '@kbl', '@southindianbank', '@equitas', '@au'
 ];
 
+const inr = new Intl.NumberFormat('en-IN');
+const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000].map((v) => ({
+  value: v,
+  formatted: inr.format(v),
+  label: `₹${v >= 1000 ? `${v / 1000}k` : v}`,
+}));
+
 interface PaymentFormProps {
   upiId: string;
   setUpiId: (value: string) => void;
@@ -619,6 +626,24 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               onBlur={() => setFocusedField(null)}
             />
           </motion.div>
+          <div className="flex flex-wrap gap-1.5 mt-2.5">
+            {QUICK_AMOUNTS.map(({ value, formatted, label }) => (
+              <motion.button
+                key={value}
+                type="button"
+                onClick={() => setAmount(formatted)}
+                className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                  amount === formatted
+                    ? 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'
+                    : 'bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.92 }}
+              >
+                {label}
+              </motion.button>
+            ))}
+          </div>
         </motion.div>
 
         <motion.div variants={itemVariants}>
