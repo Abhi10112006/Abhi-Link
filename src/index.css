@@ -17,6 +17,23 @@
   .delay-400 { animation-delay: 400ms; }
 }
 
+.stitched-tiger path {
+  fill: none; /* Crucial: ensures there is no solid background, only the outlines */
+  stroke: #c2b5a6; /* A shade slightly darker than the pocket so the thread pops */
+  stroke-width: 2.5px; /* Make the thread look thick and substantial */
+  stroke-linecap: round; /* Makes the ends of the thread look soft and real */
+  stroke-linejoin: round;
+  
+  /* THIS IS THE SECRET TO THE STITCHES */
+  stroke-dasharray: 5 3; /* 5px of thread, 3px of gap. Adjust these numbers to change stitch length */
+  
+  /* Dual-lighting for 3D volume */
+  /* 1st shadow: The dark drop shadow cast onto the pocket */
+  /* 2nd shadow: A white highlight on the top-left to make the thread look cylindrical */
+  filter: drop-shadow(1px 1.5px 1px rgba(0, 0, 0, 0.25)) 
+          drop-shadow(-0.5px -0.5px 0px rgba(255, 255, 255, 0.8));
+}
+
 body {
   background-color: #e6e1dc;
 }

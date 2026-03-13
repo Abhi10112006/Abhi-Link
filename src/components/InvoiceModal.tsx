@@ -4,6 +4,7 @@ import { X, Plus, Trash2, Download, Share2, Briefcase, GraduationCap, ShoppingBa
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import { BusinessType, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
+import { PremiumBackground } from './PremiumBackground';
 
 interface InvoiceItem {
   id: string;
@@ -45,14 +46,22 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     };
   }, []);
 
-  const [businessType, setBusinessType] = useState<BusinessType>('shop');
+  const [businessType, setBusinessType] = useState<BusinessType>(() => {
+    return (localStorage.getItem('my_card_business_type') as BusinessType) || 'shop';
+  });
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-6)}`);
-  const [businessName, setBusinessName] = useState('');
+  const [businessName, setBusinessName] = useState(() => {
+    return localStorage.getItem('my_card_name') || '';
+  });
   const [classesName, setClassesName] = useState(''); // For Tuition
   const [customerName, setCustomerName] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([{ id: '1', name: '', quantity: '', price: '', unit: 'Unit' }]);
-  const [upiId, setUpiId] = useState('');
-  const [payeeName, setPayeeName] = useState('');
+  const [upiId, setUpiId] = useState(() => {
+    return localStorage.getItem('my_card_upi') || '';
+  });
+  const [payeeName, setPayeeName] = useState(() => {
+    return localStorage.getItem('my_card_name') || '';
+  });
   const [qrCenterText, setQrCenterText] = useState('A');
   
   const qrCode = useRef<QRCodeStyling | null>(null);
@@ -317,47 +326,51 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   useEffect(() => {
     if (!upiUrl) return;
 
-    const qrOptions = {
-      width: 200,
-      height: 200,
-      data: upiUrl,
-      margin: 0,
-      type: "svg" as const,
-      qrOptions: {
-        typeNumber: 0 as const,
-        mode: "Byte" as const,
-        errorCorrectionLevel: "H" as const
-      },
-      imageOptions: {
-        hideBackgroundDots: true,
-        imageSize: 0.4,
-        margin: 0
-      },
-      dotsOptions: {
-        type: dotType,
-        color: "#2d2d2b"
-      },
-      cornersSquareOptions: {
-        type: cornerSquareType,
-        color: "#2d2d2b"
-      },
-      cornersDotOptions: {
-        type: cornerDotType,
-        color: "#2d2d2b"
-      },
-      image: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`
-    };
+    const timer = setTimeout(() => {
+      const qrOptions = {
+        width: 200,
+        height: 200,
+        data: upiUrl,
+        margin: 0,
+        type: "svg" as const,
+        qrOptions: {
+          typeNumber: 0 as const,
+          mode: "Byte" as const,
+          errorCorrectionLevel: "H" as const
+        },
+        imageOptions: {
+          hideBackgroundDots: true,
+          imageSize: 0.4,
+          margin: 0
+        },
+        dotsOptions: {
+          type: dotType,
+          color: "#2d2d2b"
+        },
+        cornersSquareOptions: {
+          type: cornerSquareType,
+          color: "#2d2d2b"
+        },
+        cornersDotOptions: {
+          type: cornerDotType,
+          color: "#2d2d2b"
+        },
+        image: `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232d2d2b'/%3E%3Ctext x='50' y='50' font-family='Arial, sans-serif' font-weight='900' font-size='60' fill='%23e6e1dc' text-anchor='middle' dominant-baseline='central'%3E${encodeURIComponent(qrCenterText || 'A')}%3C/text%3E%3C/svg%3E`
+      };
 
-    if (!qrCode.current) {
-      qrCode.current = new QRCodeStyling({ ...qrOptions, width: 180, height: 180 });
-    } else {
-      qrCode.current.update({ ...qrOptions, width: 180, height: 180 });
-    }
-    
-    if (visibleQrRef.current && visibleQrRef.current.children.length === 0) {
-      visibleQrRef.current.innerHTML = '';
-      qrCode.current.append(visibleQrRef.current);
-    }
+      if (!qrCode.current) {
+        qrCode.current = new QRCodeStyling({ ...qrOptions, width: 180, height: 180 });
+      } else {
+        qrCode.current.update({ ...qrOptions, width: 180, height: 180 });
+      }
+      
+      if (visibleQrRef.current && visibleQrRef.current.children.length === 0) {
+        visibleQrRef.current.innerHTML = '';
+        qrCode.current.append(visibleQrRef.current);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [upiUrl, dotType, cornerSquareType, cornerDotType, qrCenterText]);
 
   const [isDownloading, setIsDownloading] = useState(false);
@@ -507,16 +520,17 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#e6e1dc] overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
       initial="hidden"
       animate="show"
       exit="exit"
       variants={container}
     >
+      <PremiumBackground />
       <motion.div 
         variants={itemAnim} 
         onScroll={handleScroll}
-        className="w-full h-full bg-[#e6e1dc] overflow-y-auto relative flex flex-col"
+        className="w-full h-full overflow-y-auto relative flex flex-col"
       >
         {/* Close Button - Scrolls with content */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
@@ -554,35 +568,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
             {/* Honeypot inputs to trick password managers and browser autofill */}
             <input type="text" name="fakeusernameremembered" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
             <input type="password" name="fakepasswordremembered" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
-            
-            {/* Business Type Selection */}
-            <motion.div layout className="bg-white p-4 rounded-2xl border border-gray-200 mb-6">
-                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">{t.selectBusinessType}</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                        { id: 'shop', label: t.shop, icon: ShoppingBag },
-                        { id: 'tuition', label: t.tuition, icon: GraduationCap },
-                        { id: 'freelancer', label: t.freelancer, icon: Briefcase },
-                        { id: 'custom', label: t.custom, icon: User },
-                    ].map((type) => (
-                        <motion.button
-                            layout
-                            key={type.id}
-                            onClick={() => handleBusinessTypeChange(type.id as BusinessType)}
-                            whileHover={{ scale: 1.02, y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)" }}
-                            whileTap={{ scale: 0.98, y: 0, boxShadow: "none" }}
-                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all shadow-sm ${
-                                businessType === type.id 
-                                ? 'bg-gray-100 border-gray-900 text-gray-900' 
-                                : 'bg-white border-gray-200 text-gray-900 hover:border-gray-900/50'
-                            }`}
-                        >
-                            <type.icon className="w-5 h-5" />
-                            <span className="text-xs font-bold uppercase">{type.label}</span>
-                        </motion.button>
-                    ))}
-                </div>
-            </motion.div>
 
             {/* Business Name & Details */}
             <motion.div layout className="flex flex-col mb-6">
