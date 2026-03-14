@@ -17,10 +17,9 @@ const COMMON_UPI_HANDLES = [
 ];
 
 const inr = new Intl.NumberFormat('en-IN');
-const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000].map((v) => ({
+const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500].map((v) => ({
   value: v,
-  formatted: inr.format(v),
-  label: `₹${v >= 1000 ? `${v / 1000}k` : v}`,
+  label: `₹${v}`,
 }));
 
 const CLIP_PRESS_DURATION_MS = 450;
@@ -638,21 +637,19 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             />
           </motion.div>
           <div className="flex flex-wrap gap-1.5 mt-2.5">
-            {QUICK_AMOUNTS.map(({ value, formatted, label }) => (
+            {QUICK_AMOUNTS.map(({ value, label }) => (
               <motion.button
                 key={value}
                 type="button"
                 onClick={() => {
-                  setAmount(formatted);
+                  const current = parseFloat(amount.replace(/,/g, '')) || 0;
+                  const next = current + value;
+                  setAmount(inr.format(next));
                   if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
                   setPressedClip(value);
                   pressedClipTimerRef.current = setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
                 }}
-                className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
-                  amount === formatted
-                    ? 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'
-                    : 'bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]'
-                }`}
+                className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-all bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]"
                 animate={
                   pressedClip === value
                     ? { scale: [1, 0.82, 1.15, 0.96, 1], rotate: [0, -4, 4, -2, 0] }
