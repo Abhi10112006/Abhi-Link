@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, History, IndianRupee, Trash2 } from 'lucide-react';
+import { X, History, IndianRupee, Trash2, AlertTriangle } from 'lucide-react';
 
 export interface Transaction {
   id: string;
@@ -30,6 +30,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   onDeleteTransaction,
   t,
 }) => {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -38,6 +40,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Close confirmation if modal closes
+  useEffect(() => {
+    if (!isOpen) setPendingDeleteId(null);
+  }, [isOpen]);
+
+  const pendingTx = pendingDeleteId
+    ? transactions.find(tx => tx.id === pendingDeleteId)
+    : null;
 
   if (!isOpen) return null;
 
@@ -70,7 +81,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             {transactions.length > 0 && (
               <motion.button
                 onClick={onClearAll}
-                className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition-colors border border-red-200"
+                className="flex items-center gap-1.5 text-xs font-bold text-[#2d2d2b] hover:text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] px-3 py-1.5 rounded-full transition-colors border border-[#d9d3ce] hover:border-[#2d2d2b]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -143,7 +154,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         <p className="text-[10px] text-[#2d2d2b]/40 font-medium">{tx.time}</p>
                         </div>
                         <motion.button
-                          onClick={() => onDeleteTransaction(tx.id)}
+                          onClick={() => setPendingDeleteId(tx.id)}
                           className="p-1.5 rounded-full text-[#2d2d2b]/30 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mt-0.5"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
@@ -160,6 +171,73 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             </AnimatePresence>
           )}
         </div>
+        {/* Confirmation overlay */}
+        <AnimatePresence>
+          {pendingDeleteId && pendingTx && (
+            <motion.div
+              className="absolute inset-0 z-10 flex items-end justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div
+                className="absolute inset-0 bg-[#faf9f8]/80 backdrop-blur-[2px]"
+                onClick={() => setPendingDeleteId(null)}
+              />
+              <motion.div
+                className="relative w-full bg-white rounded-3xl border border-[#d9d3ce] shadow-2xl p-6 flex flex-col gap-4"
+                initial={{ y: 40, opacity: 0, scale: 0.97 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 40, opacity: 0, scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Icon */}
+                <div className="flex justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#f0ece8] flex items-center justify-center border border-[#d9d3ce]">
+                    <AlertTriangle className="w-5 h-5 text-[#2d2d2b]" />
+                  </div>
+                </div>
+                {/* Title & description */}
+                <div className="text-center">
+                  <h3 className="text-base font-black text-[#2d2d2b] uppercase tracking-tight mb-1">
+                    Delete Transaction?
+                  </h3>
+                  <p className="text-xs text-[#2d2d2b]/60 font-medium leading-relaxed">
+                    This will permanently remove the transaction for{' '}
+                    <span className="font-black text-[#2d2d2b]">
+                      {pendingTx.payeeName || pendingTx.payeeUpiId}
+                    </span>
+                    {pendingTx.amount ? ` (₹${pendingTx.amount})` : ''}.
+                  </p>
+                </div>
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <motion.button
+                    onClick={() => setPendingDeleteId(null)}
+                    className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      onDeleteTransaction(pendingDeleteId);
+                      setPendingDeleteId(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#e6e1dc] bg-[#2d2d2b] hover:bg-[#1a1a18] border border-[#2d2d2b] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );
