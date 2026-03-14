@@ -27,7 +27,6 @@ const CLIP_PRESS_DURATION_MS = 450;
 const PRESET_SHADOW_DEFAULT = '0 4px 0 #b8b2ac, 0 6px 12px rgba(45,45,43,0.12)';
 const PRESET_SHADOW_PRESSED  = '0 1px 0 #b8b2ac, 0 2px 4px rgba(45,45,43,0.08)';
 const PRESET_SHADOW_LIFTED   = '0 7px 0 #b8b2ac, 0 10px 20px rgba(45,45,43,0.20)';
-const PRESET_SHADOW_BOUNCE   = '0 6px 0 #b8b2ac, 0 8px 18px rgba(45,45,43,0.18)';
 
 interface PaymentFormProps {
   upiId: string;
@@ -655,20 +654,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   pressedClipTimerRef.current = setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
                   (document.activeElement as HTMLElement)?.blur();
                 }}
-                className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b] select-none"
+                className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b] select-none focus:outline-none focus-visible:outline-none"
                 style={{ boxShadow: PRESET_SHADOW_DEFAULT }}
                 animate={
                   pressedClip === value
-                    ? { scale: [1, 0.78, 1.12, 0.95, 1], rotate: [0, -5, 5, -2, 0], y: [0, 4, -3, 1, 0], boxShadow: [PRESET_SHADOW_DEFAULT, PRESET_SHADOW_PRESSED, PRESET_SHADOW_BOUNCE, PRESET_SHADOW_DEFAULT, PRESET_SHADOW_DEFAULT] }
-                    : { scale: 1, rotate: 0, y: 0, boxShadow: PRESET_SHADOW_DEFAULT }
+                    ? { scale: [1, 0.88, 1], y: [0, 3, 0], boxShadow: [PRESET_SHADOW_DEFAULT, PRESET_SHADOW_PRESSED, PRESET_SHADOW_DEFAULT] }
+                    : { scale: 1, y: 0, boxShadow: PRESET_SHADOW_DEFAULT }
                 }
                 transition={
                   pressedClip === value
-                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: 'easeInOut' }
+                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: [0.25, 0.46, 0.45, 0.94] }
                     : { type: 'spring', stiffness: 400, damping: 20 }
                 }
-                whileHover={{ scale: 1.12, y: -3, boxShadow: PRESET_SHADOW_LIFTED }}
-                whileTap={{ scale: 0.82, y: 4, boxShadow: PRESET_SHADOW_PRESSED }}
+                whileHover={{ scale: 1.08, y: -2, boxShadow: PRESET_SHADOW_LIFTED }}
+                whileTap={{ scale: 0.88, y: 3, boxShadow: PRESET_SHADOW_PRESSED }}
               >
                 {label}
               </motion.button>

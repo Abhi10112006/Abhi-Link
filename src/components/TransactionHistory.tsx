@@ -54,11 +54,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, []);
+  }, [isOpen]);
 
   // Close confirmations if modal closes
   useEffect(() => {
@@ -82,33 +84,31 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     >
       <PremiumBackground />
 
-      {/* Close button */}
-      <motion.button
-        onClick={onClose}
-        className="absolute top-6 right-6 sm:top-10 sm:right-10 p-4 rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors z-50 group shadow-sm"
-        whileHover={{ scale: 1.1, rotate: 90 }}
-        whileTap={{ scale: 0.9 }}
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1, transition: { delay: 0.8 } }}
-      >
-        <X className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
-      </motion.button>
+      {/* Top bar: centered title + close button at the same vertical height */}
+      <div className="absolute top-6 sm:top-10 left-0 right-0 z-50 h-14 flex items-center px-6 sm:px-10">
+        {/* Left spacer matches close button width so title is truly centered */}
+        <div className="w-14 flex-shrink-0" />
+        <motion.h1
+          className="flex-1 text-center text-base sm:text-lg font-black tracking-tight text-gray-900 uppercase flex items-center justify-center gap-2"
+          variants={item}
+        >
+          <History className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 flex-shrink-0" />
+          {t.transactionHistory || 'Transaction History'}
+        </motion.h1>
+        <motion.button
+          onClick={onClose}
+          className="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1, transition: { delay: 0.8 } }}
+        >
+          <X className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
+        </motion.button>
+      </div>
 
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col h-full py-12 sm:py-16">
-        {/* Header */}
-        <motion.div variants={item} className="flex flex-col items-center text-center mb-8 flex-shrink-0">
-          <div className="mb-4">
-            <span className="px-5 py-2 rounded-full border border-gray-200 bg-white/50 text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-gray-500 backdrop-blur-md">
-              ABHI LINK
-            </span>
-          </div>
-          <h1 className="text-5xl sm:text-7xl font-black tracking-tighter leading-none mb-3 bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center gap-3">
-            <History className="w-10 h-10 sm:w-14 sm:h-14 text-gray-700" />
-            History
-          </h1>
-          <div className="w-full max-w-xs h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-4" />
-        </motion.div>
+      {/* Main content — top padding clears the fixed header bar */}
+      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col h-full pt-24 sm:pt-28 pb-12">
 
         {/* Actions row */}
         {transactions.length > 0 && (
@@ -184,7 +184,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         </div>
                         <motion.button
                           onClick={() => setPendingDeleteId(tx.id)}
-                          className="p-1.5 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mt-0.5"
+                          className="p-1.5 rounded-full text-gray-300 hover:text-[#2d2d2b] hover:bg-[#e6e1dc] transition-colors flex-shrink-0 mt-0.5"
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           title="Delete transaction"
@@ -212,7 +212,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             exit={{ opacity: 0 }}
           >
             <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-[3px]"
+              className="absolute inset-0 bg-black/30"
               onClick={() => setShowClearAllConfirm(false)}
             />
             <motion.div
@@ -275,7 +275,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             exit={{ opacity: 0 }}
           >
             <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-[3px]"
+              className="absolute inset-0 bg-black/30"
               onClick={() => setPendingDeleteId(null)}
             />
             <motion.div
