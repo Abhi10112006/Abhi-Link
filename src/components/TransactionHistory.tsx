@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, History, IndianRupee, Trash2, AlertTriangle } from 'lucide-react';
+import { X, History, IndianRupee, Trash2, AlertTriangle, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
 
 export interface Transaction {
@@ -97,13 +97,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {/* Close button: pushed to the right by ml-auto */}
         <motion.button
           onClick={onClose}
-          className="ml-auto w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
+          className="ml-auto w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1, transition: { delay: 0.8 } }}
         >
-          <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+          <X className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
         </motion.button>
       </div>
 
@@ -155,7 +155,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${tx.isReceiver ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${tx.isReceiver ? 'bg-[#f0ece8] text-[#2d2d2b] border-[#d9d3ce]' : 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'}`}>
+                            {tx.isReceiver
+                              ? <ArrowDownLeft className="w-2.5 h-2.5 flex-shrink-0" />
+                              : <ArrowUpRight className="w-2.5 h-2.5 flex-shrink-0" />}
                             {tx.isReceiver ? (t.txReceived || 'Received') : (t.txPaid || 'Paid')}
                           </span>
                         </div>

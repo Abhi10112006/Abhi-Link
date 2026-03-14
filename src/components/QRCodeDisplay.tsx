@@ -159,8 +159,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         const data = await response.json();
         return data.shortUrl || url;
       }
-    } catch {
-      // Fallback to original URL if shortening fails
+    } catch (error) {
+      console.error('URL shortening failed, using original URL:', error);
     }
     return url;
   };
@@ -480,7 +480,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="flex items-center gap-2 text-green-600"
+                      className="flex items-center gap-2 text-[#2d2d2b]"
                     >
                       <Check className="w-4 h-4" />
                       {t.linkCopied || 'Copied!'}
