@@ -76,7 +76,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-start text-gray-900 overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-start text-gray-900 overflow-y-auto"
       initial="hidden"
       animate="show"
       exit="exit"
@@ -84,20 +84,20 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     >
       <PremiumBackground />
 
-      {/* Top bar: centered title + close button at the same vertical height */}
-      <div className="absolute top-6 sm:top-10 left-0 right-0 z-50 h-16 sm:h-20 flex items-center px-6 sm:px-10">
-        {/* Left spacer matches close button width so title is truly centered */}
-        <div className="w-14 flex-shrink-0" />
+      {/* Top bar: title is absolutely centered; X button sits on the right */}
+      <div className="sticky top-0 left-0 right-0 z-50 h-16 sm:h-20 flex items-center px-6 sm:px-10 relative">
+        {/* Title: absolutely centered relative to the full bar width */}
         <motion.h1
-          className="flex-1 text-center text-4xl sm:text-6xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center justify-center gap-3"
+          className="absolute left-1/2 -translate-x-1/2 text-4xl sm:text-6xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center gap-3 whitespace-nowrap"
           variants={item}
         >
           <History className="w-9 h-9 sm:w-12 sm:h-12 text-gray-700 flex-shrink-0" />
           History
         </motion.h1>
+        {/* Close button: pushed to the right by ml-auto */}
         <motion.button
           onClick={onClose}
-          className="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
+          className="ml-auto w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
           initial={{ opacity: 0, scale: 0.5 }}
@@ -107,8 +107,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </motion.button>
       </div>
 
-      {/* Main content — top padding clears the fixed header bar */}
-      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col h-full pt-28 sm:pt-36 pb-12">
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col mt-6 sm:mt-10 pb-12">
 
         {/* Actions row */}
         {transactions.length > 0 && (
@@ -128,7 +128,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {/* Transaction list */}
         <motion.div
           variants={item}
-          className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent"
+          className="w-full"
         >
           {transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-gray-400">
