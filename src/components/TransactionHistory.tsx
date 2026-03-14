@@ -97,11 +97,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {/* Close button: pushed to the right by ml-auto */}
         <motion.button
           onClick={onClose}
+          variants={item}
           className="ml-auto w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1, transition: { delay: 0.8 } }}
         >
           <X className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
         </motion.button>
@@ -146,50 +145,60 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 {transactions.map((tx, index) => (
                   <motion.div
                     key={tx.id}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 12 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
                     transition={{ delay: index * 0.04, type: 'spring', stiffness: 260, damping: 22 }}
-                    className="bg-white/60 backdrop-blur-md border border-gray-200 rounded-2xl p-4 hover:bg-white/80 hover:border-gray-300 transition-colors shadow-sm"
+                    whileHover={{ y: -2, scale: 1.012, transition: { type: 'spring', stiffness: 400, damping: 25 } }}
+                    whileTap={{ y: 0, scale: 0.985, transition: { type: 'spring', stiffness: 400, damping: 30 } }}
+                    className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-4 shadow-sm"
+                    style={{ willChange: 'transform' }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${tx.isReceiver ? 'bg-[#f0ece8] text-[#2d2d2b] border-[#d9d3ce]' : 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'}`}>
-                            {tx.isReceiver
-                              ? <ArrowDownLeft className="w-2.5 h-2.5 flex-shrink-0" />
-                              : <ArrowUpRight className="w-2.5 h-2.5 flex-shrink-0" />}
-                            {tx.isReceiver ? (t.txReceived || 'Received') : (t.txPaid || 'Paid')}
-                          </span>
+                    {/* Row 1: direction badge (left) + amount (right) */}
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${tx.isReceiver ? 'bg-[#f0ece8] text-[#2d2d2b] border-[#d9d3ce]' : 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'}`}>
+                        {tx.isReceiver
+                          ? <ArrowDownLeft className="w-2.5 h-2.5 flex-shrink-0" />
+                          : <ArrowUpRight className="w-2.5 h-2.5 flex-shrink-0" />}
+                        {tx.isReceiver ? (t.txReceived || 'Received') : (t.txPaid || 'Paid')}
+                      </span>
+                      {tx.amount ? (
+                        <div className="flex items-center gap-0.5">
+                          <IndianRupee className="w-4 h-4 text-gray-900" />
+                          <span className="text-base font-black text-gray-900">{tx.amount}</span>
                         </div>
-                        <p className="text-sm font-black text-gray-900 truncate">
-                          {tx.payeeName || tx.payeeUpiId}
-                        </p>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-medium" aria-label="No amount specified">—</span>
+                      )}
+                    </div>
+
+                    {/* Row 2: payee name (left) + date (right) */}
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-black text-gray-900 truncate flex-1 min-w-0">
+                        {tx.payeeName || tx.payeeUpiId}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-medium flex-shrink-0 whitespace-nowrap">
+                        {tx.date}
+                      </p>
+                    </div>
+
+                    {/* Row 3: UPI / remarks (left) + time + delete (right) */}
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <div className="flex-1 min-w-0">
                         {tx.payeeName && (
                           <p className="text-xs text-gray-400 font-medium truncate">{tx.payeeUpiId}</p>
                         )}
                         {tx.remarks && (
-                          <p className="text-xs text-gray-500 italic mt-0.5 truncate">"{tx.remarks}"</p>
+                          <p className="text-xs text-gray-400 italic truncate">"{tx.remarks}"</p>
                         )}
                       </div>
-                      <div className="flex items-start gap-2">
-                        <div className="text-right flex-shrink-0">
-                          {tx.amount ? (
-                            <div className="flex items-center gap-0.5 justify-end">
-                              <IndianRupee className="w-4 h-4 text-gray-900 font-black" />
-                              <span className="text-base font-black text-gray-900">{tx.amount}</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">No amount</span>
-                          )}
-                          <p className="text-[10px] text-gray-400 font-medium mt-0.5">{tx.date}</p>
-                          <p className="text-[10px] text-gray-400 font-medium">{tx.time}</p>
-                        </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <p className="text-[10px] text-gray-400 font-medium whitespace-nowrap">{tx.time}</p>
                         <motion.button
-                          onClick={() => setPendingDeleteId(tx.id)}
-                          className="p-1.5 rounded-full text-gray-300 hover:text-[#2d2d2b] hover:bg-[#e6e1dc] transition-colors flex-shrink-0 mt-0.5"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => { e.stopPropagation(); setPendingDeleteId(tx.id); }}
+                          className="p-1.5 rounded-full text-gray-300 hover:text-[#2d2d2b] hover:bg-[#e6e1dc] transition-colors"
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.88 }}
                           title="Delete transaction"
                           aria-label={`Delete transaction for ${tx.payeeName || tx.payeeUpiId}`}
                         >

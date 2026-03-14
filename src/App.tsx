@@ -770,11 +770,6 @@ export default function App() {
               >
                 <History className="w-4 h-4 text-[#2d2d2b]" />
                 <span className="hidden sm:inline">{t.history || 'History'}</span>
-                {transactions.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#2d2d2b] text-[#e6e1dc] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                    {transactions.length > 9 ? '9+' : transactions.length}
-                  </span>
-                )}
               </motion.button>
               <motion.button
                 onClick={() => setShowInvoiceModal(true)}
