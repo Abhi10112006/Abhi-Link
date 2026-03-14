@@ -97,13 +97,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {/* Close button: pushed to the right by ml-auto */}
         <motion.button
           onClick={onClose}
-          className="ml-auto w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
+          className="ml-auto w-9 h-9 sm:w-11 sm:h-11 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors group shadow-sm focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1, transition: { delay: 0.8 } }}
         >
-          <X className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
         </motion.button>
       </div>
 
