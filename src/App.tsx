@@ -294,6 +294,14 @@ export default function App() {
     localStorage.removeItem('abhi-link-transactions');
   };
 
+  const handleDeleteTransaction = (id: string) => {
+    setTransactions(prev => {
+      const updated = prev.filter(tx => tx.id !== id);
+      localStorage.setItem('abhi-link-transactions', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Form state (initially empty, decoupled from URL params)
   const [upiId, setUpiId] = useState(() => localStorage.getItem('my_card_upi') || '');
   const [touchedUpiId, setTouchedUpiId] = useState(false);
@@ -553,29 +561,7 @@ export default function App() {
           <svg className="w-4 h-4 text-[#2d2d2b]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M16.0724 4.02447C15.1063 3.04182 13.7429 2.5 12.152 2.5C10.5611 2.5 9.19773 3.04182 8.23167 4.02447C7.26636 5.00636 6.73644 6.38891 6.73644 8C6.73644 10.169 7.68081 11.567 8.8496 12.4062C9.07675 12.5692 9.3115 12.7107 9.54832 12.8327C8.24215 13.1916 7.18158 13.8173 6.31809 14.5934C4.95272 15.8205 4.10647 17.3993 3.53633 18.813C3.43305 19.0691 3.55693 19.3604 3.81304 19.4637C4.06914 19.567 4.36047 19.4431 4.46375 19.187C5.00642 17.8414 5.78146 16.4202 6.98653 15.3371C8.1795 14.265 9.82009 13.5 12.152 13.5C14.332 13.5 15.9058 14.1685 17.074 15.1279C18.252 16.0953 19.0453 17.3816 19.6137 18.6532C19.9929 19.5016 19.3274 20.5 18.2827 20.5H6.74488C6.46874 20.5 6.24488 20.7239 6.24488 21C6.24488 21.2761 6.46874 21.5 6.74488 21.5H18.2827C19.9348 21.5 21.2479 19.8588 20.5267 18.2452C19.9232 16.8952 19.0504 15.4569 17.7087 14.3551C16.9123 13.7011 15.9603 13.1737 14.8203 12.8507C15.43 12.5136 15.9312 12.0662 16.33 11.5591C17.1929 10.462 17.5676 9.10016 17.5676 8C17.5676 6.38891 17.0377 5.00636 16.0724 4.02447ZM15.3593 4.72553C16.1144 5.49364 16.5676 6.61109 16.5676 8C16.5676 8.89984 16.2541 10.038 15.544 10.9409C14.8475 11.8265 13.7607 12.5 12.152 12.5C11.5014 12.5 10.3789 12.2731 9.43284 11.5938C8.51251 10.933 7.73644 9.83102 7.73644 8C7.73644 6.61109 8.18963 5.49364 8.94477 4.72553C9.69916 3.95818 10.7935 3.5 12.152 3.5C13.5105 3.5 14.6049 3.95818 15.3593 4.72553Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
-          <span className="hidden sm:inline">{t.myCard || 'My Card'}</span>
-        </motion.button>
-        <motion.button
-          onClick={() => setShowTransactionHistory(true)}
-          className="relative flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
-          whileHover={{ 
-            scale: 1.02, 
-            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-            transition: { duration: 0.2 }
-          }}
-          whileTap={{ 
-            scale: 0.9,
-            transition: { type: "spring", stiffness: 400, damping: 10 }
-          }}
-          title={t.transactionHistory || 'Transaction History'}
-        >
-          <History className="w-4 h-4 text-[#2d2d2b]" />
-          <span className="hidden sm:inline">{t.history || 'History'}</span>
-          {transactions.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#2d2d2b] text-[#e6e1dc] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-              {transactions.length > 9 ? '9+' : transactions.length}
-            </span>
-          )}
+          <span className="hidden sm:inline">{t.myCard}</span>
         </motion.button>
         <LanguageSelector currentLang={lang} onLanguageChange={setLang} />
         <motion.a
@@ -774,7 +760,22 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-end">
+            <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-between gap-2">
+              <motion.button
+                onClick={() => setShowTransactionHistory(true)}
+                className="relative flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title={t.transactionHistory || 'Transaction History'}
+              >
+                <History className="w-4 h-4 text-[#2d2d2b]" />
+                <span className="hidden sm:inline">{t.history || 'History'}</span>
+                {transactions.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#2d2d2b] text-[#e6e1dc] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                    {transactions.length > 9 ? '9+' : transactions.length}
+                  </span>
+                )}
+              </motion.button>
               <motion.button
                 onClick={() => setShowInvoiceModal(true)}
                 className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
@@ -866,6 +867,7 @@ export default function App() {
             onClose={() => setShowTransactionHistory(false)}
             transactions={transactions}
             onClearAll={handleClearTransactions}
+            onDeleteTransaction={handleDeleteTransaction}
             t={t}
           />
         )}

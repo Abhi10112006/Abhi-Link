@@ -23,6 +23,8 @@ const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000].map((v) => ({
   label: `₹${v >= 1000 ? `${v / 1000}k` : v}`,
 }));
 
+const CLIP_PRESS_DURATION_MS = 450;
+
 interface PaymentFormProps {
   upiId: string;
   setUpiId: (value: string) => void;
@@ -71,8 +73,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [detectedClipboardUpi, setDetectedClipboardUpi] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [multipleUpiOptions, setMultipleUpiOptions] = useState<string[]>([]);
+  const [pressedClip, setPressedClip] = useState<number | null>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
+  const pressedClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up the pressed-clip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
+    };
+  }, []);
 
   // Helper to extract all potential UPI IDs from text
   const extractUpiIds = (text: string): string[] => {
@@ -631,14 +642,29 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <motion.button
                 key={value}
                 type="button"
-                onClick={() => setAmount(formatted)}
+                onClick={() => {
+                  setAmount(formatted);
+                  if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
+                  setPressedClip(value);
+                  pressedClipTimerRef.current = setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
+                }}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
                   amount === formatted
                     ? 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'
                     : 'bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]'
                 }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.92 }}
+                animate={
+                  pressedClip === value
+                    ? { scale: [1, 0.82, 1.15, 0.96, 1], rotate: [0, -4, 4, -2, 0] }
+                    : { scale: 1, rotate: 0 }
+                }
+                transition={
+                  pressedClip === value
+                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: 'easeInOut' }
+                    : { type: 'spring', stiffness: 400, damping: 20 }
+                }
+                whileHover={{ scale: 1.1, y: -2, boxShadow: '0 4px 12px rgba(45,45,43,0.18)' }}
+                whileTap={{ scale: 0.88, y: 1 }}
               >
                 {label}
               </motion.button>

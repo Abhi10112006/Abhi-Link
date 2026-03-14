@@ -454,7 +454,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               <motion.button
                 onClick={handleWhatsAppShare}
                 title="Share on WhatsApp"
-                className="flex-1 flex items-center justify-center gap-2 bg-[#25d366] text-white border-2 border-[#25d366] px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-sm hover:bg-[#1fba58] hover:border-[#1fba58] transition-all overflow-hidden relative"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#2d2d2b] text-[#e6e1dc] border-2 border-[#2d2d2b] px-4 py-3 rounded-xl font-bold text-sm uppercase tracking-wide shadow-sm hover:bg-[#3d3d3b] hover:border-[#3d3d3b] transition-all overflow-hidden relative"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 10 }}
