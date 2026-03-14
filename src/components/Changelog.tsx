@@ -83,7 +83,7 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
           variants={item} 
           className="text-lg sm:text-2xl font-medium text-gray-400 mb-8 font-mono tracking-widest uppercase"
         >
-          March 13, 2026
+          March 14, 2026
         </motion.p>
 
         <motion.div 
@@ -99,7 +99,7 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
               "Introduced 'My Digital Card' with premium animations.",
               "Added interactive Premium Background across the app.",
               "Centralized Business Type selection to the Digital Wallet.",
-              "Refined UI to match the light premium aesthetic."
+              "Added Transaction History support."
             ].map((text, i) => (
               <motion.div 
                 key={i}

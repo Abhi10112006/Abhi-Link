@@ -17,13 +17,16 @@ const COMMON_UPI_HANDLES = [
 ];
 
 const inr = new Intl.NumberFormat('en-IN');
-const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000].map((v) => ({
+const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500].map((v) => ({
   value: v,
-  formatted: inr.format(v),
-  label: `₹${v >= 1000 ? `${v / 1000}k` : v}`,
+  label: `₹${v}`,
 }));
 
 const CLIP_PRESS_DURATION_MS = 450;
+
+const PRESET_SHADOW_DEFAULT = '0 4px 0 #b8b2ac, 0 6px 12px rgba(45,45,43,0.12)';
+const PRESET_SHADOW_PRESSED  = '0 1px 0 #b8b2ac, 0 2px 4px rgba(45,45,43,0.08)';
+const PRESET_SHADOW_LIFTED   = '0 7px 0 #b8b2ac, 0 10px 20px rgba(45,45,43,0.20)';
 
 interface PaymentFormProps {
   upiId: string;
@@ -638,33 +641,34 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             />
           </motion.div>
           <div className="flex flex-wrap gap-1.5 mt-2.5">
-            {QUICK_AMOUNTS.map(({ value, formatted, label }) => (
+            {QUICK_AMOUNTS.map(({ value, label }) => (
               <motion.button
                 key={value}
                 type="button"
                 onClick={() => {
-                  setAmount(formatted);
+                  const current = parseFloat(amount.replace(/,/g, '')) || 0;
+                  const next = current + value;
+                  setAmount(inr.format(next));
                   if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
                   setPressedClip(value);
                   pressedClipTimerRef.current = setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
+                  (document.activeElement as HTMLElement)?.blur();
                 }}
-                className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
-                  amount === formatted
-                    ? 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'
-                    : 'bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]'
-                }`}
+                className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b] select-none focus:outline-none focus-visible:outline-none"
+                style={{ boxShadow: PRESET_SHADOW_DEFAULT, outline: 'none', WebkitTapHighlightColor: 'transparent' }}
+                onFocus={(e) => e.currentTarget.blur()}
                 animate={
                   pressedClip === value
-                    ? { scale: [1, 0.82, 1.15, 0.96, 1], rotate: [0, -4, 4, -2, 0] }
-                    : { scale: 1, rotate: 0 }
+                    ? { scale: [1, 0.88, 1], y: [0, 3, 0], boxShadow: [PRESET_SHADOW_DEFAULT, PRESET_SHADOW_PRESSED, PRESET_SHADOW_DEFAULT] }
+                    : { scale: 1, y: 0, boxShadow: PRESET_SHADOW_DEFAULT }
                 }
                 transition={
                   pressedClip === value
-                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: 'easeInOut' }
+                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: [0.25, 0.46, 0.45, 0.94] }
                     : { type: 'spring', stiffness: 400, damping: 20 }
                 }
-                whileHover={{ scale: 1.1, y: -2, boxShadow: '0 4px 12px rgba(45,45,43,0.18)' }}
-                whileTap={{ scale: 0.88, y: 1 }}
+                whileHover={{ scale: 1.08, y: -2, boxShadow: PRESET_SHADOW_LIFTED }}
+                whileTap={{ scale: 0.88, y: 3, boxShadow: PRESET_SHADOW_PRESSED }}
               >
                 {label}
               </motion.button>
