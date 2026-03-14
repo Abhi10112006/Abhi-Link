@@ -294,6 +294,14 @@ export default function App() {
     localStorage.removeItem('abhi-link-transactions');
   };
 
+  const handleDeleteTransaction = (id: string) => {
+    setTransactions(prev => {
+      const updated = prev.filter(tx => tx.id !== id);
+      localStorage.setItem('abhi-link-transactions', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Form state (initially empty, decoupled from URL params)
   const [upiId, setUpiId] = useState(() => localStorage.getItem('my_card_upi') || '');
   const [touchedUpiId, setTouchedUpiId] = useState(false);
@@ -752,7 +760,7 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-end gap-2">
+            <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-between gap-2">
               <motion.button
                 onClick={() => setShowTransactionHistory(true)}
                 className="relative flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
@@ -859,6 +867,7 @@ export default function App() {
             onClose={() => setShowTransactionHistory(false)}
             transactions={transactions}
             onClearAll={handleClearTransactions}
+            onDeleteTransaction={handleDeleteTransaction}
             t={t}
           />
         )}

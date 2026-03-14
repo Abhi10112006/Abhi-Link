@@ -18,6 +18,7 @@ interface TransactionHistoryProps {
   onClose: () => void;
   transactions: Transaction[];
   onClearAll: () => void;
+  onDeleteTransaction: (id: string) => void;
   t: Record<string, string>;
 }
 
@@ -26,6 +27,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   onClose,
   transactions,
   onClearAll,
+  onDeleteTransaction,
   t,
 }) => {
   useEffect(() => {
@@ -127,7 +129,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                           <p className="text-xs text-[#2d2d2b]/60 italic mt-0.5 truncate">"{tx.remarks}"</p>
                         )}
                       </div>
-                      <div className="text-right flex-shrink-0">
+                      <div className="flex items-start gap-2">
+                        <div className="text-right flex-shrink-0">
                         {tx.amount ? (
                           <div className="flex items-center gap-0.5 justify-end">
                             <IndianRupee className="w-4 h-4 text-[#2d2d2b] font-black" />
@@ -138,6 +141,17 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                         )}
                         <p className="text-[10px] text-[#2d2d2b]/40 font-medium mt-0.5">{tx.date}</p>
                         <p className="text-[10px] text-[#2d2d2b]/40 font-medium">{tx.time}</p>
+                        </div>
+                        <motion.button
+                          onClick={() => onDeleteTransaction(tx.id)}
+                          className="p-1.5 rounded-full text-[#2d2d2b]/30 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0 mt-0.5"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          title="Delete transaction"
+                          aria-label={`Delete transaction for ${tx.payeeName || tx.payeeUpiId}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </motion.button>
                       </div>
                     </div>
                   </motion.div>
