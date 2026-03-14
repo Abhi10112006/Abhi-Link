@@ -71,6 +71,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [detectedClipboardUpi, setDetectedClipboardUpi] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [multipleUpiOptions, setMultipleUpiOptions] = useState<string[]>([]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [pressedClip, setPressedClip] = useState<number | null>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
 
@@ -631,14 +633,28 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <motion.button
                 key={value}
                 type="button"
-                onClick={() => setAmount(formatted)}
+                onClick={() => {
+                  setAmount(formatted);
+                  setPressedClip(value);
+                  setTimeout(() => setPressedClip(null), 500);
+                }}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
                   amount === formatted
                     ? 'bg-[#2d2d2b] text-[#e6e1dc] border-[#2d2d2b]'
                     : 'bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b]'
                 }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.92 }}
+                animate={
+                  pressedClip === value
+                    ? { scale: [1, 0.82, 1.15, 0.96, 1], rotate: [0, -4, 4, -2, 0] }
+                    : { scale: 1, rotate: 0 }
+                }
+                transition={
+                  pressedClip === value
+                    ? { duration: 0.45, ease: 'easeInOut' }
+                    : { type: 'spring', stiffness: 400, damping: 20 }
+                }
+                whileHover={{ scale: 1.1, y: -2, boxShadow: '0 4px 12px rgba(45,45,43,0.18)' }}
+                whileTap={{ scale: 0.82, y: 1 }}
               >
                 {label}
               </motion.button>
@@ -698,7 +714,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               >
                 <motion.button
                   type="button"
-                  onClick={handleClear}
+                  onClick={() => setShowClearConfirm(true)}
                   className="flex items-center gap-2 text-xs font-bold text-[#2d2d2b] uppercase tracking-wider bg-[#f5f5f0] hover:bg-[#e6e1dc] px-4 py-2 rounded-xl transition-colors border border-[#d9d3ce] shadow-sm"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -706,6 +722,59 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   <Eraser className="w-4 h-4" />
                   Clear Fields
                 </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Clear Fields Confirmation Dialog */}
+          <AnimatePresence>
+            {showClearConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                onClick={() => setShowClearConfirm(false)}
+              >
+                <motion.div
+                  initial={{ scale: 0.88, opacity: 0, y: 24 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.88, opacity: 0, y: 24 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                  className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 border border-[#e6e1dc]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-[#f5f5f0] flex items-center justify-center border border-[#d9d3ce]">
+                      <Eraser className="w-4 h-4 text-[#2d2d2b]" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[#2d2d2b] uppercase tracking-wide">Clear Fields?</h3>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-5">
+                    This will erase the amount and remarks you've entered.
+                  </p>
+                  <div className="flex gap-2">
+                    <motion.button
+                      type="button"
+                      onClick={() => setShowClearConfirm(false)}
+                      className="flex-1 text-xs font-bold text-[#2d2d2b] uppercase tracking-wider bg-[#f5f5f0] hover:bg-[#e6e1dc] px-4 py-2.5 rounded-xl transition-colors border border-[#d9d3ce]"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      onClick={() => { setShowClearConfirm(false); handleClear(); }}
+                      className="flex-1 text-xs font-bold text-white uppercase tracking-wider bg-[#2d2d2b] hover:bg-[#1a1a18] px-4 py-2.5 rounded-xl transition-colors border border-[#2d2d2b] shadow-sm"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Clear
+                    </motion.button>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
