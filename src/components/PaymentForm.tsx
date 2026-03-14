@@ -23,6 +23,8 @@ const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500, 1000].map((v) => ({
   label: `₹${v >= 1000 ? `${v / 1000}k` : v}`,
 }));
 
+const CLIP_PRESS_DURATION_MS = 450;
+
 interface PaymentFormProps {
   upiId: string;
   setUpiId: (value: string) => void;
@@ -636,7 +638,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 onClick={() => {
                   setAmount(formatted);
                   setPressedClip(value);
-                  setTimeout(() => setPressedClip(null), 500);
+                  setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
                 }}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
                   amount === formatted
@@ -650,7 +652,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 }
                 transition={
                   pressedClip === value
-                    ? { duration: 0.45, ease: 'easeInOut' }
+                    ? { duration: CLIP_PRESS_DURATION_MS / 1000, ease: 'easeInOut' }
                     : { type: 'spring', stiffness: 400, damping: 20 }
                 }
                 whileHover={{ scale: 1.1, y: -2, boxShadow: '0 4px 12px rgba(45,45,43,0.18)' }}
