@@ -77,6 +77,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [pressedClip, setPressedClip] = useState<number | null>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
+  const pressedClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up the pressed-clip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
+    };
+  }, []);
 
   // Helper to extract all potential UPI IDs from text
   const extractUpiIds = (text: string): string[] => {
@@ -637,8 +645,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 type="button"
                 onClick={() => {
                   setAmount(formatted);
+                  if (pressedClipTimerRef.current !== null) clearTimeout(pressedClipTimerRef.current);
                   setPressedClip(value);
-                  setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
+                  pressedClipTimerRef.current = setTimeout(() => setPressedClip(null), CLIP_PRESS_DURATION_MS);
                 }}
                 className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-all ${
                   amount === formatted
@@ -656,7 +665,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     : { type: 'spring', stiffness: 400, damping: 20 }
                 }
                 whileHover={{ scale: 1.1, y: -2, boxShadow: '0 4px 12px rgba(45,45,43,0.18)' }}
-                whileTap={{ scale: 0.82, y: 1 }}
+                whileTap={{ scale: 0.88, y: 1 }}
               >
                 {label}
               </motion.button>
