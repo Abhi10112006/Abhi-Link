@@ -43,19 +43,22 @@ const item = {
 };
 
 // Swipeable card sub-component — uses motion drag for swipe-to-delete
+const DRAG_CONSTRAINT = -240; // max drag distance in px
+const DELETE_THRESHOLD = -220; // must swipe nearly to the end to confirm delete
+
 const SwipeableCard: React.FC<{
   tx: Transaction;
   index: number;
   onDelete: (id: string) => void;
 }> = ({ tx, index, onDelete }) => {
   const x = useMotionValue(0);
-  // Fade in the red delete background as the card is dragged left
-  const deleteOpacity = useTransform(x, [-200, -50, 0], [1, 0.5, 0]);
-  const deleteIconScale = useTransform(x, [-180, -60, 0], [1, 0.7, 0.5]);
+  // Reveal the premium delete background only as the card nears the full swipe end
+  const deleteOpacity = useTransform(x, [DRAG_CONSTRAINT, -100, 0], [1, 0.5, 0]);
+  const deleteIconScale = useTransform(x, [DELETE_THRESHOLD, -100, 0], [1, 0.7, 0.5]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
-    if (info.offset.x < -160) {
-      // Swiped far enough — delete immediately, no confirmation needed
+    if (info.offset.x < DELETE_THRESHOLD) {
+      // Swiped to the end — delete immediately, no confirmation needed
       onDelete(tx.id);
     } else {
       // Not far enough — spring back to original position
@@ -74,19 +77,19 @@ const SwipeableCard: React.FC<{
       {/* Delete background revealed on swipe */}
       <motion.div
         style={{ opacity: deleteOpacity }}
-        className="absolute inset-0 bg-red-500 flex items-center justify-end pr-5 rounded-2xl pointer-events-none"
+        className="absolute inset-0 bg-[#2d2d2b] flex items-center justify-end pr-5 rounded-2xl pointer-events-none"
         aria-hidden={true}
       >
         <motion.div style={{ scale: deleteIconScale }} className="flex items-center gap-2">
-          <Trash2 className="w-4 h-4 text-white" />
-          <span className="text-white font-bold text-xs uppercase tracking-wide">Delete</span>
+          <Trash2 className="w-4 h-4 text-[#e6e1dc]" />
+          <span className="text-[#e6e1dc] font-bold text-xs uppercase tracking-widest">Delete</span>
         </motion.div>
       </motion.div>
 
       {/* The draggable card itself */}
       <motion.div
         drag="x"
-        dragConstraints={{ left: -240, right: 0 }}
+        dragConstraints={{ left: DRAG_CONSTRAINT, right: 0 }}
         dragElastic={{ left: 0.08, right: 0 }}
         onDragEnd={handleDragEnd}
         style={{ x }}
@@ -184,11 +187,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {/* Close button: pushed to the right */}
         <motion.button
           onClick={onClose}
-          className="ml-auto w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
+          className="ml-auto w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
         >
-          <X className="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
         </motion.button>
       </motion.div>
 
