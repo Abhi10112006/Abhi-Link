@@ -85,15 +85,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       <PremiumBackground />
 
       {/* Top bar: centered title + close button at the same vertical height */}
-      <div className="absolute top-6 sm:top-10 left-0 right-0 z-50 h-14 flex items-center px-6 sm:px-10">
+      <div className="absolute top-6 sm:top-10 left-0 right-0 z-50 h-16 sm:h-20 flex items-center px-6 sm:px-10">
         {/* Left spacer matches close button width so title is truly centered */}
         <div className="w-14 flex-shrink-0" />
         <motion.h1
-          className="flex-1 text-center text-base sm:text-lg font-black tracking-tight text-gray-900 uppercase flex items-center justify-center gap-2"
+          className="flex-1 text-center text-4xl sm:text-6xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center justify-center gap-3"
           variants={item}
         >
-          <History className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 flex-shrink-0" />
-          {t.transactionHistory || 'Transaction History'}
+          <History className="w-9 h-9 sm:w-12 sm:h-12 text-gray-700 flex-shrink-0" />
+          History
         </motion.h1>
         <motion.button
           onClick={onClose}
@@ -108,7 +108,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       </div>
 
       {/* Main content — top padding clears the fixed header bar */}
-      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col h-full pt-24 sm:pt-28 pb-12">
+      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col h-full pt-28 sm:pt-36 pb-12">
 
         {/* Actions row */}
         {transactions.length > 0 && (
