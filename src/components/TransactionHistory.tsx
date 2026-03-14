@@ -85,7 +85,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       <PremiumBackground />
 
       {/* Top bar: title is absolutely centered; X button sits on the right */}
-      <div className="sticky top-0 left-0 right-0 z-50 h-16 sm:h-20 flex items-center px-6 sm:px-10 relative">
+      <div className="sticky top-0 left-0 right-0 z-50 w-full h-16 sm:h-20 flex items-center px-6 sm:px-10 relative">
         {/* Title: absolutely centered relative to the full bar width */}
         <motion.h1
           className="absolute left-1/2 -translate-x-1/2 text-4xl sm:text-6xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center gap-3 whitespace-nowrap"

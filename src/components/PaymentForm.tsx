@@ -656,6 +656,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 }}
                 className="text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors bg-white text-[#2d2d2b] border-[#d9d3ce] hover:border-[#2d2d2b] select-none focus:outline-none focus-visible:outline-none"
                 style={{ boxShadow: PRESET_SHADOW_DEFAULT, outline: 'none', WebkitTapHighlightColor: 'transparent' }}
+                onFocus={(e) => e.currentTarget.blur()}
                 animate={
                   pressedClip === value
                     ? { scale: [1, 0.88, 1], y: [0, 3, 0], boxShadow: [PRESET_SHADOW_DEFAULT, PRESET_SHADOW_PRESSED, PRESET_SHADOW_DEFAULT] }
