@@ -1224,9 +1224,24 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     </div>
 
                     {upiId && (
-                        <div className="flex flex-col items-center bg-white p-6 rounded-2xl mb-8">
-                            <div ref={visibleQrRef} />
-                        </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 28, delay: 0.05 }}
+                            className="mb-8 flex flex-col items-center"
+                        >
+                            <div className="bg-[#f5f5f0] border border-[#d9d3ce]/60 rounded-2xl px-6 pt-5 pb-5 flex flex-col items-center gap-3 w-full">
+                                <span className="text-[10px] font-black text-[#2d2d2b]/40 uppercase tracking-widest">Scan to Pay</span>
+                                <div ref={visibleQrRef} className="rounded-xl" />
+                                <div className="w-full h-px bg-[#d9d3ce]" />
+                                <div className="flex flex-col items-center gap-0.5">
+                                    {payeeName && (
+                                        <span className="text-sm font-bold text-[#2d2d2b] tracking-tight">{payeeName}</span>
+                                    )}
+                                    <span className="text-xs font-medium text-[#2d2d2b]/50 tracking-wide">{upiId}</span>
+                                </div>
+                            </div>
+                        </motion.div>
                     )}
 
                     <div className="flex flex-col sm:flex-row gap-4">
