@@ -766,37 +766,33 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                     {recentPayees.length === 1 ? 'Recent User' : 'Recent Users'}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-                    <AnimatePresence mode="popLayout">
+                  <div className="grid grid-cols-2 gap-2 w-full">
                     {recentPayees.map((payee) => (
                       <motion.div 
-                        layout
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ duration: 0.22, ease: 'easeOut' }}
                         key={payee.upiId}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm overflow-hidden"
+                        className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
                         onClick={() => onSelectRecent(payee)}
                       >
                         <div className="flex flex-col mr-2 overflow-hidden">
                           {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
                           <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-gray-600' : 'text-gray-900'}`}>{payee.upiId}</span>
                         </div>
-                        <button 
+                        <motion.button
                           className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveRecent(payee.upiId);
                           }}
+                          aria-label="Remove recent payee"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
-                          <X className="w-3 h-3" />
-                        </button>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </motion.button>
                       </motion.div>
                     ))}
-                    </AnimatePresence>
                   </div>
                 </motion.div>
               )}
