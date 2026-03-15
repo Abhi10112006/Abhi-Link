@@ -20,8 +20,9 @@ Both apps share the same core features — UPI QR generation, invoices, transact
 ```
 abhi-link/
 ├── apps/
-│   ├── web/       # Vite + React web app (PWA)
-│   └── mobile/    # Expo + React Native mobile app
+│   ├── web/       # Vite + React web app (PWA) — deploy to Vercel
+│   └── mobile/    # Expo + React Native mobile app — run with Expo Go
+├── .npmrc         # legacy-peer-deps=true (resolves React 18/19 conflict)
 ├── package.json   # Root workspace manifest
 └── README.md
 ```
@@ -33,7 +34,8 @@ abhi-link/
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) ≥ 18
-- [npm](https://www.npmjs.com/) ≥ 9 (ships with Node 18+)
+- [npm](https://www.npmjs.com/) ≥ 9
+- For mobile preview: [Expo Go](https://expo.dev/go) app on your phone
 
 ### Install all workspaces
 
@@ -41,21 +43,8 @@ abhi-link/
 npm install
 ```
 
-### Run the web app
-
-```bash
-npm run web
-# or directly:
-cd apps/web && npm run dev
-```
-
-### Run the mobile app
-
-```bash
-npm run mobile
-# or directly:
-cd apps/mobile && npm run start
-```
+> The `.npmrc` file sets `legacy-peer-deps=true` to resolve the React 18 / React 19
+> peer dependency conflict between the web and mobile workspaces.
 
 ---
 
@@ -66,38 +55,44 @@ A Progressive Web App built with **Vite**, **React 19**, and **Tailwind CSS v4**
 ### Features
 
 - UPI QR Code Generation (qr-code-styling)
-- Clipboard UPI-ID detection
-- Recent Payees & Quick Amount Presets
+- Clipboard UPI-ID detection with autocomplete
+- Quick Amount Presets (₹10, ₹20, ₹50, ₹100, ₹200, ₹500)
+- Recent Payees with swipe-to-delete
+- Copy Link (TinyURL shortening)
+- WhatsApp Share with short link
 - Invoice PDF generation (jsPDF + html2canvas)
-- Digital Payment Card share
+- Digital Payment Card sharing
 - Transaction History (localStorage)
-- URL shortening via TinyURL
 - PWA with offline support
 - Multi-language support (12+ languages)
 - Premium animations (Motion/Framer)
 
-### Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Bundler | Vite 6 |
-| UI | React 19 |
-| Styling | Tailwind CSS v4 |
-| QR | qr-code-styling |
-| PDF | jsPDF + html2canvas |
-| Animations | motion (Framer Motion) |
-| Icons | lucide-react |
-| Server | Express (dev) / Vercel (prod) |
-
-### Scripts
+### Run locally
 
 ```bash
 cd apps/web
-npm run dev      # Start Vite dev server + Express API
-npm run build    # Production build
-npm run preview  # Preview production build
-npm run lint     # TypeScript type-check
+npm install
+npm run dev      # Start Vite dev server + Express API on :3000
 ```
+
+### Build for production
+
+```bash
+cd apps/web
+npm run build    # Output goes to apps/web/dist/
+```
+
+### ☁️ Deploy to Vercel
+
+> **Critical for Monorepo:** You must set the Root Directory to `apps/web` in the
+> Vercel project settings. See [apps/web/VERCEL_DEPLOYMENT.md](apps/web/VERCEL_DEPLOYMENT.md)
+> for the full guide.
+
+**Quick steps:**
+1. Import the GitHub repo on [vercel.com](https://vercel.com)
+2. Set **Root Directory** → `apps/web`
+3. Leave all other settings as-is (Vercel auto-detects Vite)
+4. Click **Deploy**
 
 ---
 
@@ -108,37 +103,54 @@ A native app built with **Expo** (~52) and **React Native** 0.76.
 ### Features
 
 - UPI QR Code Generation (react-native-qrcode-svg)
+- Clipboard UPI-ID detection with autocomplete
+- Quick Amount Presets (₹10, ₹20, ₹50, ₹100, ₹200, ₹500)
+- Recent Payees (swipe-to-delete)
+- Copy Payment Link (copies web URL to clipboard)
+- WhatsApp Share (opens WhatsApp with pre-filled message)
 - QR code save to camera roll / share as image
 - Invoice PDF generation (expo-print)
 - Digital Payment Card share (expo-sharing)
 - Transaction History (AsyncStorage)
-- Swipe-to-delete transactions
 - Multi-language support
 - Animations (react-native-reanimated / moti)
 
-### Tech Stack
+### 📲 How to Preview the Mobile App
 
-| Layer | Technology |
+You can preview the mobile app **without a Mac/Xcode/Android Studio** using **Expo Go**:
+
+#### Step 1 — Install Expo Go on your phone
+
+| Platform | Link |
 |---|---|
-| Framework | Expo ~52 |
-| UI | React Native 0.76 |
-| QR | react-native-qrcode-svg |
-| PDF | expo-print |
-| Sharing | expo-sharing |
-| Clipboard | expo-clipboard |
-| Storage | @react-native-async-storage/async-storage |
-| QR Capture | react-native-view-shot |
-| Icons | lucide-react-native |
-| Gestures | react-native-gesture-handler |
+| iOS (iPhone/iPad) | [App Store → Expo Go](https://apps.apple.com/app/expo-go/id982107779) |
+| Android | [Google Play → Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent) |
 
-### Scripts
+#### Step 2 — Start the Expo dev server
 
 ```bash
 cd apps/mobile
-npm run start    # Start Expo dev server (Expo Go)
-npm run android  # Run on Android
-npm run ios      # Run on iOS
-npm run lint     # TypeScript type-check
+npm install
+npm run start
+```
+
+This will open **Expo DevTools** in your browser and display a **QR code** in the terminal.
+
+#### Step 3 — Scan the QR code
+
+- **Android**: Open the **Expo Go** app → tap "Scan QR Code" → scan the terminal QR.
+- **iPhone**: Open the **Camera app** → point at the QR code → tap the banner that appears.
+
+The app will load on your phone over your local Wi-Fi — no USB cable needed!
+
+#### Alternative: Run on an emulator/simulator
+
+```bash
+# Android emulator (requires Android Studio)
+cd apps/mobile && npm run android
+
+# iOS simulator (requires Xcode on macOS)
+cd apps/mobile && npm run ios
 ```
 
 ---

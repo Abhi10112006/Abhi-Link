@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
@@ -42,6 +43,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isSharingWhatsApp, setIsSharingWhatsApp] = useState(false);
 
   const handleShareClick = async () => {
     setIsSharing(true);
@@ -87,6 +89,25 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     await Clipboard.setStringAsync(link);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2500);
+  };
+
+  const handleWhatsAppShare = async () => {
+    setIsSharingWhatsApp(true);
+    try {
+      const link = buildPaymentLink();
+      const rawAmount = amount.replace(/,/g, '');
+      const text = payeeName
+        ? `Pay ${payeeName}${rawAmount ? ` ₹${rawAmount}` : ''} via UPI: ${link}`
+        : `Pay via UPI: ${link}`;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      await Linking.openURL(waUrl);
+    } catch {
+      // If WhatsApp is not installed, fall back to clipboard
+      const link = buildPaymentLink();
+      await Clipboard.setStringAsync(link);
+    } finally {
+      setIsSharingWhatsApp(false);
+    }
   };
 
   if (!isValidUpi) {
@@ -174,6 +195,23 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         <Text style={[styles.copyLinkText, linkCopied && styles.copyLinkTextCopied]}>
           {linkCopied ? 'Link Copied!' : (t.shareLink || 'Copy Link')}
         </Text>
+      </TouchableOpacity>
+
+      {/* WhatsApp Share */}
+      <TouchableOpacity
+        style={[styles.btn, styles.whatsappBtn]}
+        onPress={handleWhatsAppShare}
+        disabled={isSharingWhatsApp}
+        activeOpacity={0.8}
+      >
+        {isSharingWhatsApp ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <>
+            <Share2 size={16} color="#fff" />
+            <Text style={styles.whatsappBtnText}>{t.whatsapp || 'WhatsApp'}</Text>
+          </>
+        )}
       </TouchableOpacity>
 
       {/* Generate receipt */}
@@ -311,5 +349,15 @@ const styles = StyleSheet.create({
     color: '#2d2d2b',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  whatsappBtn: {
+    backgroundColor: '#25D366',
+    width: '100%',
+    flex: 0,
+  },
+  whatsappBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
   },
 });

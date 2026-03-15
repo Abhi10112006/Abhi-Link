@@ -11,6 +11,8 @@ import {
 import { IndianRupee, MessageSquare, User, Eraser, X } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 
+const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500];
+
 const COMMON_UPI_HANDLES = [
   '@ybl', '@paytm', '@okicici', '@okhdfcbank', '@oksbi',
   '@okaxis', '@apl', '@ibl', '@axl', '@icici', '@sbi',
@@ -240,6 +242,30 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         />
       </View>
 
+      {/* Quick Amount Presets */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.quickAmountScroll}
+        contentContainerStyle={styles.quickAmountContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {QUICK_AMOUNTS.map((v) => (
+          <TouchableOpacity
+            key={v}
+            style={styles.quickAmountBtn}
+            onPress={() => {
+              const current = parseFloat(amount.replace(/,/g, '')) || 0;
+              const next = current + v;
+              setAmount(next.toLocaleString('en-IN'));
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.quickAmountText}>+₹{v}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       {/* Remarks */}
       <Text style={[styles.sectionTitle, { marginTop: 16 }]}>
         {t.remarksLabel || 'Remarks'}
@@ -395,5 +421,30 @@ const styles = StyleSheet.create({
     color: 'rgba(45,45,43,0.5)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  quickAmountScroll: {
+    marginTop: 8,
+  },
+  quickAmountContent: {
+    gap: 8,
+    paddingRight: 8,
+  },
+  quickAmountBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#d9d3ce',
+    shadowColor: '#b8b2ac',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  quickAmountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2d2d2b',
   },
 });
