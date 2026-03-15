@@ -757,51 +757,49 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               {recentPayees.length > 0 && (
                 <motion.div 
                   layout 
-                  initial={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }} 
-                  animate={{ opacity: 1, height: 'auto', marginBottom: 24, overflow: 'visible' }} 
-                  exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
-                  transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="mb-6"
                 >
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                     {recentPayees.length === 1 ? 'Recent User' : 'Recent Users'}
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-                    <AnimatePresence>
+                  <div className="grid grid-cols-2 gap-2 w-full">
                     {recentPayees.map((payee) => (
                       <motion.div 
-                        layout
-                        initial={{ opacity: 0, scale: 0.8, height: 0 }}
-                        animate={{ opacity: 1, scale: 1, height: 'auto' }}
-                        exit={{ opacity: 0, scale: 0.8, height: 0 }}
                         key={payee.upiId}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm overflow-hidden"
+                        className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
                         onClick={() => onSelectRecent(payee)}
                       >
                         <div className="flex flex-col mr-2 overflow-hidden">
                           {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
                           <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-gray-600' : 'text-gray-900'}`}>{payee.upiId}</span>
                         </div>
-                        <button 
-                          className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                        <motion.button
+                          className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveRecent(payee.upiId);
                           }}
+                          aria-label="Remove recent payee"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
-                          <X className="w-3 h-3" />
-                        </button>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </motion.button>
                       </motion.div>
                     ))}
-                    </AnimatePresence>
                   </div>
                 </motion.div>
               )}
               </AnimatePresence>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className={showAutocomplete ? "relative z-50" : "relative z-10"}>
+              <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className={showAutocomplete ? "relative z-50" : "relative"}>
                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">UPI ID</label>
                   <motion.div 
                     className="relative"
@@ -937,7 +935,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     />
                   </motion.div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
 
             <motion.div layout className="mb-6">
@@ -1053,7 +1051,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           whileTap={{ scale: 0.9 }}
                           type="button"
                           onClick={(e) => handleRemoveCustomRemark(clip, e)}
-                          className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-[#2d2d2b]/40 hover:text-[#2d2d2b] hover:bg-[#f5f5f0] transition-colors"
                           title="Remove clip"
                         >
                           <X className="w-3 h-3" />
@@ -1226,9 +1224,24 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     </div>
 
                     {upiId && (
-                        <div className="flex flex-col items-center bg-white p-6 rounded-2xl mb-8">
-                            <div ref={visibleQrRef} />
-                        </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 28, delay: 0.05 }}
+                            className="mb-8 flex flex-col items-center"
+                        >
+                            <div className="bg-[#f5f5f0] border border-[#d9d3ce]/60 rounded-2xl px-6 pt-5 pb-5 flex flex-col items-center gap-3 w-full">
+                                <span className="text-[10px] font-black text-[#2d2d2b]/40 uppercase tracking-widest">Scan to Pay</span>
+                                <div ref={visibleQrRef} className="rounded-xl" />
+                                <div className="w-full h-px bg-[#d9d3ce]" />
+                                <div className="flex flex-col items-center gap-0.5">
+                                    {payeeName && (
+                                        <span className="text-sm font-bold text-[#2d2d2b] tracking-tight">{payeeName}</span>
+                                    )}
+                                    <span className="text-xs font-medium text-[#2d2d2b]/50 tracking-wide">{upiId}</span>
+                                </div>
+                            </div>
+                        </motion.div>
                     )}
 
                     <div className="flex flex-col sm:flex-row gap-4">

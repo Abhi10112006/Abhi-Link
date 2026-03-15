@@ -773,9 +773,16 @@ export default function App() {
               </motion.button>
               <motion.button
                 onClick={() => setShowInvoiceModal(true)}
-                className="flex items-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  transition: { duration: 0.2 }
+                }}
+                whileTap={{ 
+                  scale: 0.9,
+                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                }}
               >
                 <ReceiptText className="w-4 h-4" /> Create Invoice
               </motion.button>

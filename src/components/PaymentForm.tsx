@@ -298,7 +298,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-[#2d2d2b]/60' : 'text-[#2d2d2b]'}`}>{payee.upiId}</span>
                   </div>
                   <motion.button 
-                    className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                    className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemoveRecent(payee.upiId);
