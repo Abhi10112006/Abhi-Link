@@ -757,22 +757,24 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               {recentPayees.length > 0 && (
                 <motion.div 
                   layout 
-                  initial={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }} 
-                  animate={{ opacity: 1, height: 'auto', marginBottom: 24, overflow: 'visible' }} 
-                  exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
-                  transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
+                  style={{ overflow: 'visible' }}
                 >
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                     {recentPayees.length === 1 ? 'Recent User' : 'Recent Users'}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                     {recentPayees.map((payee) => (
                       <motion.div 
                         layout
-                        initial={{ opacity: 0, scale: 0.8, height: 0 }}
-                        animate={{ opacity: 1, scale: 1, height: 'auto' }}
-                        exit={{ opacity: 0, scale: 0.8, height: 0 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.22, ease: 'easeOut' }}
                         key={payee.upiId}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
@@ -801,7 +803,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               </AnimatePresence>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className={showAutocomplete ? "relative z-50" : "relative z-10"}>
+                <div className={showAutocomplete ? "relative z-50" : "relative"}>
                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">UPI ID</label>
                   <motion.div 
                     className="relative"
