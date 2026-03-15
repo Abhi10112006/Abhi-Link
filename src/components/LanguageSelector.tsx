@@ -1,6 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Globe, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
+import { Globe, Check } from 'lucide-react-native';
 import { languages } from '../locales/translations';
 
 interface LanguageSelectorProps {
@@ -8,84 +16,121 @@ interface LanguageSelectorProps {
   onLanguageChange: (langCode: string) => void;
 }
 
-export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang, onLanguageChange }) => {
+export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
+  currentLang,
+  onLanguageChange,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const currentLanguage = languages.find(l => l.code === currentLang) || languages[0];
+  const currentLanguage = languages.find((l) => l.code === currentLang) || languages[0];
 
   return (
-    <div className="relative z-50" ref={dropdownRef}>
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
-        whileHover={{ 
-          scale: 1.02, 
-          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-          transition: { duration: 0.2 }
-        }}
-        whileTap={{ 
-          scale: 0.9,
-          transition: { type: "spring", stiffness: 400, damping: 10 }
-        }}
+    <>
+      <TouchableOpacity
+        style={styles.trigger}
+        onPress={() => setIsOpen(true)}
+        activeOpacity={0.8}
       >
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Globe className="w-4 h-4" />
-        </motion.div>
-        <span className="hidden sm:inline">{currentLanguage.nativeName}</span>
-        <span className="sm:hidden">{currentLanguage.code.toUpperCase()}</span>
-      </motion.button>
+        <Globe size={16} color="#2d2d2b" />
+        <Text style={styles.triggerText}>{currentLanguage.nativeName}</Text>
+      </TouchableOpacity>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#d9d3ce] overflow-hidden"
-          >
-            <div className="max-h-64 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-[#d9d3ce] scrollbar-track-transparent">
-              {languages.map((lang) => (
-                <motion.button
-                  key={lang.code}
-                  onClick={() => {
-                    onLanguageChange(lang.code);
+      <Modal
+        visible={isOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setIsOpen(false)}>
+          <Pressable style={styles.dropdown} onPress={(e) => e.stopPropagation()}>
+            <FlatList
+              data={languages}
+              keyExtractor={(item) => item.code}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.langItem,
+                    item.code === currentLang && styles.langItemActive,
+                  ]}
+                  onPress={() => {
+                    onLanguageChange(item.code);
                     setIsOpen(false);
                   }}
-                  whileHover={{ backgroundColor: '#f5f5f0' }}
-                  whileTap={{ scale: 0.95, backgroundColor: '#e6e1dc' }}
-                  className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors ${
-                    currentLang === lang.code ? 'bg-[#f5f5f0]' : ''
-                  }`}
+                  activeOpacity={0.7}
                 >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[#2d2d2b]">{lang.nativeName}</span>
-                    <span className="text-xs font-medium text-[#2d2d2b]/60">{lang.name}</span>
-                  </div>
-                  {currentLang === lang.code && (
-                    <Check className="w-4 h-4 text-[#2d2d2b]" />
-                  )}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+                  <View>
+                    <Text style={styles.nativeName}>{item.nativeName}</Text>
+                    <Text style={styles.engName}>{item.name}</Text>
+                  </View>
+                  {item.code === currentLang && <Check size={16} color="#2d2d2b" />}
+                </TouchableOpacity>
+              )}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 };
+
+const styles = StyleSheet.create({
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: '#d9d3ce',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  triggerText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2d2d2b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdown: {
+    width: 240,
+    maxHeight: 320,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d9d3ce',
+    overflow: 'hidden',
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+  },
+  langItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  langItemActive: {
+    backgroundColor: '#f5f5f0',
+  },
+  nativeName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2d2d2b',
+  },
+  engName: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: 'rgba(45,45,43,0.5)',
+  },
+});

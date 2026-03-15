@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Abhi Link",
+    "slug": "abhi-link",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "abhilink",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#e6e1dc"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.abhiyad.abhilink"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#e6e1dc"
+      },
+      "package": "com.abhiyad.abhilink"
+    },
+    "web": {
+      "favicon": "./public/favicon.ico"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Abhi Link to access your photos.",
+          "savePhotosPermission": "Allow Abhi Link to save QR codes to your photos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ]
+  }
+}

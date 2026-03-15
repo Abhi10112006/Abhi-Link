@@ -2,124 +2,106 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Abhi-Link — UPI Payment QR Code Generator
+# Abhi-Link — UPI Payment QR Code Generator (React Native / Expo)
 
-A premium, feature-rich UPI payment QR code generator built with React and TypeScript. Generate instant, scannable UPI QR codes, create professional invoices, track transactions, and share payment requests — all in one place.
+A premium, feature-rich UPI payment QR code generator built with **React Native** and **Expo**. Generate instant, scannable UPI QR codes, create professional invoices, track transactions, and share payment requests — all in one mobile app.
 
 ---
 
 ## ✨ Features
 
-- **UPI QR Code Generation** — Create dynamic QR codes compatible with Google Pay, PhonePe, Paytm, and all UPI-enabled apps.
-- **Smart Clipboard Detection** — Automatically detects UPI IDs copied to your clipboard and suggests them for quick entry.
+- **UPI QR Code Generation** — Dynamic QR codes compatible with Google Pay, PhonePe, Paytm, and all UPI-enabled apps.
 - **UPI Handle Autocomplete** — Suggests 50+ common bank UPI handles (e.g. `@ybl`, `@paytm`, `@okhdfcbank`) as you type.
-- **Recent Payees** — Quickly re-select from previously used payees without re-typing.
-- **Quick Amount Clips** — One-tap preset amount buttons (₹10, ₹20, ₹50, ₹100, ₹200, ₹500, ₹1k).
-- **QR Code Customization** — Choose dot styles, corner square types, and colors for your QR code.
-- **Invoice Generation** — Create and export professional PDF invoices from any payment session.
-- **Digital Payment Card** — Generate a stylish, shareable digital card embedding your QR code.
-- **Transaction History** — Browse, search, and manage a full log of past payment sessions stored locally.
-- **Receipt Export** — Download or share payment receipts as images or PDFs.
-- **Payment Request Links** — Share a URL that pre-fills the form with your UPI details.
+- **Recent Payees** — Quickly re-select from previously used payees.
+- **Invoice Generation** — Create and export professional PDF invoices via `expo-print`.
+- **Digital Payment Card** — Generate a stylish shareable card embedding your QR code.
+- **Transaction History** — Browse and manage a full log of past payment sessions stored via AsyncStorage.
+- **Receipt Export** — Share payment receipts as PDFs.
 - **Multi-Language Support** — Full UI translations for multiple languages.
-- **PWA Support** — Install as a Progressive Web App for offline use on any device.
-- **Premium Animations** — Smooth, physics-based animations powered by the Motion library throughout the UI.
+- **Swipe-to-Delete** — Swipe transaction cards left to delete them.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category | Libraries / Tools |
+| Layer | Technology |
 |---|---|
-| **Frontend** | React 19, TypeScript 5.8, Vite 6 |
-| **Animations** | Motion 12 (spring physics, variants) |
-| **Styling** | Tailwind CSS 4 |
-| **Icons** | Lucide React |
-| **QR Codes** | qr-code-styling, qrcode.react |
-| **PDF Export** | jsPDF, jspdf-autotable, html2canvas |
-| **Backend** | Express, Node.js, tsx |
-| **Database** | better-sqlite3 (local), Upstash Redis (serverless) |
-| **Deployment** | Vercel |
-| **PWA** | vite-plugin-pwa |
+| Framework | [Expo](https://expo.dev) ~52 |
+| UI | React Native 0.76 |
+| QR Generation | `react-native-qrcode-svg` |
+| PDF / Printing | `expo-print` |
+| Sharing | `expo-sharing` |
+| Clipboard | `expo-clipboard` |
+| Storage | `@react-native-async-storage/async-storage` |
+| QR Image Capture | `react-native-view-shot` |
+| Media Library | `expo-media-library` |
+| Icons | `lucide-react-native` |
+| Gestures | `react-native-gesture-handler` |
+| Language | TypeScript |
 
 ---
 
-## 🚀 Run Locally
+## 🚀 Getting Started
 
-**Prerequisites:** Node.js (v18+)
+### Prerequisites
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Abhi10112006/Abhi-Link.git
-   cd Abhi-Link
-   ```
+- [Node.js](https://nodejs.org/) ≥ 18
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables:**
-
-   Copy `.env.example` to `.env.local` and fill in the required values:
-   ```bash
-   cp .env.example .env.local
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at `http://localhost:3000`.
-
----
-
-## 📦 Build & Preview
+### Install
 
 ```bash
-# Build for production
-npm run build
+npm install
+```
 
-# Preview the production build locally
-npm run preview
+### Run
+
+```bash
+# Start Expo dev server
+npm start
+
+# Android
+npm run android
+
+# iOS
+npm run ios
 ```
 
 ---
 
-## ☁️ Deploy to Vercel
-
-This project is configured for Vercel deployment. See [`VERCEL_DEPLOYMENT.md`](VERCEL_DEPLOYMENT.md) for step-by-step instructions.
-
----
-
-## 📁 Project Structure
+## 📂 Project Structure
 
 ```
-src/
-├── App.tsx                   # Main application component & state
-├── main.tsx                  # React entry point
-├── index.css                 # Global styles & CSS variables
-├── components/
-│   ├── PaymentForm.tsx        # UPI form with smart clipboard & autocomplete
-│   ├── QRCodeDisplay.tsx      # Styled QR code renderer & controls
-│   ├── TransactionHistory.tsx # Transaction log management
-│   ├── InvoiceModal.tsx       # Professional invoice generator
-│   ├── DigitalCardModal.tsx   # Digital payment card creator
-│   ├── ReceiptModals.tsx      # Receipt confirmation dialogs
-│   ├── Receipt.tsx            # Payment receipt display
-│   ├── Changelog.tsx          # Version history
-│   ├── LanguageSelector.tsx   # Language switcher
-│   └── PremiumBackground.tsx  # Decorative background
-├── utils/
-│   ├── qrGenerator.ts         # QR code download & share helpers
-│   └── invoicePdfGenerator.ts # PDF invoice generation
-└── locales/
-    └── translations.ts        # Multi-language UI strings
+├── App.tsx              # Root Expo entry point (providers)
+├── app.json             # Expo configuration
+├── babel.config.js      # Babel preset for Expo
+├── src/
+│   ├── App.tsx          # Main application screen
+│   ├── components/
+│   │   ├── PremiumBackground.tsx
+│   │   ├── Changelog.tsx
+│   │   ├── DigitalCardModal.tsx
+│   │   ├── InvoiceModal.tsx
+│   │   ├── LanguageSelector.tsx
+│   │   ├── PaymentForm.tsx
+│   │   ├── QRCodeDisplay.tsx
+│   │   ├── Receipt.tsx           # HTML template for expo-print
+│   │   ├── ReceiptModals.tsx
+│   │   └── TransactionHistory.tsx
+│   ├── locales/
+│   │   └── translations.ts
+│   └── utils/
+│       ├── qrGenerator.ts        # Share / save QR via expo-sharing & expo-media-library
+│       └── invoicePdfGenerator.ts # PDF via expo-print
+└── public/              # Static assets
 ```
 
 ---
 
-## 📄 License
+## 👤 Developer
 
-This project is private. All rights reserved.
+**Abhinav Yaduvanshi** — [GitHub](https://github.com/Abhi10112006)
+
+---
+
+<p align="center">Made with ❤️ and React Native</p>

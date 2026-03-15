@@ -1,6 +1,16 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
+import { X, Check } from 'lucide-react-native';
+
+// ─── ReceiptConfirmationModal ────────────────────────────────────────────────
 
 interface ReceiptConfirmationModalProps {
   isOpen: boolean;
@@ -14,52 +24,28 @@ export const ReceiptConfirmationModal: React.FC<ReceiptConfirmationModalProps> =
   isOpen,
   onClose,
   onConfirm,
-  isReceiver,
   t,
-}) => {
-  if (!isOpen) return null;
+}) => (
+  <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={styles.overlay}>
+      <View style={styles.card}>
+        <Text style={styles.title}>{t.moneyArrivedTitle || 'Did you receive the money?'}</Text>
+        <Text style={styles.body}>{t.checkBankMessage || 'Please check your bank account before generating a receipt.'}</Text>
+        <View style={styles.row}>
+          <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onClose} activeOpacity={0.8}>
+            <Text style={styles.btnSecondaryText}>{t.waitCheck || 'Not yet'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={onConfirm} activeOpacity={0.8}>
+            <Check size={18} color="#fff" />
+            <Text style={styles.btnPrimaryText}>{t.yesGenerate || 'Yes, Generate'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-        >
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-[#2d2d2b] mb-2">
-              {t.moneyArrivedTitle}
-            </h3>
-            <p className="text-[#2d2d2b]/70 mb-6">
-              {t.checkBankMessage}
-            </p>
-            <div className="flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onClose}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
-              >
-                {t.waitCheck}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onConfirm}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
-              >
-                <Check className="w-5 h-5" />
-                {t.yesGenerate}
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  );
-};
+// ─── PaymentCompletedModal ───────────────────────────────────────────────────
 
 interface PaymentCompletedModalProps {
   isOpen: boolean;
@@ -73,50 +59,27 @@ export const PaymentCompletedModal: React.FC<PaymentCompletedModalProps> = ({
   onClose,
   onConfirm,
   t,
-}) => {
-  if (!isOpen) return null;
+}) => (
+  <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={styles.overlay}>
+      <View style={styles.card}>
+        <Text style={styles.title}>{t.paymentCompletedTitle || 'Payment Completed?'}</Text>
+        <Text style={styles.body}>{t.paymentCompletedMessage || 'Has the payment been processed successfully?'}</Text>
+        <View style={styles.row}>
+          <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onClose} activeOpacity={0.8}>
+            <Text style={styles.btnSecondaryText}>{t.notYet || 'Not yet'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={onConfirm} activeOpacity={0.8}>
+            <Check size={18} color="#fff" />
+            <Text style={styles.btnPrimaryText}>{t.yesItsDone || "Yes, it's done"}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-        >
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-[#2d2d2b] mb-2">
-              {t.paymentCompletedTitle}
-            </h3>
-            <p className="text-[#2d2d2b]/70 mb-6">
-              {t.paymentCompletedMessage}
-            </p>
-            <div className="flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onClose}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
-              >
-                {t.notYet}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onConfirm}
-                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
-              >
-                <Check className="w-5 h-5" />
-                {t.yesItsDone}
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  );
-};
+// ─── SenderNameModal ─────────────────────────────────────────────────────────
 
 interface SenderNameModalProps {
   isOpen: boolean;
@@ -133,91 +96,147 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
   t,
   isLoading = false,
 }) => {
-  const [name, setName] = React.useState('');
-  const [inputId] = React.useState(() => `sender_${Math.random().toString(36).slice(2, 9)}`);
+  const [name, setName] = useState('');
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (name.trim() && !isLoading) {
-      onSubmit(name);
+      onSubmit(name.trim());
     }
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-        >
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-[#2d2d2b]">
-                {t.senderNameTitle}
-              </h3>
-              <button onClick={onClose} className="text-[#2d2d2b]/50 hover:text-[#2d2d2b]">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-[#2d2d2b]/70 mb-2 uppercase tracking-wide">
-                  {t.enterSenderNameLabel}
-                </label>
-                <input
-                  type="search"
-                  id={inputId}
-                  name={inputId}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border-2 border-[#d9d3ce] focus:border-[#2d2d2b] focus:outline-none font-bold text-[#2d2d2b] placeholder-[#2d2d2b]/30 transition-colors"
-                  placeholder={t.senderNamePlaceholder}
-                  autoFocus
-                  disabled={isLoading}
-                  autoComplete={`nope-${inputId}`}
-                  aria-autocomplete="none"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck={false}
-                  data-lpignore="true"
-                  data-form-type="other"
-                />
-              </div>
-              <motion.button
-                whileHover={!isLoading ? { scale: 1.02 } : {}}
-                whileTap={!isLoading ? { scale: 0.98 } : {}}
-                type="submit"
-                disabled={!name.trim() || isLoading}
-                className="w-full px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex items-center justify-center w-5 h-5">
-                      <motion.span 
-                        className="absolute w-full h-full border-2 border-white/20 border-t-white rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
-                      <motion.span 
-                        className="absolute w-1.5 h-1.5 bg-white rounded-full"
-                        animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    </div>
-                    <span className="font-black tracking-widest text-sm text-white">GENERATING</span>
-                  </div>
-                ) : (
-                  t.generateAndShare
-                )}
-              </motion.button>
-            </form>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.title}>{t.senderNameTitle || 'Your Name'}</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={8}>
+              <X size={22} color="rgba(45,45,43,0.5)" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.label}>{t.enterSenderNameLabel || 'Enter sender name'}</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder={t.senderNamePlaceholder || 'e.g. Ravi Kumar'}
+            placeholderTextColor="rgba(45,45,43,0.3)"
+            autoFocus
+            editable={!isLoading}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
+          <TouchableOpacity
+            style={[styles.btn, styles.btnPrimary, styles.btnFull, (!name.trim() || isLoading) && styles.btnDisabled]}
+            onPress={handleSubmit}
+            disabled={!name.trim() || isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.btnPrimaryText}>{t.generateAndShare || 'Generate Receipt'}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2d2d2b',
+    marginBottom: 8,
+  },
+  body: {
+    fontSize: 14,
+    color: 'rgba(45,45,43,0.7)',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: 'rgba(45,45,43,0.7)',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#f5f5f0',
+    borderWidth: 2,
+    borderColor: '#d9d3ce',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2d2d2b',
+    marginBottom: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  btn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  btnFull: {
+    flex: 0,
+    width: '100%',
+  },
+  btnPrimary: {
+    backgroundColor: '#2d2d2b',
+  },
+  btnPrimaryText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  btnSecondary: {
+    backgroundColor: '#f5f5f0',
+  },
+  btnSecondaryText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2d2d2b',
+  },
+  btnDisabled: {
+    opacity: 0.5,
+  },
+});

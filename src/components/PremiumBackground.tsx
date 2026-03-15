@@ -1,19 +1,17 @@
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import Svg, { Defs, Pattern, Rect, Circle } from 'react-native-svg';
 
-export const PremiumBackground = () => {
-  return (
-    <div className="fixed inset-0 z-0 overflow-hidden bg-[#e6e1dc] pointer-events-none">
-      {/* Sacred Geometry / Mandala Pattern inspired by ancient architecture */}
-      <div 
-        className="absolute inset-0 opacity-[0.15]"
-        style={{ 
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%238b7355' stroke-width='1' fill='none'%3E%3Cpath d='M60 0 L120 60 L60 120 L0 60 Z'/%3E%3Ccircle cx='60' cy='60' r='42'/%3E%3Ccircle cx='60' cy='60' r='30'/%3E%3Cpath d='M60 18 L60 102 M18 60 L102 60'/%3E%3Cpath d='M30 30 L90 90 M30 90 L90 30'/%3E%3Ccircle cx='60' cy='60' r='2' fill='%238b7355'/%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '120px 120px',
-          backgroundPosition: 'center'
-        }}
-      />
-      {/* Subtle radial gradient to focus center */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#e6e1dc_100%)] opacity-60" />
-    </div>
-  );
-};
+export const PremiumBackground: React.FC = () => (
+  <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFillObject}>
+      <Defs>
+        <Pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+          <Circle cx="1" cy="1" r="1" fill="rgba(45,45,43,0.06)" />
+        </Pattern>
+      </Defs>
+      <Rect width="100%" height="100%" fill="#e6e1dc" />
+      <Rect width="100%" height="100%" fill="url(#dots)" />
+    </Svg>
+  </View>
+);
