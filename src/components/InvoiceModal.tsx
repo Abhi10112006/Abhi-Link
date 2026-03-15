@@ -757,11 +757,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               {recentPayees.length > 0 && (
                 <motion.div 
                   layout 
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                  style={{ overflow: 'visible' }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="mb-6"
                 >
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">
                     {recentPayees.length === 1 ? 'Recent User' : 'Recent Users'}
@@ -780,7 +780,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           <span className={`text-[10px] font-medium leading-tight truncate ${payee.payeeName ? 'text-gray-600' : 'text-gray-900'}`}>{payee.upiId}</span>
                         </div>
                         <motion.button
-                          className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-50"
+                          className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveRecent(payee.upiId);
@@ -798,7 +798,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               )}
               </AnimatePresence>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className={showAutocomplete ? "relative z-50" : "relative"}>
                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">UPI ID</label>
                   <motion.div 
@@ -935,7 +935,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     />
                   </motion.div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
 
             <motion.div layout className="mb-6">
@@ -1051,7 +1051,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           whileTap={{ scale: 0.9 }}
                           type="button"
                           onClick={(e) => handleRemoveCustomRemark(clip, e)}
-                          className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-[#2d2d2b]/40 hover:text-[#2d2d2b] hover:bg-[#f5f5f0] transition-colors"
                           title="Remove clip"
                         >
                           <X className="w-3 h-3" />
