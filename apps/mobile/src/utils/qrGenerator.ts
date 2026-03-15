@@ -7,7 +7,7 @@ import ViewShot from 'react-native-view-shot';
  * Captures a ViewShot ref as a PNG and shares it via the native share sheet.
  */
 export const handleShare = async (
-  viewShotRef: React.RefObject<ViewShot>,
+  viewShotRef: React.RefObject<ViewShot | null>,
   amount: string,
   payeeName: string,
   remarks: string,
@@ -39,7 +39,7 @@ export const handleShare = async (
  * Captures a ViewShot ref as a PNG and saves it to the device media library.
  */
 export const handleDownload = async (
-  viewShotRef: React.RefObject<ViewShot>,
+  viewShotRef: React.RefObject<ViewShot | null>,
   amount: string,
   _payeeName: string,
   _remarks: string,

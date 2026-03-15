@@ -41,7 +41,7 @@ interface PaymentFormProps {
   onSelectRecent: (p: RecentPayee) => void;
   onRemoveRecent: (upiId: string) => void;
   onSaveRecent: () => void;
-  amountInputRef: React.RefObject<RNTextInput>;
+  amountInputRef: React.RefObject<RNTextInput | null>;
   t: Record<string, string>;
 }
 

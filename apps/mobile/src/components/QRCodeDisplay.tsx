@@ -20,7 +20,7 @@ interface QRCodeDisplayProps {
   amount: string;
   payeeName: string;
   remarks: string;
-  qrRef: React.RefObject<ViewShot>;
+  qrRef: React.RefObject<ViewShot | null>;
   onDownload: () => Promise<void>;
   onShare: () => Promise<void>;
   onGenerateReceipt: () => Promise<void>;

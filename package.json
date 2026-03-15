@@ -12,5 +12,8 @@
     "lint:web": "npm run lint --workspace=apps/web",
     "lint:mobile": "npm run lint --workspace=apps/mobile",
     "lint": "npm run lint:web && npm run lint:mobile"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.4"
   }
 }
