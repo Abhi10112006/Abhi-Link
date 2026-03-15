@@ -1,0 +1,41 @@
+{
+  "name": "@abhi-link/mobile",
+  "private": true,
+  "version": "1.0.0",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "~2.1.2",
+    "expo": "~55.0.6",
+    "expo-clipboard": "~55.0.8",
+    "expo-font": "~55.0.4",
+    "expo-linking": "~55.0.7",
+    "expo-media-library": "~55.0.9",
+    "expo-print": "~55.0.8",
+    "expo-sharing": "~55.0.11",
+    "expo-status-bar": "~55.0.4",
+    "lucide-react-native": "^0.477.0",
+    "moti": "^0.30.0",
+    "react": "19.0.0",
+    "react-native": "0.78.3",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-qrcode-svg": "^6.3.21",
+    "react-native-reanimated": "~3.17.2",
+    "react-native-safe-area-context": "~5.4.0",
+    "react-native-screens": "~4.10.0",
+    "react-native-svg": "~15.11.2",
+    "react-native-view-shot": "^4.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~19.0.14",
+    "babel-preset-expo": "~55.0.11",
+    "typescript": "~5.8.2"
+  }
+}

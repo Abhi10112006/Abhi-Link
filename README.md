@@ -2,124 +2,163 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Abhi-Link — UPI Payment QR Code Generator
+# Abhi-Link — Monorepo
 
-A premium, feature-rich UPI payment QR code generator built with React and TypeScript. Generate instant, scannable UPI QR codes, create professional invoices, track transactions, and share payment requests — all in one place.
+A monorepo containing the **Abhi-Link UPI Payment QR Code Generator** in two flavours:
 
----
+| App | Path | Stack | Description |
+|---|---|---|---|
+| 🌐 Web | [`apps/web`](apps/web) | Vite + React 19 + Tailwind CSS | Progressive Web App for browsers |
+| 📱 Mobile | [`apps/mobile`](apps/mobile) | Expo + React Native 0.76 | Native iOS & Android app |
 
-## ✨ Features
-
-- **UPI QR Code Generation** — Create dynamic QR codes compatible with Google Pay, PhonePe, Paytm, and all UPI-enabled apps.
-- **Smart Clipboard Detection** — Automatically detects UPI IDs copied to your clipboard and suggests them for quick entry.
-- **UPI Handle Autocomplete** — Suggests 50+ common bank UPI handles (e.g. `@ybl`, `@paytm`, `@okhdfcbank`) as you type.
-- **Recent Payees** — Quickly re-select from previously used payees without re-typing.
-- **Quick Amount Clips** — One-tap preset amount buttons (₹10, ₹20, ₹50, ₹100, ₹200, ₹500, ₹1k).
-- **QR Code Customization** — Choose dot styles, corner square types, and colors for your QR code.
-- **Invoice Generation** — Create and export professional PDF invoices from any payment session.
-- **Digital Payment Card** — Generate a stylish, shareable digital card embedding your QR code.
-- **Transaction History** — Browse, search, and manage a full log of past payment sessions stored locally.
-- **Receipt Export** — Download or share payment receipts as images or PDFs.
-- **Payment Request Links** — Share a URL that pre-fills the form with your UPI details.
-- **Multi-Language Support** — Full UI translations for multiple languages.
-- **PWA Support** — Install as a Progressive Web App for offline use on any device.
-- **Premium Animations** — Smooth, physics-based animations powered by the Motion library throughout the UI.
+Both apps share the same core features — UPI QR generation, invoices, transaction history, receipts, and multi-language support — implemented with their respective platform primitives.
 
 ---
 
-## 🛠️ Tech Stack
+## 🗂️ Structure
 
-| Category | Libraries / Tools |
-|---|---|
-| **Frontend** | React 19, TypeScript 5.8, Vite 6 |
-| **Animations** | Motion 12 (spring physics, variants) |
-| **Styling** | Tailwind CSS 4 |
-| **Icons** | Lucide React |
-| **QR Codes** | qr-code-styling, qrcode.react |
-| **PDF Export** | jsPDF, jspdf-autotable, html2canvas |
-| **Backend** | Express, Node.js, tsx |
-| **Database** | better-sqlite3 (local), Upstash Redis (serverless) |
-| **Deployment** | Vercel |
-| **PWA** | vite-plugin-pwa |
+```
+abhi-link/
+├── apps/
+│   ├── web/       # Vite + React web app (PWA) — deploy to Vercel
+│   └── mobile/    # Expo + React Native mobile app — run with Expo Go
+├── .npmrc         # legacy-peer-deps=true (resolves React 18/19 conflict)
+├── package.json   # Root workspace manifest
+└── README.md
+```
 
 ---
 
-## 🚀 Run Locally
+## 🚀 Getting Started
 
-**Prerequisites:** Node.js (v18+)
+### Prerequisites
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Abhi10112006/Abhi-Link.git
-   cd Abhi-Link
-   ```
+- [Node.js](https://nodejs.org/) ≥ 18
+- [npm](https://www.npmjs.com/) ≥ 9
+- For mobile preview: [Expo Go](https://expo.dev/go) app on your phone
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables:**
-
-   Copy `.env.example` to `.env.local` and fill in the required values:
-   ```bash
-   cp .env.example .env.local
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-   The app will be available at `http://localhost:3000`.
-
----
-
-## 📦 Build & Preview
+### Install all workspaces
 
 ```bash
-# Build for production
-npm run build
+npm install
+```
 
-# Preview the production build locally
-npm run preview
+> The `.npmrc` file sets `legacy-peer-deps=true` to resolve the React 18 / React 19
+> peer dependency conflict between the web and mobile workspaces.
+
+---
+
+## 🌐 Web App (`apps/web`)
+
+A Progressive Web App built with **Vite**, **React 19**, and **Tailwind CSS v4**.
+
+### Features
+
+- UPI QR Code Generation (qr-code-styling)
+- Clipboard UPI-ID detection with autocomplete
+- Quick Amount Presets (₹10, ₹20, ₹50, ₹100, ₹200, ₹500)
+- Recent Payees with swipe-to-delete
+- Copy Link (TinyURL shortening)
+- WhatsApp Share with short link
+- Invoice PDF generation (jsPDF + html2canvas)
+- Digital Payment Card sharing
+- Transaction History (localStorage)
+- PWA with offline support
+- Multi-language support (12+ languages)
+- Premium animations (Motion/Framer)
+
+### Run locally
+
+```bash
+cd apps/web
+npm install
+npm run dev      # Start Vite dev server + Express API on :3000
+```
+
+### Build for production
+
+```bash
+cd apps/web
+npm run build    # Output goes to apps/web/dist/
+```
+
+### ☁️ Deploy to Vercel
+
+> **Critical for Monorepo:** You must set the Root Directory to `apps/web` in the
+> Vercel project settings. See [apps/web/VERCEL_DEPLOYMENT.md](apps/web/VERCEL_DEPLOYMENT.md)
+> for the full guide.
+
+**Quick steps:**
+1. Import the GitHub repo on [vercel.com](https://vercel.com)
+2. Set **Root Directory** → `apps/web`
+3. Leave all other settings as-is (Vercel auto-detects Vite)
+4. Click **Deploy**
+
+---
+
+## 📱 Mobile App (`apps/mobile`)
+
+A native app built with **Expo** (~52) and **React Native** 0.76.
+
+### Features
+
+- UPI QR Code Generation (react-native-qrcode-svg)
+- Clipboard UPI-ID detection with autocomplete
+- Quick Amount Presets (₹10, ₹20, ₹50, ₹100, ₹200, ₹500)
+- Recent Payees (swipe-to-delete)
+- Copy Payment Link (copies web URL to clipboard)
+- WhatsApp Share (opens WhatsApp with pre-filled message)
+- QR code save to camera roll / share as image
+- Invoice PDF generation (expo-print)
+- Digital Payment Card share (expo-sharing)
+- Transaction History (AsyncStorage)
+- Multi-language support
+- Animations (react-native-reanimated / moti)
+
+### 📲 How to Preview the Mobile App
+
+You can preview the mobile app **without a Mac/Xcode/Android Studio** using **Expo Go**:
+
+#### Step 1 — Install Expo Go on your phone
+
+| Platform | Link |
+|---|---|
+| iOS (iPhone/iPad) | [App Store → Expo Go](https://apps.apple.com/app/expo-go/id982107779) |
+| Android | [Google Play → Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent) |
+
+#### Step 2 — Start the Expo dev server
+
+```bash
+cd apps/mobile
+npm install
+npm run start
+```
+
+This will open **Expo DevTools** in your browser and display a **QR code** in the terminal.
+
+#### Step 3 — Scan the QR code
+
+- **Android**: Open the **Expo Go** app → tap "Scan QR Code" → scan the terminal QR.
+- **iPhone**: Open the **Camera app** → point at the QR code → tap the banner that appears.
+
+The app will load on your phone over your local Wi-Fi — no USB cable needed!
+
+#### Alternative: Run on an emulator/simulator
+
+```bash
+# Android emulator (requires Android Studio)
+cd apps/mobile && npm run android
+
+# iOS simulator (requires Xcode on macOS)
+cd apps/mobile && npm run ios
 ```
 
 ---
 
-## ☁️ Deploy to Vercel
+## 👤 Developer
 
-This project is configured for Vercel deployment. See [`VERCEL_DEPLOYMENT.md`](VERCEL_DEPLOYMENT.md) for step-by-step instructions.
-
----
-
-## 📁 Project Structure
-
-```
-src/
-├── App.tsx                   # Main application component & state
-├── main.tsx                  # React entry point
-├── index.css                 # Global styles & CSS variables
-├── components/
-│   ├── PaymentForm.tsx        # UPI form with smart clipboard & autocomplete
-│   ├── QRCodeDisplay.tsx      # Styled QR code renderer & controls
-│   ├── TransactionHistory.tsx # Transaction log management
-│   ├── InvoiceModal.tsx       # Professional invoice generator
-│   ├── DigitalCardModal.tsx   # Digital payment card creator
-│   ├── ReceiptModals.tsx      # Receipt confirmation dialogs
-│   ├── Receipt.tsx            # Payment receipt display
-│   ├── Changelog.tsx          # Version history
-│   ├── LanguageSelector.tsx   # Language switcher
-│   └── PremiumBackground.tsx  # Decorative background
-├── utils/
-│   ├── qrGenerator.ts         # QR code download & share helpers
-│   └── invoicePdfGenerator.ts # PDF invoice generation
-└── locales/
-    └── translations.ts        # Multi-language UI strings
-```
+**Abhinav Yaduvanshi** — [GitHub](https://github.com/Abhi10112006)
 
 ---
 
-## 📄 License
-
-This project is private. All rights reserved.
+<p align="center">Made with ❤️ — Web + Mobile, one repo</p>
