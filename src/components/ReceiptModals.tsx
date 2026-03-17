@@ -221,3 +221,117 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
     </AnimatePresence>
   );
 };
+
+interface PostPaymentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onShareReceipt: () => void;
+  t: Record<string, string>;
+}
+
+export const PostPaymentModal: React.FC<PostPaymentModalProps> = ({
+  isOpen,
+  onClose,
+  onShareReceipt,
+  t,
+}) => {
+  const [step, setStep] = React.useState<'verification' | 'share'>('verification');
+
+  // Reset to first step whenever the modal opens
+  React.useEffect(() => {
+    if (isOpen) setStep('verification');
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+          className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+        >
+          <AnimatePresence mode="wait">
+            {step === 'verification' ? (
+              <motion.div
+                key="verification"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="p-6"
+              >
+                <h3 className="text-xl font-bold text-[#2d2d2b] mb-2">
+                  {t.postPaymentTitle}
+                </h3>
+                <p className="text-[#2d2d2b]/70 mb-6">
+                  {t.postPaymentSubtitle}
+                </p>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClose}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
+                  >
+                    {t.notYet}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setStep('share')}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-5 h-5" />
+                    {t.postPaymentYes}
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="share"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="p-6"
+              >
+                <h3 className="text-xl font-bold text-[#2d2d2b] mb-2">
+                  {t.shareReceiptTitle}
+                </h3>
+                <p className="text-[#2d2d2b]/70 mb-6">
+                  {t.shareReceiptSubtitle}
+                </p>
+                <div className="flex gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClose}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
+                  >
+                    {t.shareReceiptNo}
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onClose();
+                      onShareReceipt();
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                    {t.shareReceiptYes}
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};

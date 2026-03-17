@@ -11,7 +11,7 @@ import { Changelog } from './components/Changelog';
 import { LanguageSelector } from './components/LanguageSelector';
 import { handleDownload, handleShare } from './utils/qrGenerator';
 import { translations } from './locales/translations';
-import { ReceiptConfirmationModal, SenderNameModal, PaymentCompletedModal } from './components/ReceiptModals';
+import { ReceiptConfirmationModal, SenderNameModal, PaymentCompletedModal, PostPaymentModal } from './components/ReceiptModals';
 import { Receipt } from './components/Receipt';
 import { InvoiceModal } from './components/InvoiceModal';
 import { DigitalCardModal } from './components/DigitalCardModal';
@@ -102,6 +102,30 @@ export default function App() {
   const [showSenderNameInput, setShowSenderNameInput] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
 
+  // Post-UPI Return State
+  const [isWaitingForUpiReturn, setIsWaitingForUpiReturn] = useState(false);
+  const [showPostPaymentModal, setShowPostPaymentModal] = useState(false);
+  const isWaitingForUpiReturnRef = useRef(false);
+
+  // Keep ref in sync with state so the visibility listener always reads the latest value
+  useEffect(() => {
+    isWaitingForUpiReturnRef.current = isWaitingForUpiReturn;
+  }, [isWaitingForUpiReturn]);
+
+  // Listen for the user returning from the UPI app and open the post-payment modal.
+  // Registered once via a ref so there is no stale-closure or duplicate-listener issue.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isWaitingForUpiReturnRef.current) {
+        isWaitingForUpiReturnRef.current = false;
+        setIsWaitingForUpiReturn(false);
+        setShowPostPaymentModal(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // QR Code Styling State
   const [dotType, setDotType] = useState<DotType>('square');
   const [cornerSquareType, setCornerSquareType] = useState<CornerSquareType>('square');
@@ -159,6 +183,19 @@ export default function App() {
   const handlePaymentCompletedConfirmed = () => {
     setShowPaymentCompletedModal(false);
     // Small delay to allow modal to close smoothly
+    setTimeout(() => setShowSenderNameInput(true), 200);
+  };
+
+  // Called when user taps "Yes" on the Share Receipt step of PostPaymentModal.
+  // Sets up pending receipt data and jumps straight to SenderNameModal.
+  const handlePostPaymentReceiptClick = () => {
+    setPendingReceiptData({
+      payee: requestPayeeName || '',
+      upiId: requestUpiId || '',
+      amount: requestAmount || '',
+      remarks: requestRemarks || '',
+      isReceiver: false,
+    });
     setTimeout(() => setShowSenderNameInput(true), 200);
   };
 
@@ -541,6 +578,12 @@ export default function App() {
         isLoading={isGeneratingReceipt}
         t={t}
       />
+      <PostPaymentModal
+        isOpen={showPostPaymentModal}
+        onClose={() => setShowPostPaymentModal(false)}
+        onShareReceipt={handlePostPaymentReceiptClick}
+        t={t}
+      />
       
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 z-40">
@@ -736,6 +779,7 @@ export default function App() {
                   </p>
                   <motion.a 
                     href={requestUpiUrl}
+                    onClick={() => setIsWaitingForUpiReturn(true)}
                     className="relative inline-flex items-center justify-center w-full sm:w-auto bg-gray-900 text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
                     whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
                     whileTap={{ scale: 0.95 }}
