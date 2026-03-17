@@ -5,6 +5,7 @@ import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code
 import { BusinessType, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
 import { PremiumBackground } from './PremiumBackground';
+import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticSuccess, hapticScroll } from '../utils/haptics';
 
 interface InvoiceItem {
   id: string;
@@ -394,8 +395,16 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const [randomItemPricePrefix] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
   const [randomItemUnitPrefix] = useState(() => `edit_${Math.random().toString(36).slice(2, 9)}`);
 
+  const scrollLastYRef = React.useRef(0);
+  const SCROLL_HAPTIC_THRESHOLD = 40;
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setIsScrolled(e.currentTarget.scrollTop > 50);
+    const delta = Math.abs(e.currentTarget.scrollTop - scrollLastYRef.current);
+    if (delta >= SCROLL_HAPTIC_THRESHOLD) {
+      hapticScroll();
+      scrollLastYRef.current = e.currentTarget.scrollTop;
+    }
   };
 
   const getInvoiceData = async (): Promise<InvoiceData> => {
@@ -430,6 +439,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
 
   const handleDownload = async () => {
+    hapticMedium();
     setIsDownloading(true);
     try {
       // Minimum loading time of 1.5s for better UX
@@ -439,6 +449,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         minLoadTime
       ]);
       await downloadInvoicePdf(data);
+      hapticSuccess();
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
@@ -447,6 +458,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   };
 
   const handleShare = async () => {
+    hapticMedium();
     setIsSharing(true);
     try {
       // Minimum loading time of 1.5s for better UX
@@ -456,6 +468,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         minLoadTime
       ]);
       await shareInvoicePdf(data);
+      hapticSuccess();
     } catch (error) {
       console.error('Error sharing PDF:', error);
     } finally {
@@ -535,7 +548,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         {/* Close Button - Scrolls with content */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
           <motion.button 
-            onClick={onClose}
+            onClick={() => { hapticMedium(); onClose(); }}
             className="p-3 rounded-full bg-white/50 hover:bg-white text-gray-900 shadow-sm border border-gray-200 backdrop-blur-sm transition-all"
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
@@ -773,7 +786,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
                         className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
-                        onClick={() => onSelectRecent(payee)}
+                        onClick={() => { hapticLight(); onSelectRecent(payee); }}}
                       >
                         <div className="flex flex-col mr-2 overflow-hidden">
                           {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
@@ -783,6 +796,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                           onClick={(e) => {
                             e.stopPropagation();
+                            hapticWarning();
                             handleRemoveRecent(payee.upiId);
                           }}
                           aria-label="Remove recent payee"
@@ -843,6 +857,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           exit={{ opacity: 0, scale: 0.8 }}
                           type="button"
                           onClick={async () => {
+                            hapticMedium();
                             try {
                               const text = await navigator.clipboard.readText();
                               const ids = extractUpiIds(text || '');
@@ -995,8 +1010,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     <div className="flex justify-between items-center pt-4">
                       <motion.button
                         type="button"
-                        onClick={handleSaveCustomRemark}
-                        disabled={!remarks || allRemarksClips.includes(remarks)}
+                        onClick={() => { hapticLight(); handleSaveCustomRemark(); }}
                         className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -1007,13 +1021,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
                       <motion.button
                         type="button"
-                        onClick={handleClear}
-                        className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Eraser className="w-4 h-4" />
-                        {t.clearFields}
+                        onClick={() => { hapticMedium(); handleClear(); }}
                       </motion.button>
                     </div>
                   </motion.div>
@@ -1039,7 +1047,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
-                        onClick={() => setRemarks(clip)}
+                        onClick={() => { hapticLight(); setRemarks(clip); }}}
                         className={`text-xs font-medium text-gray-900 bg-white border border-gray-200 hover:border-gray-900 hover:bg-gray-50 py-1.5 rounded-full transition-colors shadow-sm flex items-center ${isCustom ? 'pl-3 pr-8' : 'px-3'}`}
                       >
                         {clip.length > 30 ? clip.substring(0, 30) + '...' : clip}
@@ -1050,7 +1058,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           type="button"
-                          onClick={(e) => handleRemoveCustomRemark(clip, e)}
+                          onClick={(e) => { hapticWarning(); handleRemoveCustomRemark(clip, e); }}}
                           className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-[#2d2d2b]/40 hover:text-[#2d2d2b] hover:bg-[#f5f5f0] transition-colors"
                           title="Remove clip"
                         >
@@ -1071,7 +1079,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                 <motion.button
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98, y: 1 }}
-                  onClick={handleAddItem}
+                  onClick={() => { hapticMedium(); handleAddItem(); }}
                   className="text-sm font-bold text-gray-900 bg-white px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-900 transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
                 >
                   <Plus className="w-4 h-4" /> {t.addItem}
@@ -1199,7 +1207,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleRemoveItem(item.id)}
+                          onClick={() => { hapticWarning(); handleRemoveItem(item.id); }}}
                           className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
                           disabled={items.length === 1}
                         >
@@ -1379,7 +1387,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                   <span className="text-xs text-gray-400">Select one below</span>
                 )}
               </div>
-              <button onClick={() => setShowToast(false)} className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors">
+              <button onClick={() => { hapticMedium(); setShowToast(false); }} className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </motion.div>
@@ -1401,6 +1409,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                    <button
                      key={id}
                      onClick={() => {
+                       hapticLight();
                        setUpiId(id);
                        setShowToast(false);
                        setMultipleUpiOptions([]);

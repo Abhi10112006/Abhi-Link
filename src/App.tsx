@@ -17,6 +17,7 @@ import { InvoiceModal } from './components/InvoiceModal';
 import { DigitalCardModal } from './components/DigitalCardModal';
 import { PremiumBackground } from './components/PremiumBackground';
 import { TransactionHistory, Transaction } from './components/TransactionHistory';
+import { hapticMedium, hapticHeavy, hapticSuccess } from './utils/haptics';
 
 export default function App() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -588,7 +589,7 @@ export default function App() {
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 z-40">
         <motion.button
-          onClick={() => setShowDigitalCard(true)}
+          onClick={() => { hapticMedium(); setShowDigitalCard(true); }}
           className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
           whileHover={{ 
             scale: 1.02, 
@@ -633,7 +634,7 @@ export default function App() {
         className="absolute top-4 left-4 sm:top-6 sm:left-6 select-none cursor-pointer z-40"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setShowChangelog(true)}
+        onClick={() => { hapticMedium(); setShowChangelog(true); }}}
       >
         <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-gray-900/60 hover:text-gray-900 bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-gray-200/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
           <span>{t.version}</span>
@@ -671,7 +672,7 @@ export default function App() {
                   className="mb-8 bg-white p-8 rounded-3xl shadow-sm border border-gray-200 text-center relative overflow-hidden"
                 >
                   <motion.button 
-                    onClick={() => setIsPaymentRequestVisible(false)}
+                    onClick={() => { hapticMedium(); setIsPaymentRequestVisible(false); }}
                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-50 transition-colors text-gray-900/40 hover:text-gray-900"
                     aria-label="Close payment request"
                     whileHover={{ scale: 1.1 }}
@@ -711,7 +712,7 @@ export default function App() {
                     <div className="flex flex-col gap-3 w-full max-w-xs justify-center">
                       <div className="flex gap-3 w-full">
                         <motion.button
-                          onClick={onBannerShareClick}
+                          onClick={() => { hapticMedium(); onBannerShareClick(); }}
                           disabled={isBannerSharing}
                           className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl font-bold text-sm border border-gray-200 disabled:opacity-80 disabled:cursor-not-allowed"
                           whileHover={!isBannerSharing ? { scale: 1.05 } : {}}
@@ -735,7 +736,7 @@ export default function App() {
                           )}
                         </motion.button>
                         <motion.button
-                          onClick={onBannerDownloadClick}
+                          onClick={() => { hapticMedium(); onBannerDownloadClick(); }}
                           disabled={isBannerDownloading}
                           className="relative overflow-hidden flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl font-bold text-sm border border-gray-200 disabled:opacity-80 disabled:cursor-not-allowed"
                           whileHover={!isBannerDownloading ? { scale: 1.05 } : {}}
@@ -760,7 +761,7 @@ export default function App() {
                         </motion.button>
                       </div>
                       <motion.button
-                        onClick={() => handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false)}
+                        onClick={() => { hapticMedium(); handleGenerateReceiptClick(requestPayeeName || '', requestUpiId || '', requestAmount || '', requestRemarks || '', false); }}
                         className="w-full flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-gray-900 bg-white hover:bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 hover:border-gray-900 transition-all shadow-sm uppercase tracking-wide"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
@@ -779,7 +780,7 @@ export default function App() {
                   </p>
                   <motion.a 
                     href={requestUpiUrl}
-                    onClick={() => setIsWaitingForUpiReturn(true)}
+                    onClick={() => { hapticHeavy(); setIsWaitingForUpiReturn(true); }}}
                     className="relative inline-flex items-center justify-center w-full sm:w-auto bg-gray-900 text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
                     whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
                     whileTap={{ scale: 0.95 }}
@@ -806,7 +807,7 @@ export default function App() {
 
             <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-between gap-2">
               <motion.button
-                onClick={() => setShowTransactionHistory(true)}
+                onClick={() => { hapticMedium(); setShowTransactionHistory(true); }}}
                 className="relative flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -816,7 +817,7 @@ export default function App() {
                 <span className="hidden sm:inline">{t.history || 'History'}</span>
               </motion.button>
               <motion.button
-                onClick={() => setShowInvoiceModal(true)}
+                onClick={() => { hapticMedium(); setShowInvoiceModal(true); }}}
                 className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
                 whileHover={{ 
                   scale: 1.02,

@@ -4,6 +4,7 @@ import { X, Fingerprint, Share2, ShieldAlert, Check, Copy, Briefcase, Store, Gra
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import { PremiumBackground } from './PremiumBackground';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticScroll } from '../utils/haptics';
 
 interface DigitalCardModalProps {
   isOpen: boolean;
@@ -137,6 +138,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
   const handleSaveSetup = () => {
     if (name && upi.includes('@')) {
+      hapticHeavy();
       localStorage.setItem('my_card_name', name);
       localStorage.setItem('my_card_upi', upi);
       localStorage.setItem('my_card_business_type', businessType);
@@ -159,6 +161,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   };
 
   const copyToClipboard = () => {
+    hapticSuccess();
     navigator.clipboard.writeText(upi);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -290,21 +293,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
               transition={{ duration: 0.4, delay: 0.8 }}
-              onClick={onClose}
+              onClick={() => { hapticMedium(); onClose(); }}
               className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/50 text-gray-900 hover:bg-white transition-colors border border-gray-200 shadow-sm"
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ 
-                scale: 0.92, 
-                filter: "brightness(0.9)",
-                transition: { duration: 0.1 } 
-              }}
-            >
-              <X className="w-6 h-6" />
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence mode="wait">
           {/* Setup Step */}
           {step === 'setup' && (
             <motion.div
@@ -364,7 +354,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   {(['shop', 'freelancer', 'tuition', 'custom'] as BusinessType[]).map((type) => (
                     <motion.button
                       key={type}
-                      onClick={() => setBusinessType(type)}
+                      onClick={() => { hapticLight(); setBusinessType(type); }}
                       whileHover={{ scale: 1.02, y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                       whileTap={{ scale: 0.92, y: 0, filter: "brightness(0.9)" }}
                       className={`py-3 px-4 rounded-xl border text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
@@ -451,7 +441,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                     exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                     transition={{ duration: 0.4, delay: 0.6 }}
                     className="flex items-center gap-3 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm cursor-pointer hover:bg-white transition-colors" 
-                    onClick={() => setStep('setup')}
+                    onClick={() => { hapticMedium(); setStep('setup'); }}}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -607,11 +597,13 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 dragElastic={0.2}
                 onDragEnd={(e, info) => {
                   if (info.offset.y < -150 || info.velocity.y < -500) {
+                    hapticHeavy();
                     setStep('revealed');
                   }
                 }}
                 onClick={() => {
                   if (step === 'revealed') {
+                    hapticMedium();
                     setStep('pocket');
                     setIsStealthMode(true);
                   }
@@ -708,6 +700,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                     <motion.button 
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent card stow
+                        hapticLight();
                         setIsStealthMode(!isStealthMode);
                       }}
                       whileHover={{ scale: 1.1 }}
@@ -776,7 +769,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="absolute bottom-10 z-30 w-full px-6 flex justify-center"
               >
                 <button
-                  onClick={() => setShowAmountModal(true)}
+                  onClick={() => { hapticMedium(); setShowAmountModal(true); }}}
                   disabled={isSharing}
                   className="w-full max-w-[280px] py-4 rounded-xl bg-gradient-to-r from-[#e8c382] via-[#f3dca3] to-[#e8c382] text-[#1a0f05] font-bold uppercase tracking-widest disabled:opacity-50 shadow-[0_0_15px_rgba(232,195,130,0.3)] flex items-center justify-center gap-2 relative overflow-hidden active:scale-95 transition-transform"
                 >
@@ -835,7 +828,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="bg-[#f5f2ed] border border-[#d4c5b9] rounded-3xl p-6 w-full max-w-sm shadow-2xl relative"
               >
                 <motion.button
-                  onClick={() => setShowAmountModal(false)}
+                  onClick={() => { hapticMedium(); setShowAmountModal(false); }}}
                   whileHover={{ scale: 1.1, rotate: 90, backgroundColor: "#f3f4f6" }}
                   whileTap={{ scale: 0.92 }}
                   className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors z-10"
@@ -871,6 +864,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
+                      hapticMedium();
                       setShareAmount('');
                       setShowAmountModal(false);
                       // Small delay to allow modal to close before capturing
@@ -882,6 +876,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   </button>
                   <button
                     onClick={() => {
+                      hapticHeavy();
                       setShowAmountModal(false);
                       // Small delay to allow modal to close before capturing
                       setTimeout(shareCard, 300);

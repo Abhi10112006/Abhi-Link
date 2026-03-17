@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticScroll } from '../utils/haptics';
 
 const COMMON_UPI_HANDLES = [
   '@ybl', '@paytm', '@okicici', '@okhdfcbank', '@oksbi',
@@ -239,6 +240,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const handleClear = () => {
+    hapticMedium();
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
     
     let iterations = Math.max(amount.length, remarks.length);
@@ -291,7 +293,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
-                  onClick={() => onSelectRecent(payee)}
+                  onClick={() => { hapticLight(); onSelectRecent(payee); }}}
                 >
                   <div className="flex flex-col mr-2 overflow-hidden">
                     {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
@@ -301,6 +303,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                     onClick={(e) => {
                       e.stopPropagation();
+                      hapticWarning();
                       onRemoveRecent(payee.upiId);
                     }}
                     aria-label="Remove recent payee"
@@ -366,6 +369,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   exit={{ opacity: 0, scale: 0.8 }}
                   type="button"
                   onClick={async () => {
+                    hapticMedium();
                     try {
                       const text = await navigator.clipboard.readText();
                       const ids = extractUpiIds(text || '');
@@ -424,6 +428,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">Select UPI ID</span>
                         <motion.button 
                           onClick={() => {
+                            hapticMedium();
                             setShowToast(false);
                             setMultipleUpiOptions([]);
                           }}
@@ -443,6 +448,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                             transition={{ duration: 0.2, delay: index * 0.05 }}
                             type="button"
                             onClick={() => {
+                              hapticLight();
                               // Close menu first
                               setShowToast(false);
                               setMultipleUpiOptions([]);
@@ -646,6 +652,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 key={value}
                 type="button"
                 onClick={() => {
+                  hapticLight();
                   const current = parseFloat(amount.replace(/,/g, '')) || 0;
                   const next = current + value;
                   setAmount(inr.format(next));
