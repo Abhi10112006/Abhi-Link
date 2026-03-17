@@ -1011,6 +1011,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                       <motion.button
                         type="button"
                         onClick={() => { hapticLight(); handleSaveCustomRemark(); }}
+                        disabled={!remarks || allRemarksClips.includes(remarks)}
                         className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -1022,6 +1023,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                       <motion.button
                         type="button"
                         onClick={() => { hapticMedium(); handleClear(); }}
+                        className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-50 hover:bg-gray-50 px-4 py-2 rounded-xl transition-colors border border-gray-200 shadow-sm"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Eraser className="w-4 h-4" />
+                        {t.clearFields}
                       </motion.button>
                     </div>
                   </motion.div>

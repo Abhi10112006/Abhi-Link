@@ -295,6 +295,19 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ duration: 0.4, delay: 0.8 }}
               onClick={() => { hapticMedium(); onClose(); }}
               className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/50 text-gray-900 hover:bg-white transition-colors border border-gray-200 shadow-sm"
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ 
+                scale: 0.92, 
+                filter: "brightness(0.9)",
+                transition: { duration: 0.1 } 
+              }}
+            >
+              <X className="w-6 h-6" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
           {/* Setup Step */}
           {step === 'setup' && (
             <motion.div

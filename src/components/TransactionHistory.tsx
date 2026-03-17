@@ -275,6 +275,9 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <div
               className="absolute inset-0 bg-black/30"
               onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
+            />
+            <motion.div
+              className="relative w-full max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl p-6 flex flex-col gap-4"
               initial={{ y: 40, opacity: 0, scale: 0.97 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 40, opacity: 0, scale: 0.97 }}
@@ -298,7 +301,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               </div>
               <div className="flex gap-2">
                 <motion.button
-                  onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }} hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
+                  onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
+                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                 >
