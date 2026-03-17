@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Download, QrCode, Share2, Loader2, ReceiptText, Palette, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess } from '../utils/haptics';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticScroll } from '../utils/haptics';
 
 interface QRCodeDisplayProps {
   upiId: string;
@@ -53,6 +53,25 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   const [showStyles, setShowStyles] = useState(false);
 
   const qrCode = useRef<QRCodeStyling | null>(null);
+
+  const handleScroll = useCallback(() => {
+    hapticScroll();
+  }, []);
+
+  // Page-level scroll haptics for the QR display panel
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(window.scrollY - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollY = window.scrollY;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     qrCode.current = new QRCodeStyling({

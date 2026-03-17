@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticScroll } from '../utils/haptics';
@@ -81,6 +81,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
   const pressedClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autocompleteScrollRef = useRef<HTMLUListElement>(null);
+  const multipleUpiScrollRef = useRef<HTMLDivElement>(null);
 
   // Clean up the pressed-clip timer on unmount
   useEffect(() => {
@@ -160,6 +162,59 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleScroll = useCallback(() => {
+    hapticScroll();
+  }, []);
+
+  // Page-level scroll haptics (fires when the user scrolls the main page)
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(window.scrollY - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollY = window.scrollY;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
+
+  // Scroll haptics for the autocomplete UPI handle list
+  useEffect(() => {
+    const el = autocompleteScrollRef.current;
+    if (!el) return;
+    let lastScrollTop = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollTop);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollTop = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [handleScroll, showAutocomplete]);
+
+  // Scroll haptics for the multiple UPI options list
+  useEffect(() => {
+    const el = multipleUpiScrollRef.current;
+    if (!el) return;
+    let lastScrollTop = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollTop);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollTop = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [handleScroll, showToast, multipleUpiOptions]);
+
   const handleUpiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
     const val = e.target.value;
@@ -179,6 +234,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const selectHandle = (handle: string) => {
+    hapticLight();
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
 
     const prefix = upiId.split('@')[0];
@@ -439,7 +495,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                           <X className="h-3 w-3" />
                         </motion.button>
                       </div>
-                      <div className="max-h-[200px] overflow-y-auto">
+                      <div ref={multipleUpiScrollRef} className="max-h-[200px] overflow-y-auto">
                         {multipleUpiOptions.map((id, index) => (
                           <motion.button
                             key={index}
@@ -505,7 +561,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   exit="exit"
                   className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                 >
-                  <ul className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                  <ul ref={autocompleteScrollRef} className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     {getFilteredHandles().map((handle, index) => (
                       <motion.li 
                         key={handle} 

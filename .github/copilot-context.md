@@ -250,10 +250,29 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 
 ---
 
-### 2026-03-17 — Robustify Haptics + Add Copilot Context File
+### 2026-03-17 — Add Scroll Haptics to PaymentForm & QRCodeDisplay + Fix UPI Auto-Handler Menu Haptics
 
 **Branch:** `copilot/implement-haptic-feedback`  
-**Files changed:** `src/App.tsx`, `src/components/ReceiptModals.tsx`, `.github/copilot-context.md` (created)
+**Files changed:** `src/components/PaymentForm.tsx`, `src/components/QRCodeDisplay.tsx`
+
+**Changes made:**
+
+1. **`src/components/PaymentForm.tsx` — UPI auto-handler menu haptic:**
+   - Added `hapticLight()` at the start of `selectHandle()`. The autocomplete dropdown (the UPI bank-handle suggester, e.g. `@ybl`, `@paytm`) triggered `selectHandle()` via `onMouseDown` with no haptic. Now fires `hapticLight()` on every handle selection.
+   - Added `autocompleteScrollRef` (`useRef<HTMLUListElement>`) and attached it to the scrollable `<ul>` in the autocomplete dropdown. A new `useEffect` with 40px threshold fires `hapticScroll()` when the user scrolls this list.
+   - Added `multipleUpiScrollRef` (`useRef<HTMLDivElement>`) and attached it to the scrollable `<div>` in the multi-UPI-options toast. A new `useEffect` fires `hapticScroll()` when the user scrolls this list.
+   - Added `useCallback` to React imports and a `handleScroll` `useCallback`.
+   - Added a **page-level window scroll listener** (`useEffect` on `window`, 40px threshold) so haptics fire as the user scrolls the main page through the payment form area.
+
+2. **`src/components/QRCodeDisplay.tsx` — Scroll haptics:**
+   - Added `hapticScroll` to the haptics import.
+   - Added `useCallback` to React imports.
+   - Added `handleScroll` `useCallback` + a **page-level window scroll listener** (`useEffect` on `window`, 40px threshold), consistent with the pattern in Changelog.tsx and TransactionHistory.tsx.
+
+**Note:** Both PaymentForm and QRCodeDisplay attach to `window` scroll. On mobile (stacked single-column layout), the user scrolls them at different times so there is no double-fire. On desktop (side-by-side grid), both components are in the viewport simultaneously but the vibration API's behavior of overwriting a running vibration means the user still feels only one 5ms tick per threshold crossing.
+
+
+### 2026-03-17 — Robustify Haptics + Add Copilot Context File
 
 **Haptic gaps fixed:**
 
