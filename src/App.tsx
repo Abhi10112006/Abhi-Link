@@ -17,7 +17,7 @@ import { InvoiceModal } from './components/InvoiceModal';
 import { DigitalCardModal } from './components/DigitalCardModal';
 import { PremiumBackground } from './components/PremiumBackground';
 import { TransactionHistory, Transaction } from './components/TransactionHistory';
-import { hapticMedium, hapticHeavy, hapticSuccess } from './utils/haptics';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess } from './utils/haptics';
 
 export default function App() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -612,6 +612,7 @@ export default function App() {
           href="https://ledger69.vercel.app/"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => hapticLight()}
           className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
           whileHover={{ 
             scale: 1.02, 

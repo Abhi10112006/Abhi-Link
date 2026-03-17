@@ -142,6 +142,7 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && !isLoading) {
+      hapticHeavy();
       onSubmit(name);
     }
   };
