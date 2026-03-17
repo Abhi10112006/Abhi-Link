@@ -441,7 +441,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                     exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                     transition={{ duration: 0.4, delay: 0.6 }}
                     className="flex items-center gap-3 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm cursor-pointer hover:bg-white transition-colors" 
-                    onClick={() => { hapticMedium(); setStep('setup'); }}}
+                    onClick={() => { hapticMedium(); setStep('setup'); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -769,7 +769,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="absolute bottom-10 z-30 w-full px-6 flex justify-center"
               >
                 <button
-                  onClick={() => { hapticMedium(); setShowAmountModal(true); }}}
+                  onClick={() => { hapticMedium(); setShowAmountModal(true); }}
                   disabled={isSharing}
                   className="w-full max-w-[280px] py-4 rounded-xl bg-gradient-to-r from-[#e8c382] via-[#f3dca3] to-[#e8c382] text-[#1a0f05] font-bold uppercase tracking-widest disabled:opacity-50 shadow-[0_0_15px_rgba(232,195,130,0.3)] flex items-center justify-center gap-2 relative overflow-hidden active:scale-95 transition-transform"
                 >
@@ -828,7 +828,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="bg-[#f5f2ed] border border-[#d4c5b9] rounded-3xl p-6 w-full max-w-sm shadow-2xl relative"
               >
                 <motion.button
-                  onClick={() => { hapticMedium(); setShowAmountModal(false); }}}
+                  onClick={() => { hapticMedium(); setShowAmountModal(false); }}
                   whileHover={{ scale: 1.1, rotate: 90, backgroundColor: "#f3f4f6" }}
                   whileTap={{ scale: 0.92 }}
                   className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors z-10"

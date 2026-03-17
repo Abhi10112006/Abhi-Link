@@ -226,7 +226,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           <div className="w-full mb-2">
             <div className="flex justify-center mb-2">
               <motion.button
-                onClick={() => { hapticLight(); setShowStyles(!showStyles); }}}
+                onClick={() => { hapticLight(); setShowStyles(!showStyles); }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${showStyles ? 'bg-[#2d2d2b] text-[#e6e1dc]' : 'bg-[#e6e1dc] text-[#2d2d2b] hover:bg-[#d9d3ce]'}`}

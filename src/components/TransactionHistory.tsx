@@ -223,7 +223,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {transactions.length > 0 && (
           <motion.div variants={item} className="flex justify-end mb-4 flex-shrink-0">
             <motion.button
-              onClick={() => { hapticMedium(); setShowClearAllConfirm(true); }}}
+              onClick={() => { hapticMedium(); setShowClearAllConfirm(true); }}
               className="flex items-center gap-1.5 text-xs font-bold text-[#2d2d2b] bg-white/60 hover:bg-white px-4 py-2 rounded-full transition-colors border border-gray-200 backdrop-blur-md shadow-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

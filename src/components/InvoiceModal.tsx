@@ -786,7 +786,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
                         className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-gray-200 rounded-full pl-3 pr-1 py-1.5 hover:border-gray-900 transition-colors cursor-pointer group shadow-sm"
-                        onClick={() => { hapticLight(); onSelectRecent(payee); }}}
+                        onClick={() => { hapticLight(); onSelectRecent(payee); }}
                       >
                         <div className="flex flex-col mr-2 overflow-hidden">
                           {payee.payeeName && <span className="text-xs font-bold text-gray-900 leading-tight truncate">{payee.payeeName}</span>}
@@ -1047,7 +1047,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
-                        onClick={() => { hapticLight(); setRemarks(clip); }}}
+                        onClick={() => { hapticLight(); setRemarks(clip); }}
                         className={`text-xs font-medium text-gray-900 bg-white border border-gray-200 hover:border-gray-900 hover:bg-gray-50 py-1.5 rounded-full transition-colors shadow-sm flex items-center ${isCustom ? 'pl-3 pr-8' : 'px-3'}`}
                       >
                         {clip.length > 30 ? clip.substring(0, 30) + '...' : clip}
@@ -1058,7 +1058,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           type="button"
-                          onClick={(e) => { hapticWarning(); handleRemoveCustomRemark(clip, e); }}}
+                          onClick={(e) => { hapticWarning(); handleRemoveCustomRemark(clip, e); }}
                           className="absolute right-1 w-6 h-6 flex items-center justify-center rounded-full text-[#2d2d2b]/40 hover:text-[#2d2d2b] hover:bg-[#f5f5f0] transition-colors"
                           title="Remove clip"
                         >
@@ -1207,7 +1207,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => { hapticWarning(); handleRemoveItem(item.id); }}}
+                          onClick={() => { hapticWarning(); handleRemoveItem(item.id); }}
                           className="text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
                           disabled={items.length === 1}
                         >

@@ -634,7 +634,7 @@ export default function App() {
         className="absolute top-4 left-4 sm:top-6 sm:left-6 select-none cursor-pointer z-40"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => { hapticMedium(); setShowChangelog(true); }}}
+        onClick={() => { hapticMedium(); setShowChangelog(true); }}
       >
         <div className="flex items-center gap-2 text-[10px] sm:text-xs font-black text-gray-900/60 hover:text-gray-900 bg-white/30 hover:bg-white/50 px-3 py-1.5 rounded-full border border-gray-200/50 uppercase tracking-widest backdrop-blur-sm transition-colors">
           <span>{t.version}</span>
@@ -780,7 +780,7 @@ export default function App() {
                   </p>
                   <motion.a 
                     href={requestUpiUrl}
-                    onClick={() => { hapticHeavy(); setIsWaitingForUpiReturn(true); }}}
+                    onClick={() => { hapticHeavy(); setIsWaitingForUpiReturn(true); }}
                     className="relative inline-flex items-center justify-center w-full sm:w-auto bg-gray-900 text-white font-bold text-lg px-8 py-4 rounded-xl overflow-hidden shadow-lg group"
                     whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
                     whileTap={{ scale: 0.95 }}
@@ -807,7 +807,7 @@ export default function App() {
 
             <div className="max-w-3xl mx-auto px-4 mb-4 flex justify-between gap-2">
               <motion.button
-                onClick={() => { hapticMedium(); setShowTransactionHistory(true); }}}
+                onClick={() => { hapticMedium(); setShowTransactionHistory(true); }}
                 className="relative flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -817,7 +817,7 @@ export default function App() {
                 <span className="hidden sm:inline">{t.history || 'History'}</span>
               </motion.button>
               <motion.button
-                onClick={() => { hapticMedium(); setShowInvoiceModal(true); }}}
+                onClick={() => { hapticMedium(); setShowInvoiceModal(true); }}
                 className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2d2d2b] bg-white/50 hover:bg-white px-4 py-2.5 rounded-full border-2 border-[#d9d3ce] hover:border-[#2d2d2b] transition-all shadow-sm uppercase tracking-wide"
                 whileHover={{ 
                   scale: 1.02,

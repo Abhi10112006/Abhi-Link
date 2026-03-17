@@ -293,7 +293,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
-                  onClick={() => { hapticLight(); onSelectRecent(payee); }}}
+                  onClick={() => { hapticLight(); onSelectRecent(payee); }}
                 >
                   <div className="flex flex-col mr-2 overflow-hidden">
                     {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
