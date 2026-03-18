@@ -85,7 +85,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const shadowY = useTransform(smoothCardY, [-600, 600], [10, 40]);
   const shadowX = useTransform(smoothCardX, [-600, 600], [-12, 12]);
   const shadowBlur = useTransform(smoothCardY, [-600, 600], [30, 60]);
-  const cardBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.4), inset 0 -1px 1px rgba(0,0,0,0.6), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.65)`;
+  // Outer penumbra: wider spread at lower opacity so the shadow fades naturally rather than cutting off sharply
+  const shadowBlurOuter = useTransform(smoothCardY, [-600, 600], [60, 100]);
+  const cardBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.4), inset 0 -1px 1px rgba(0,0,0,0.4), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.35), ${shadowX}px ${shadowY}px ${shadowBlurOuter}px rgba(0,0,0,0.12)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -592,7 +594,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
-              <div className="absolute inset-0 shadow-[inset_0_6px_10px_rgba(0,0,0,0.12)] rounded-t-[2.5rem]" />
+              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8)] rounded-t-[2.5rem]" />
             </motion.div>
 
             {/* The Sleeve Front Flap */}
@@ -606,8 +608,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Tight ambient-occlusion shadow where pocket meets card — no muddy aura
-                filter: 'drop-shadow(0 -2px 4px rgba(0,0,0,0.12)) drop-shadow(0 2px 4px rgba(0,0,0,0.06))',
+                // Drop shadow falls upwards onto the card to simulate hollow depth; larger blur ensures smooth natural fade
+                filter: 'drop-shadow(0 -10px 20px rgba(0,0,0,0.4)) drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
                 willChange: 'transform'
               }}
             >
