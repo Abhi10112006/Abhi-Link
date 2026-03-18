@@ -545,8 +545,13 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         onScroll={handleScroll}
         className="w-full h-full overflow-y-auto relative flex flex-col"
       >
-        {/* Close Button - Scrolls with content */}
+        {/* Language Selector */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
+          <LanguageSelector currentLang={lang} onLanguageChange={onLanguageChange} />
+        </div>
+
+        {/* Close Button - Scrolls with content */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
           <motion.button 
             onClick={() => { hapticMedium(); onClose(); }}
             className="p-3 rounded-full bg-white/50 hover:bg-white text-gray-900 shadow-sm border border-gray-200 backdrop-blur-sm transition-all"
@@ -555,11 +560,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </motion.button>
-        </div>
-
-        {/* Language Selector */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
-          <LanguageSelector currentLang={lang} onLanguageChange={onLanguageChange} />
         </div>
 
         {/* Main Content Container */}

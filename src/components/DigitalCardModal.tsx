@@ -62,11 +62,20 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const glareXPct = useTransform(smoothCardX, [-600, 600], [0, 100]);
   const glareYPct = useTransform(smoothCardY, [-600, 600], [0, 100]);
   const glareBackground = useMotionTemplate`radial-gradient(circle at ${glareXPct}% ${glareYPct}%, rgba(255, 255, 255, 0.22) 0%, rgba(212, 180, 115, 0.13) 30%, transparent 60%)`;
-  // Gyro / mouse float translation — card drifts left/right/up/down without any shape change
+  // Gyro / mouse float translation — card drifts left/right/up/down
   const gyroTransX = useMotionValue(0);
   const gyroTransY = useMotionValue(0);
   const smoothGyroX = useSpring(gyroTransX, { stiffness: 60, damping: 18 });
   const smoothGyroY = useSpring(gyroTransY, { stiffness: 60, damping: 18 });
+  // Gate that is 1 while card is revealed, 0 otherwise.
+  // Multiplied into the float so the wrapper instantly centers when card returns to pocket.
+  const revealedGate = useMotionValue(0);
+  const gatedGyroX = useTransform([smoothGyroX, revealedGate], (values) => values[0] * values[1]);
+  const gatedGyroY = useTransform([smoothGyroY, revealedGate], (values) => values[0] * values[1]);
+  // Premium 3D tilt: ±6° derived from the same smooth glare data (smoothCardX/Y).
+  // smoothCardX/Y spring back to 0 when step leaves 'revealed', so tilt auto-resets.
+  const cardRotateX = useTransform(smoothCardY, [-600, 600], [6, -6]);
+  const cardRotateY = useTransform(smoothCardX, [-600, 600], [-6, 6]);
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -165,6 +174,12 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       cardY.set(0);
     }
   }, [step, gyroTransX, gyroTransY, cardX, cardY]);
+
+  // Keep the revealed gate in sync — instantly snaps the float wrapper to center when
+  // the card goes back into the pocket, so it never drifts sideways during that transition.
+  useEffect(() => {
+    revealedGate.set(step === 'revealed' ? 1 : 0);
+  }, [step, revealedGate]);
 
   useEffect(() => {
     if (step === 'revealed' && upi && qrRef.current) {
@@ -690,8 +705,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* Export Wrapper */}
             <div ref={exportWrapperRef} className="absolute inset-0 pointer-events-none z-10 flex justify-center items-center">
-              {/* Gyro float wrapper — translates card left/right/up/down without any shape change */}
-              <motion.div style={{ x: smoothGyroX, y: smoothGyroY }} className="pointer-events-none flex justify-center items-center">
+              {/* Gyro float wrapper — translates card (gated to revealed step) + supplies CSS perspective for 3D tilt */}
+              <motion.div style={{ x: gatedGyroX, y: gatedGyroY, perspective: '1200px' }} className="pointer-events-none flex justify-center items-center">
               {/* The Card */}
               <motion.div
                 ref={cardRef}
@@ -720,7 +735,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   scale: step === 'revealed' ? 1.05 : 0.95
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                style={{ y: cardDragY, willChange: 'transform' }}
+                style={{ y: cardDragY, rotateX: cardRotateX, rotateY: cardRotateY, willChange: 'transform' }}
                 onMouseMove={step === 'revealed' ? handleMouseMove : undefined}
                 onMouseLeave={step === 'revealed' ? handleMouseLeave : undefined}
                 className={`relative w-[300px] h-[480px] rounded-[1.5rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(0,0,0,0.6),0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
