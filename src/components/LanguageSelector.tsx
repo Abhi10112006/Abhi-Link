@@ -7,9 +7,11 @@ import { hapticLight, hapticMedium, hapticScroll } from '../utils/haptics';
 interface LanguageSelectorProps {
   currentLang: string;
   onLanguageChange: (langCode: string) => void;
+  /** Which edge of the trigger button the dropdown anchors to. Default 'right'. */
+  alignMenu?: 'left' | 'right';
 }
 
-export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang, onLanguageChange }) => {
+export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang, onLanguageChange, alignMenu = 'right' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLang,
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#d9d3ce] overflow-hidden"
+            className={`absolute ${alignMenu === 'left' ? 'left-0' : 'right-0'} mt-2 w-48 bg-white rounded-2xl shadow-xl border border-[#d9d3ce] overflow-hidden`}
           >
             <div ref={listRef} className="max-h-64 overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-[#d9d3ce] scrollbar-track-transparent">
               {languages.map((lang) => (

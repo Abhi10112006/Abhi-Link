@@ -547,14 +547,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
       >
         {/* Language Selector */}
         <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
-          <LanguageSelector currentLang={lang} onLanguageChange={onLanguageChange} />
+          <LanguageSelector currentLang={lang} onLanguageChange={onLanguageChange} alignMenu="left" />
         </div>
 
         {/* Close Button - same visual size as language selector button */}
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
           <motion.button 
             onClick={() => { hapticMedium(); onClose(); }}
-            className="py-2.5 px-2.5 rounded-full bg-white/50 hover:bg-white text-gray-900 shadow-sm border-2 border-[#d9d3ce] hover:border-[#2d2d2b] backdrop-blur-sm transition-all"
+            className="py-2.5 px-2.5 rounded-full bg-white/50 hover:bg-white text-gray-900 shadow-sm border-2 border-[#d9d3ce] hover:border-[#2d2d2b] backdrop-blur-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9d3ce]"
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
           >

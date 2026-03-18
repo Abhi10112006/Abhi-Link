@@ -70,13 +70,22 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   // Gate that is 1 while card is revealed, 0 otherwise.
   // Multiplied into the float so the wrapper instantly centers when card returns to pocket.
   const revealedGate = useMotionValue(0);
-  const gatedGyroX = useTransform([smoothGyroX, revealedGate], (values) => values[0] * values[1]);
-  const gatedGyroY = useTransform([smoothGyroY, revealedGate], (values) => values[0] * values[1]);
+  const gatedGyroX = useTransform([smoothGyroX, revealedGate], (values) => Number(values[0]) * Number(values[1]));
+  const gatedGyroY = useTransform([smoothGyroY, revealedGate], (values) => Number(values[0]) * Number(values[1]));
   // Premium 3D tilt: ±10° derived from the same smooth glare data (smoothCardX/Y).
   // Multiplied by revealedGate so rotation instantly snaps to 0 when card returns to pocket —
   // prevents the perspective-projected "right-side peek" that occurs when the spring is mid-flight.
   const cardRotateX = useTransform([smoothCardY, revealedGate], (values) => -(Number(values[0]) / 600) * 10 * Number(values[1]));
   const cardRotateY = useTransform([smoothCardX, revealedGate], (values) => (Number(values[0]) / 600) * 10 * Number(values[1]));
+
+  // Dynamic drop shadow driven by real physics:
+  //   smoothCardY  = beta driver  → shadow moves vertically (front-back tilt)
+  //   smoothCardX  = gamma driver → shadow moves horizontally (left-right tilt)
+  // At rest the shadow sits 25px below; full tilt shifts it ±15 px on each axis.
+  const shadowY = useTransform(smoothCardY, [-600, 600], [10, 40]);
+  const shadowX = useTransform(smoothCardX, [-600, 600], [-12, 12]);
+  const shadowBlur = useTransform(smoothCardY, [-600, 600], [30, 60]);
+  const cardBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.4), inset 0 -1px 1px rgba(0,0,0,0.6), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.65)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -540,7 +549,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             initial="hidden"
             animate="show"
             exit="exit"
-            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center"
+            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center overflow-x-hidden"
           >
             
             {/* Top Bar (Aadhaar Style) */}
@@ -736,10 +745,10 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   scale: step === 'revealed' ? 1.05 : 0.95
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                style={{ y: cardDragY, rotateX: cardRotateX, rotateY: cardRotateY, willChange: 'transform' }}
+                style={{ y: cardDragY, rotateX: cardRotateX, rotateY: cardRotateY, boxShadow: cardBoxShadow, willChange: 'transform' }}
                 onMouseMove={step === 'revealed' ? handleMouseMove : undefined}
                 onMouseLeave={step === 'revealed' ? handleMouseLeave : undefined}
-                className={`relative w-[300px] h-[480px] rounded-[1.5rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(0,0,0,0.6),0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+                className={`relative w-[300px] h-[480px] rounded-[1.5rem] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
               >
               {/* Card Background Pattern */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#4a3018] via-[#7a5230] to-[#2a1a0a]" />

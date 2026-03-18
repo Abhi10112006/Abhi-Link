@@ -17,6 +17,7 @@ import { InvoiceModal } from './components/InvoiceModal';
 import { DigitalCardModal } from './components/DigitalCardModal';
 import { PremiumBackground } from './components/PremiumBackground';
 import { TransactionHistory, Transaction } from './components/TransactionHistory';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess } from './utils/haptics';
 
 export default function App() {
@@ -920,6 +921,9 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* PWA Install Banner — shown once if browser fires beforeinstallprompt and app is not already installed */}
+      <PWAInstallBanner />
 
       {/* Hidden Receipt Component for PDF Generation */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>

@@ -309,3 +309,32 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 **Knowledge file created:**
 
 - `.github/copilot-context.md` — comprehensive single-file reference for Copilot agents covering app overview, full repository structure, every component's role and features, utility references, localStorage keys, API routes, build instructions, haptic policy, and this update log.
+
+---
+
+### 2026-03-18 — PWA Install Banner, Language Dropdown Fix, Focus Ring, Pocket Overflow Clip, Gyro Physics Shadow
+
+1. **`LanguageSelector.tsx` — New `alignMenu` prop:**
+   - Added optional `alignMenu?: 'left' | 'right'` prop (default `'right'`).
+   - When `'left'`, the dropdown uses `left-0` so it opens to the right of the trigger button; useful when the button is anchored to the left edge of the screen.
+   - When `'right'` (default, main app), the dropdown uses `right-0` — unchanged for the main nav bar.
+
+2. **`InvoiceModal.tsx` — Language dropdown direction + close button focus ring:**
+   - Passes `alignMenu="left"` to `<LanguageSelector>` so the dropdown no longer hides behind the left screen edge.
+   - Added `focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9d3ce]` to the close button — removes the browser's default black focus ring and replaces it with the same subtle ring used across all other modal close buttons.
+
+3. **`PWAInstallBanner.tsx` (new component) + `App.tsx`:**
+   - Premium bottom-sheet install banner displayed once when the browser fires `beforeinstallprompt` (Chrome/Edge/Samsung Browser on Android).
+   - Never shown if the app is already running in `standalone` or `fullscreen` display mode (already installed).
+   - Appears 4 seconds after page load; animated spring entry/exit.
+   - "Install" button calls `deferredPrompt.prompt()` and fires `hapticSuccess` on acceptance.
+   - "Dismiss" (×) button hides the banner for the session.
+   - Mounted unconditionally in `App.tsx` — the component itself manages all visibility logic.
+
+4. **`DigitalCardModal.tsx` — Pocket overflow clip + Gyro physics drop shadow:**
+   - Added `overflow-x-hidden` to the pocket-step container div so the card can never visually bleed outside the pocket on the left or right sides during any animation.
+   - Dynamic drop-shadow driven by real gyro physics:
+     - `shadowY`: `smoothCardY` (beta, front-back tilt) maps `[-600 → 600]` to `[10px → 40px]` — shadow moves down when phone tilts forward, up when tilting back.
+     - `shadowX`: `smoothCardX` (gamma, left-right tilt) maps `[-600 → 600]` to `[-12px → 12px]` — shadow shifts laterally with phone tilt.
+     - `shadowBlur`: `smoothCardY` maps `[-600 → 600]` to `[30px → 60px]` — shadow softens as card appears to lift toward viewer.
+   - Combined via `useMotionTemplate` into `cardBoxShadow` applied as `style.boxShadow` on the card element; static `shadow-[...]` Tailwind class removed.
