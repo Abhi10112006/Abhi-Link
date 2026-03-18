@@ -76,11 +76,11 @@ export const PWAInstallBanner: React.FC = () => {
       {show && (
         <motion.div
           key="pwa-banner"
-          initial={{ y: 120, opacity: 0, scale: 0.96 }}
+          initial={{ y: -120, opacity: 0, scale: 0.96 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 120, opacity: 0, scale: 0.96 }}
+          exit={{ y: -120, opacity: 0, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm"
         >
           <div className="relative overflow-hidden rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)] px-5 py-4">
             {/* Shimmer stripe */}

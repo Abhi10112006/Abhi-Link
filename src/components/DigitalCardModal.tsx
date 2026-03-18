@@ -592,7 +592,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
-              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8)] rounded-t-[2.5rem]" />
+              <div className="absolute inset-0 shadow-[inset_0_6px_10px_rgba(0,0,0,0.12)] rounded-t-[2.5rem]" />
             </motion.div>
 
             {/* The Sleeve Front Flap */}
@@ -606,8 +606,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Drop shadow falls upwards onto the card to simulate hollow depth
-                filter: 'drop-shadow(0 -10px 20px rgba(0,0,0,0.4)) drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
+                // Tight ambient-occlusion shadow where pocket meets card — no muddy aura
+                filter: 'drop-shadow(0 -2px 4px rgba(0,0,0,0.12)) drop-shadow(0 2px 4px rgba(0,0,0,0.06))',
                 willChange: 'transform'
               }}
             >
