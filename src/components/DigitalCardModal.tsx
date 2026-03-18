@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useMotionTemplate } from 'motion/react';
 import { X, Fingerprint, Share2, ShieldAlert, Check, Copy, Briefcase, Store, GraduationCap, PenTool, User, ChevronDown, Maximize, Edit3, Eye, EyeOff, Loader2, Wifi } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
@@ -44,19 +44,29 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const [isSharing, setIsSharing] = useState(false);
   const [showAmountModal, setShowAmountModal] = useState(false);
   const [shareAmount, setShareAmount] = useState('');
+  // True once we've received at least one real deviceorientation event from the hardware sensor
+  const [gyroDetected, setGyroDetected] = useState(false);
   
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const exportWrapperRef = useRef<HTMLDivElement>(null);
+  // Tracks the smoothed gyroscope angles (degrees) between sensor events
+  const gyroSmoothRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // 3D Tilt Effect
   const cardX = useMotionValue(0);
   const cardY = useMotionValue(0);
-  const rotateX = useTransform(cardY, [-200, 200], [5, -5]);
-  const rotateY = useTransform(cardX, [-200, 200], [-5, 5]);
-  const glareX = useTransform(cardX, [-200, 200], [100, -100]);
-  const glareY = useTransform(cardY, [-200, 200], [100, -100]);
+  // Spring-smooth the raw motion values: removes sensor jitter on mobile, smooths mouse on desktop
+  const smoothCardX = useSpring(cardX, { stiffness: 80, damping: 25 });
+  const smoothCardY = useSpring(cardY, { stiffness: 80, damping: 25 });
+  // Mapping: mouse ±150 px → ~±3.75°; gyro ±15° × 40 → ±600 px → ±15°
+  const rotateX = useTransform(smoothCardY, [-600, 600], [15, -15]);
+  const rotateY = useTransform(smoothCardX, [-600, 600], [-15, 15]);
+  // Dynamic metal glare: radial gradient whose centre tracks tilt (white + gold → transparent)
+  const glareXPct = useTransform(smoothCardX, [-600, 600], [0, 100]);
+  const glareYPct = useTransform(smoothCardY, [-600, 600], [0, 100]);
+  const glareBackground = useMotionTemplate`radial-gradient(circle at ${glareXPct}% ${glareYPct}%, rgba(255, 255, 255, 0.22) 0%, rgba(212, 180, 115, 0.13) 30%, transparent 60%)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -94,6 +104,42 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Gyroscopic 3D tilt: listen to deviceorientation and feed smoothed angles into the
+  // shared cardX / cardY motion values. Gracefully does nothing on desktop (no sensor).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return;
+
+    const CLAMP = 15;  // maximum tilt in degrees
+    const ALPHA = 0.12; // exponential-moving-average factor (lower = smoother)
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      // gamma: left–right tilt (naturally 0 when upright); beta: front–back tilt
+      // beta ranges 0°→180°; subtract 60° to centre on a typical portrait hold
+      // (phone lying flat = 0°, perfectly upright = 90°; ~60° is the natural mid-tilt)
+      const rawX = event.gamma ?? 0;
+      const rawY = (event.beta ?? 60) - 60;
+
+      // Clamp to ±CLAMP degrees
+      const cx = Math.max(-CLAMP, Math.min(CLAMP, rawX));
+      const cy = Math.max(-CLAMP, Math.min(CLAMP, rawY));
+
+      // Exponential moving average – attenuates high-frequency sensor noise
+      gyroSmoothRef.current = {
+        x: gyroSmoothRef.current.x + ALPHA * (cx - gyroSmoothRef.current.x),
+        y: gyroSmoothRef.current.y + ALPHA * (cy - gyroSmoothRef.current.y),
+      };
+
+      // Scale to the motion-value pixel space: ±15° → ±600 px (fits [-600,600] range)
+      cardX.set(gyroSmoothRef.current.x * 40);
+      cardY.set(gyroSmoothRef.current.y * 40);
+
+      if (!gyroDetected) setGyroDetected(true);
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    return () => window.removeEventListener('deviceorientation', handleOrientation, true);
+  }, [cardX, cardY, gyroDetected]);
 
   useEffect(() => {
     if (step === 'revealed' && upi && qrRef.current) {
@@ -148,6 +194,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (gyroDetected) return; // gyro drives tilt on mobile; don't let stray touch-mouse events override it
     const rect = event.currentTarget.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -156,6 +203,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   };
 
   const handleMouseLeave = () => {
+    if (gyroDetected) return; // keep gyro tilt active; only reset for pure-mouse (desktop) sessions
     cardX.set(0);
     cardY.set(0);
   };
@@ -657,14 +705,10 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 </div>
               </div>
               
-              {/* Holographic Glare */}
+              {/* Dynamic Metal Glare — radial gradient centre tracks tilt; white+gold→transparent */}
               <motion.div
                 className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-40"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 60%)',
-                  x: glareX,
-                  y: glareY,
-                }}
+                style={{ background: glareBackground }}
               />
 
               {/* Metal Glare Overlay */}
