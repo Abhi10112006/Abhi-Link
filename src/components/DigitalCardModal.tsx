@@ -72,10 +72,11 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const revealedGate = useMotionValue(0);
   const gatedGyroX = useTransform([smoothGyroX, revealedGate], (values) => values[0] * values[1]);
   const gatedGyroY = useTransform([smoothGyroY, revealedGate], (values) => values[0] * values[1]);
-  // Premium 3D tilt: ±6° derived from the same smooth glare data (smoothCardX/Y).
-  // smoothCardX/Y spring back to 0 when step leaves 'revealed', so tilt auto-resets.
-  const cardRotateX = useTransform(smoothCardY, [-600, 600], [6, -6]);
-  const cardRotateY = useTransform(smoothCardX, [-600, 600], [-6, 6]);
+  // Premium 3D tilt: ±10° derived from the same smooth glare data (smoothCardX/Y).
+  // Multiplied by revealedGate so rotation instantly snaps to 0 when card returns to pocket —
+  // prevents the perspective-projected "right-side peek" that occurs when the spring is mid-flight.
+  const cardRotateX = useTransform([smoothCardY, revealedGate], (values) => -(Number(values[0]) / 600) * 10 * Number(values[1]));
+  const cardRotateY = useTransform([smoothCardX, revealedGate], (values) => (Number(values[0]) / 600) * 10 * Number(values[1]));
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -122,7 +123,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
     const CLAMP = 15;       // maximum tilt in degrees
     const ALPHA = 0.12;     // EMA factor – lower = smoother, higher = more responsive
-    const FLOAT_SCALE = 1.33; // ±15° → ±20 px card drift
+    const FLOAT_SCALE = 0.25; // ±15° → ±3.75 px subtle drift (grounded, not floating)
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       // Only apply the float when the card is fully revealed (not in pocket)
@@ -154,7 +155,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       cardX.set(gyroSmoothRef.current.x * 40);
       cardY.set(gyroSmoothRef.current.y * 40);
 
-      // Float translation: ±15° → ±20 px (card drifts without changing shape)
+      // Float translation: ±15° → ±3.75 px subtle drift (grounded feel)
       gyroTransX.set(gyroSmoothRef.current.x * FLOAT_SCALE);
       gyroTransY.set(gyroSmoothRef.current.y * FLOAT_SCALE);
 
@@ -243,9 +244,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
     // Glare: full pixel offset for gradient position
     cardX.set(dx);
     cardY.set(dy);
-    // Float translation: ±150 px mouse offset → ±20 px card drift
-    gyroTransX.set(dx * 0.13);
-    gyroTransY.set(dy * 0.13);
+    // Float translation: ±150 px mouse offset → ±3.75 px subtle drift (grounded feel)
+    gyroTransX.set(dx * 0.025);
+    gyroTransY.set(dy * 0.025);
   };
 
   const handleMouseLeave = () => {
@@ -705,8 +706,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* Export Wrapper */}
             <div ref={exportWrapperRef} className="absolute inset-0 pointer-events-none z-10 flex justify-center items-center">
-              {/* Gyro float wrapper — translates card (gated to revealed step) + supplies CSS perspective for 3D tilt */}
-              <motion.div style={{ x: gatedGyroX, y: gatedGyroY, perspective: '1200px' }} className="pointer-events-none flex justify-center items-center">
+              {/* Gyro float wrapper — subtle position drift (gated to revealed step); 900px perspective for real 3D depth */}
+              <motion.div style={{ x: gatedGyroX, y: gatedGyroY, perspective: '900px', transformStyle: 'preserve-3d' }} className="pointer-events-none flex justify-center items-center">
               {/* The Card */}
               <motion.div
                 ref={cardRef}

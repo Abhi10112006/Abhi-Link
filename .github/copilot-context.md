@@ -272,6 +272,32 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 **Note:** Both PaymentForm and QRCodeDisplay attach to `window` scroll. On mobile (stacked single-column layout), the user scrolls them at different times so there is no double-fire. On desktop (side-by-side grid), both components are in the viewport simultaneously but the vibration API's behavior of overwriting a running vibration means the user still feels only one 5ms tick per threshold crossing.
 
 
+### 2026-03-18 — Premium 3D Tilt, Card Centering Fix, Invoice Button Size Parity
+
+**Branch:** `copilot/implement-haptic-feedback`  
+**Files changed:** `src/components/DigitalCardModal.tsx`, `src/components/InvoiceModal.tsx`
+
+**Changes made:**
+
+1. **`DigitalCardModal.tsx` — Fix card "peek on right side" in pocket animation:**
+   - `cardRotateX` and `cardRotateY` now gate through `revealedGate` (multiplied by the gate MotionValue).
+   - Previously the rotations sprang back to 0 over ~500ms after returning to pocket; during that spring the CSS perspective projection made the right edge appear closer/larger — a visual "right-side peek". Now `revealedGate` instantly becomes 0 when step leaves `'revealed'`, so `cardRotateX = cardRotateY = 0` the very next frame.
+   - Tilt range increased from ±6° to ±10° for a more pronounced, premium feel.
+
+2. **`DigitalCardModal.tsx` — Make tilt look "real/grounded" not "floating":**
+   - `FLOAT_SCALE` reduced from `1.33` to `0.25` (gyro: ±15° → ±3.75 px drift instead of ±20 px).
+   - Mouse float multiplier reduced from `0.13` to `0.025` (same ratio).
+   - With minimal translation the card appears anchored — only rotating in place — which reads as physically real rather than floating.
+   - Perspective tightened from `1200px` to `900px` on the float wrapper for stronger 3D depth.
+   - Added `transformStyle: 'preserve-3d'` to the float wrapper so the card's 3D transforms are properly maintained within the parent's 3D context.
+
+3. **`InvoiceModal.tsx` — Match Close button size to Language selector button:**
+   - Close button changed from `p-3 border border-gray-200` to `py-2.5 px-2.5 border-2 border-[#d9d3ce] hover:border-[#2d2d2b]` — matching the language button's vertical padding and border weight.
+   - Icon kept at `w-5 h-5` (fixed, previously `sm:w-6 sm:h-6` which made it taller on sm+ screens).
+   - Both buttons now share the same height (~40–44 px) at all viewport sizes.
+
+---
+
 ### 2026-03-17 — Robustify Haptics + Add Copilot Context File
 
 **Haptic gaps fixed:**
