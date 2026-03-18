@@ -594,7 +594,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
-              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8)] rounded-t-[2.5rem]" />
+              {/* Top + left/right inset shadows give the pocket real 3-sided depth */}
+              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8),inset_24px_0_48px_rgba(0,0,0,0.28),inset_-24px_0_48px_rgba(0,0,0,0.28)] rounded-t-[2.5rem]" />
             </motion.div>
 
             {/* The Sleeve Front Flap */}
@@ -608,8 +609,10 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Drop shadow falls upwards onto the card to simulate hollow depth; larger blur ensures smooth natural fade
-                filter: 'drop-shadow(0 -10px 20px rgba(0,0,0,0.4)) drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
+                // Real directional shadow: primary cast falls downward from a top light source.
+                // Two layers (tight umbra + wide penumbra) fade out naturally without the
+                // symmetric all-sides glow that causes a glassmorphic appearance.
+                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.55)) drop-shadow(0 16px 40px rgba(0,0,0,0.25))',
                 willChange: 'transform'
               }}
             >
@@ -623,8 +626,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 {/* Paper Texture */}
                 <div className="absolute inset-0 opacity-[0.2] mix-blend-multiply" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
                 
-                {/* Inner side shadows for 3D volume */}
-                <div className="absolute inset-0 shadow-[inset_15px_0_30px_rgba(0,0,0,0.04),inset_-15px_0_30px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]" />
+                {/* Inner side shadows for 3D volume — opacity raised to a visible level so left/right walls read as real depth */}
+                <div className="absolute inset-0 shadow-[inset_20px_0_40px_rgba(0,0,0,0.16),inset_-20px_0_40px_rgba(0,0,0,0.16)] rounded-t-[2.5rem]" />
 
                 {/* Perimeter Stitching */}
                 <div className="absolute inset-3 pointer-events-none z-10" style={{ maskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)', WebkitMaskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)' }}>
