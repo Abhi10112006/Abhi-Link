@@ -549,7 +549,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             initial="hidden"
             animate="show"
             exit="exit"
-            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center overflow-x-hidden"
+            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center overflow-hidden"
           >
             
             {/* Top Bar (Aadhaar Style) */}

@@ -550,15 +550,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
           <LanguageSelector currentLang={lang} onLanguageChange={onLanguageChange} alignMenu="left" />
         </div>
 
-        {/* Close Button - same visual size as language selector button */}
+        {/* Close Button - same design as TransactionHistory close button */}
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
           <motion.button 
             onClick={() => { hapticMedium(); onClose(); }}
-            className="py-2.5 px-2.5 rounded-full bg-white/50 hover:bg-white text-gray-900 shadow-sm border-2 border-[#d9d3ce] hover:border-[#2d2d2b] backdrop-blur-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9d3ce]"
+            className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
           </motion.button>
         </div>
 
