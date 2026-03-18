@@ -54,19 +54,19 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   // Tracks the smoothed gyroscope angles (degrees) between sensor events
   const gyroSmoothRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // 3D Tilt Effect
+  // Drives the dynamic metal glare gradient position only
   const cardX = useMotionValue(0);
   const cardY = useMotionValue(0);
-  // Spring-smooth the raw motion values: removes sensor jitter on mobile, smooths mouse on desktop
   const smoothCardX = useSpring(cardX, { stiffness: 80, damping: 25 });
   const smoothCardY = useSpring(cardY, { stiffness: 80, damping: 25 });
-  // Mapping: mouse ±150 px → ~±3.75°; gyro ±15° × 40 → ±600 px → ±15°
-  const rotateX = useTransform(smoothCardY, [-600, 600], [15, -15]);
-  const rotateY = useTransform(smoothCardX, [-600, 600], [-15, 15]);
-  // Dynamic metal glare: radial gradient whose centre tracks tilt (white + gold → transparent)
   const glareXPct = useTransform(smoothCardX, [-600, 600], [0, 100]);
   const glareYPct = useTransform(smoothCardY, [-600, 600], [0, 100]);
   const glareBackground = useMotionTemplate`radial-gradient(circle at ${glareXPct}% ${glareYPct}%, rgba(255, 255, 255, 0.22) 0%, rgba(212, 180, 115, 0.13) 30%, transparent 60%)`;
+  // Gyro / mouse float translation — card drifts left/right/up/down without any shape change
+  const gyroTransX = useMotionValue(0);
+  const gyroTransY = useMotionValue(0);
+  const smoothGyroX = useSpring(gyroTransX, { stiffness: 60, damping: 18 });
+  const smoothGyroY = useSpring(gyroTransY, { stiffness: 60, damping: 18 });
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -105,15 +105,26 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
     };
   }, [isOpen]);
 
-  // Gyroscopic 3D tilt: listen to deviceorientation and feed smoothed angles into the
-  // shared cardX / cardY motion values. Gracefully does nothing on desktop (no sensor).
+  // Gyroscopic float: translates card left/right/up/down only when fully revealed.
+  // Does NOT apply any 3D rotation so the card never changes shape.
+  // Gracefully no-ops on desktop (no DeviceOrientationEvent support).
   useEffect(() => {
     if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return;
 
-    const CLAMP = 15;  // maximum tilt in degrees
-    const ALPHA = 0.12; // exponential-moving-average factor (lower = smoother)
+    const CLAMP = 15;       // maximum tilt in degrees
+    const ALPHA = 0.12;     // EMA factor – lower = smoother, higher = more responsive
+    const FLOAT_SCALE = 1.33; // ±15° → ±20 px card drift
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
+      // Only apply the float when the card is fully revealed (not in pocket)
+      if (step !== 'revealed') {
+        gyroTransX.set(0);
+        gyroTransY.set(0);
+        cardX.set(0);
+        cardY.set(0);
+        return;
+      }
+
       // gamma: left–right tilt (naturally 0 when upright); beta: front–back tilt
       // beta ranges 0°→180°; subtract 60° to centre on a typical portrait hold
       // (phone lying flat = 0°, perfectly upright = 90°; ~60° is the natural mid-tilt)
@@ -130,16 +141,30 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
         y: gyroSmoothRef.current.y + ALPHA * (cy - gyroSmoothRef.current.y),
       };
 
-      // Scale to the motion-value pixel space: ±15° → ±600 px (fits [-600,600] range)
+      // Glare: ±15° → ±600 px (drives the radial-gradient centre position)
       cardX.set(gyroSmoothRef.current.x * 40);
       cardY.set(gyroSmoothRef.current.y * 40);
+
+      // Float translation: ±15° → ±20 px (card drifts without changing shape)
+      gyroTransX.set(gyroSmoothRef.current.x * FLOAT_SCALE);
+      gyroTransY.set(gyroSmoothRef.current.y * FLOAT_SCALE);
 
       if (!gyroDetected) setGyroDetected(true);
     };
 
     window.addEventListener('deviceorientation', handleOrientation, true);
     return () => window.removeEventListener('deviceorientation', handleOrientation, true);
-  }, [cardX, cardY, gyroDetected]);
+  }, [step, cardX, cardY, gyroTransX, gyroTransY, gyroDetected]);
+
+  // Immediately reset float translation when card leaves the revealed state
+  useEffect(() => {
+    if (step !== 'revealed') {
+      gyroTransX.set(0);
+      gyroTransY.set(0);
+      cardX.set(0);
+      cardY.set(0);
+    }
+  }, [step, gyroTransX, gyroTransY, cardX, cardY]);
 
   useEffect(() => {
     if (step === 'revealed' && upi && qrRef.current) {
@@ -194,18 +219,26 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (gyroDetected) return; // gyro drives tilt on mobile; don't let stray touch-mouse events override it
+    if (gyroDetected) return; // gyro drives float on mobile; don't let mouse events interfere
     const rect = event.currentTarget.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    cardX.set(event.clientX - centerX);
-    cardY.set(event.clientY - centerY);
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    // Glare: full pixel offset for gradient position
+    cardX.set(dx);
+    cardY.set(dy);
+    // Float translation: ±150 px mouse offset → ±20 px card drift
+    gyroTransX.set(dx * 0.13);
+    gyroTransY.set(dy * 0.13);
   };
 
   const handleMouseLeave = () => {
-    if (gyroDetected) return; // keep gyro tilt active; only reset for pure-mouse (desktop) sessions
+    if (gyroDetected) return; // keep gyro float active on mobile
     cardX.set(0);
     cardY.set(0);
+    gyroTransX.set(0);
+    gyroTransY.set(0);
   };
 
   const copyToClipboard = () => {
@@ -220,11 +253,15 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
     setIsSharing(true);
     
     try {
-      // Temporarily reset 3D transforms for a clean capture
+      // Temporarily reset float transforms for a clean capture
       const currentX = cardX.get();
       const currentY = cardY.get();
+      const currentGyroX = gyroTransX.get();
+      const currentGyroY = gyroTransY.get();
       cardX.set(0);
       cardY.set(0);
+      gyroTransX.set(0);
+      gyroTransY.set(0);
       
       // Wait a tiny bit for transforms to apply
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -271,6 +308,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       // Restore transforms
       cardX.set(currentX);
       cardY.set(currentY);
+      gyroTransX.set(currentGyroX);
+      gyroTransY.set(currentGyroY);
 
       if (navigator.share) {
         const blob = await (await fetch(dataUrl)).blob();
@@ -520,10 +559,11 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             <motion.div 
               initial={{ y: 500, opacity: 0 }}
               animate={{ 
-                y: step === 'revealed' ? '120vh' : 0,
-                opacity: step === 'revealed' ? 0 : 1 
+                y: step === 'revealed' ? '130vh' : 0,
+                opacity: step === 'revealed' ? 0 : 1,
+                rotate: step === 'revealed' ? -4 : 0,
               }}
-              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+              transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
@@ -534,10 +574,11 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             <motion.div 
               initial={{ y: 500, opacity: 0 }}
               animate={{ 
-                y: step === 'revealed' ? '120vh' : 0,
-                opacity: step === 'revealed' ? 0 : 1 
+                y: step === 'revealed' ? '130vh' : 0,
+                opacity: step === 'revealed' ? 0 : 1,
+                rotate: step === 'revealed' ? 4 : 0,
               }}
-              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
+              transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
                 // Drop shadow falls upwards onto the card to simulate hollow depth
@@ -649,13 +690,15 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* Export Wrapper */}
             <div ref={exportWrapperRef} className="absolute inset-0 pointer-events-none z-10 flex justify-center items-center">
+              {/* Gyro float wrapper — translates card left/right/up/down without any shape change */}
+              <motion.div style={{ x: smoothGyroX, y: smoothGyroY }} className="pointer-events-none flex justify-center items-center">
               {/* The Card */}
               <motion.div
                 ref={cardRef}
                 data-card-element="true"
                 drag={step === 'pocket' ? "y" : false}
                 dragConstraints={{ top: -250, bottom: 0 }}
-                dragElastic={0.2}
+                dragElastic={0.25}
                 onDragEnd={(e, info) => {
                   if (info.offset.y < -150 || info.velocity.y < -500) {
                     hapticHeavy();
@@ -676,11 +719,11 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   opacity: 1,
                   scale: step === 'revealed' ? 1.05 : 0.95
                 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-                style={{ y: cardDragY, rotateX, rotateY, willChange: 'transform' }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                style={{ y: cardDragY, willChange: 'transform' }}
                 onMouseMove={step === 'revealed' ? handleMouseMove : undefined}
                 onMouseLeave={step === 'revealed' ? handleMouseLeave : undefined}
-                className={`relative w-[300px] h-[480px] rounded-[1.5rem] transform-style-3d shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(0,0,0,0.6),0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+                className={`relative w-[300px] h-[480px] rounded-[1.5rem] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(0,0,0,0.6),0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
               >
               {/* Card Background Pattern */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#4a3018] via-[#7a5230] to-[#2a1a0a]" />
@@ -799,6 +842,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 </div>
               </div>
             </motion.div>
+            </motion.div>{/* end gyro float wrapper */}
             </div>
 
             {/* Hint Arrow for Pocket */}
