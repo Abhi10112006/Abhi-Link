@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
 import { X, History, IndianRupee, Trash2, AlertTriangle, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
+import { hapticMedium, hapticHeavy, hapticWarning, hapticScroll } from '../utils/haptics';
 
 export interface Transaction {
   id: string;
@@ -59,6 +60,7 @@ const SwipeableCard: React.FC<{
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
     if (info.offset.x < DELETE_THRESHOLD) {
       // Swiped to the end — delete immediately, no confirmation needed
+      hapticWarning();
       onDelete(tx.id);
     } else {
       // Not far enough — spring back to original position
@@ -147,6 +149,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   t,
 }) => {
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -164,8 +167,26 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     }
   }, [isOpen]);
 
+  // Scroll haptic feedback
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let lastScrollY = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        hapticScroll();
+        lastScrollY = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  });
+
   return (
     <motion.div
+      ref={scrollRef}
       className="fixed inset-0 z-50 flex flex-col items-center justify-start text-gray-900 overflow-y-auto"
       initial="hidden"
       animate="show"
@@ -186,7 +207,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </h1>
         {/* Close button: pushed to the right */}
         <motion.button
-          onClick={onClose}
+          onClick={() => { hapticMedium(); onClose(); }}
           className="ml-auto w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
@@ -202,7 +223,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         {transactions.length > 0 && (
           <motion.div variants={item} className="flex justify-end mb-4 flex-shrink-0">
             <motion.button
-              onClick={() => setShowClearAllConfirm(true)}
+              onClick={() => { hapticMedium(); setShowClearAllConfirm(true); }}
               className="flex items-center gap-1.5 text-xs font-bold text-[#2d2d2b] bg-white/60 hover:bg-white px-4 py-2 rounded-full transition-colors border border-gray-200 backdrop-blur-md shadow-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -253,7 +274,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           >
             <div
               className="absolute inset-0 bg-black/30"
-              onClick={() => setShowClearAllConfirm(false)}
+              onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
             />
             <motion.div
               className="relative w-full max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl p-6 flex flex-col gap-4"
@@ -280,7 +301,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               </div>
               <div className="flex gap-2">
                 <motion.button
-                  onClick={() => setShowClearAllConfirm(false)}
+                  onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
                   className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
@@ -289,6 +310,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 </motion.button>
                 <motion.button
                   onClick={() => {
+                    hapticWarning();
                     onClearAll();
                     setShowClearAllConfirm(false);
                   }}

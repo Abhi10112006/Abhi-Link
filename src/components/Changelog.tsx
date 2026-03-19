@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
+import { hapticMedium, hapticScroll } from '../utils/haptics';
 
 interface ChangelogProps {
   onClose: () => void;
@@ -28,6 +29,12 @@ const item = {
 };
 
 export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = useCallback(() => {
+    hapticScroll();
+  }, []);
+
   useEffect(() => {
     // Disable scrolling on the body when the changelog is open
     document.body.style.overflow = 'hidden';
@@ -37,6 +44,22 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    let lastScrollY = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollY = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center text-gray-900 overflow-hidden"
@@ -44,13 +67,14 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
       animate="show"
       exit="exit"
       variants={container}
-      onClick={onClose}
+      onClick={() => { hapticMedium(); onClose(); }}
     >
       <PremiumBackground />
 
       <motion.button 
         onClick={(e) => {
           e.stopPropagation();
+          hapticMedium();
           onClose();
         }}
         className="absolute top-6 right-6 sm:top-10 sm:right-10 p-4 rounded-full border border-gray-200 bg-white/50 hover:bg-white transition-colors z-50 group shadow-sm"
@@ -63,7 +87,8 @@ export const Changelog: React.FC<ChangelogProps> = ({ onClose, t }) => {
       </motion.button>
 
       <div 
-        className="relative z-10 max-w-3xl w-full px-6 flex flex-col items-center text-center"
+        ref={scrollContainerRef}
+        className="relative z-10 max-w-3xl w-full px-6 flex flex-col items-center text-center overflow-y-auto max-h-screen"
         onClick={(e) => e.stopPropagation()}
       >
         <motion.div variants={item} className="mb-6">

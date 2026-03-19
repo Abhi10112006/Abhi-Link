@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IndianRupee, MessageSquare, User, Info, Eraser, Clipboard, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticScroll } from '../utils/haptics';
 
 const COMMON_UPI_HANDLES = [
   '@ybl', '@paytm', '@okicici', '@okhdfcbank', '@oksbi',
@@ -80,6 +81,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
   const pressedClipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autocompleteScrollRef = useRef<HTMLUListElement>(null);
+  const multipleUpiScrollRef = useRef<HTMLDivElement>(null);
 
   // Clean up the pressed-clip timer on unmount
   useEffect(() => {
@@ -159,6 +162,59 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleScroll = useCallback(() => {
+    hapticScroll();
+  }, []);
+
+  // Page-level scroll haptics (fires when the user scrolls the main page)
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(window.scrollY - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollY = window.scrollY;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
+
+  // Scroll haptics for the autocomplete UPI handle list
+  useEffect(() => {
+    const el = autocompleteScrollRef.current;
+    if (!el) return;
+    let lastScrollTop = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollTop);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollTop = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [handleScroll, showAutocomplete]);
+
+  // Scroll haptics for the multiple UPI options list
+  useEffect(() => {
+    const el = multipleUpiScrollRef.current;
+    if (!el) return;
+    let lastScrollTop = el.scrollTop;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(el.scrollTop - lastScrollTop);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollTop = el.scrollTop;
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [handleScroll, showToast, multipleUpiOptions]);
+
   const handleUpiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
     const val = e.target.value;
@@ -178,6 +234,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const selectHandle = (handle: string) => {
+    hapticLight();
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
 
     const prefix = upiId.split('@')[0];
@@ -239,6 +296,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const handleClear = () => {
+    hapticMedium();
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
     
     let iterations = Math.max(amount.length, remarks.length);
@@ -291,7 +349,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex-1 min-w-0 inline-flex items-center justify-between bg-white border border-[#d9d3ce] rounded-full pl-3 pr-1 py-1.5 hover:border-[#2d2d2b] transition-colors cursor-pointer group shadow-sm"
-                  onClick={() => onSelectRecent(payee)}
+                  onClick={() => { hapticLight(); onSelectRecent(payee); }}
                 >
                   <div className="flex flex-col mr-2 overflow-hidden">
                     {payee.payeeName && <span className="text-xs font-bold text-[#2d2d2b] leading-tight truncate">{payee.payeeName}</span>}
@@ -301,6 +359,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     className="flex-shrink-0 text-[#2d2d2b]/30 hover:text-[#2d2d2b] transition-colors p-1.5 rounded-full hover:bg-[#f5f5f0]"
                     onClick={(e) => {
                       e.stopPropagation();
+                      hapticWarning();
                       onRemoveRecent(payee.upiId);
                     }}
                     aria-label="Remove recent payee"
@@ -366,6 +425,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   exit={{ opacity: 0, scale: 0.8 }}
                   type="button"
                   onClick={async () => {
+                    hapticMedium();
                     try {
                       const text = await navigator.clipboard.readText();
                       const ids = extractUpiIds(text || '');
@@ -424,6 +484,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         <span className="text-white/60 text-[10px] uppercase tracking-wider font-bold">Select UPI ID</span>
                         <motion.button 
                           onClick={() => {
+                            hapticMedium();
                             setShowToast(false);
                             setMultipleUpiOptions([]);
                           }}
@@ -434,7 +495,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                           <X className="h-3 w-3" />
                         </motion.button>
                       </div>
-                      <div className="max-h-[200px] overflow-y-auto">
+                      <div ref={multipleUpiScrollRef} className="max-h-[200px] overflow-y-auto">
                         {multipleUpiOptions.map((id, index) => (
                           <motion.button
                             key={index}
@@ -443,6 +504,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                             transition={{ duration: 0.2, delay: index * 0.05 }}
                             type="button"
                             onClick={() => {
+                              hapticLight();
                               // Close menu first
                               setShowToast(false);
                               setMultipleUpiOptions([]);
@@ -499,7 +561,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   exit="exit"
                   className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                 >
-                  <ul className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                  <ul ref={autocompleteScrollRef} className="max-h-56 overflow-y-auto py-2 px-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#d9d3ce] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
                     {getFilteredHandles().map((handle, index) => (
                       <motion.li 
                         key={handle} 
@@ -646,6 +708,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 key={value}
                 type="button"
                 onClick={() => {
+                  hapticLight();
                   const current = parseFloat(amount.replace(/,/g, '')) || 0;
                   const next = current + value;
                   setAmount(inr.format(next));

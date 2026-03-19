@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useMotionTemplate } from 'motion/react';
 import { X, Fingerprint, Share2, ShieldAlert, Check, Copy, Briefcase, Store, GraduationCap, PenTool, User, ChevronDown, Maximize, Edit3, Eye, EyeOff, Loader2, Wifi } from 'lucide-react';
 import QRCodeStyling from 'qr-code-styling';
 import { toPng } from 'html-to-image';
 import { PremiumBackground } from './PremiumBackground';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticScroll } from '../utils/haptics';
 
 interface DigitalCardModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ const modalItem = {
   show: { 
     opacity: 1, 
     scale: 1, 
-    transition: { type: "spring", stiffness: 300, damping: 25 } 
+    transition: { type: "spring", stiffness: 200, damping: 28 } 
   },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
@@ -43,19 +44,61 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const [isSharing, setIsSharing] = useState(false);
   const [showAmountModal, setShowAmountModal] = useState(false);
   const [shareAmount, setShareAmount] = useState('');
+  // True once we've received at least one real deviceorientation event from the hardware sensor
+  const [gyroDetected, setGyroDetected] = useState(false);
   
   const qrRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const exportWrapperRef = useRef<HTMLDivElement>(null);
+  // Tracks the smoothed gyroscope angles (degrees) between sensor events
+  const gyroSmoothRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // 3D Tilt Effect
+  // Drives the dynamic metal glare gradient position only
   const cardX = useMotionValue(0);
   const cardY = useMotionValue(0);
-  const rotateX = useTransform(cardY, [-200, 200], [5, -5]);
-  const rotateY = useTransform(cardX, [-200, 200], [-5, 5]);
-  const glareX = useTransform(cardX, [-200, 200], [100, -100]);
-  const glareY = useTransform(cardY, [-200, 200], [100, -100]);
+  const smoothCardX = useSpring(cardX, { stiffness: 80, damping: 25 });
+  const smoothCardY = useSpring(cardY, { stiffness: 80, damping: 25 });
+  const glareXPct = useTransform(smoothCardX, [-600, 600], [0, 100]);
+  const glareYPct = useTransform(smoothCardY, [-600, 600], [0, 100]);
+  const glareBackground = useMotionTemplate`radial-gradient(circle at ${glareXPct}% ${glareYPct}%, rgba(255, 255, 255, 0.22) 0%, rgba(212, 180, 115, 0.13) 30%, transparent 60%)`;
+  // Gyro / mouse float translation — card drifts left/right/up/down
+  const gyroTransX = useMotionValue(0);
+  const gyroTransY = useMotionValue(0);
+  const smoothGyroX = useSpring(gyroTransX, { stiffness: 60, damping: 18 });
+  const smoothGyroY = useSpring(gyroTransY, { stiffness: 60, damping: 18 });
+  // Gate that is 1 while card is revealed, 0 otherwise.
+  // Multiplied into the float so the wrapper instantly centers when card returns to pocket.
+  const revealedGate = useMotionValue(0);
+  const gatedGyroX = useTransform([smoothGyroX, revealedGate], (values) => Number(values[0]) * Number(values[1]));
+  const gatedGyroY = useTransform([smoothGyroY, revealedGate], (values) => Number(values[0]) * Number(values[1]));
+  // Premium 3D tilt: ±10° derived from the same smooth glare data (smoothCardX/Y).
+  // Multiplied by revealedGate so rotation instantly snaps to 0 when card returns to pocket —
+  // prevents the perspective-projected "right-side peek" that occurs when the spring is mid-flight.
+  const cardRotateX = useTransform([smoothCardY, revealedGate], (values) => -(Number(values[0]) / 600) * 10 * Number(values[1]));
+  const cardRotateY = useTransform([smoothCardX, revealedGate], (values) => (Number(values[0]) / 600) * 10 * Number(values[1]));
+
+  // Dynamic drop shadow driven by real physics:
+  //   smoothCardY  = beta driver  → shadow moves vertically (front-back tilt)
+  //   smoothCardX  = gamma driver → shadow moves horizontally (left-right tilt)
+  //
+  // Three-layer realistic shadow system (consistent top-left light source):
+  //   Layer 1 — umbra (tight, close, high opacity): follows tilt fully.
+  //   Layer 2 — outer penumbra (wider blur, lower opacity): offset Y is kept LARGER
+  //             than the blur radius so the shadow stays directional and does not
+  //             wrap around the top edge as a glowing halo.
+  //   Layer 3 — contact shadow (always-present, no tilt): physically grounds the card.
+  const shadowY = useTransform(smoothCardY, [-600, 600], [8, 30]);
+  const shadowX = useTransform(smoothCardX, [-600, 600], [-10, 10]);
+  const shadowBlur = useTransform(smoothCardY, [-600, 600], [18, 38]);
+  // Outer penumbra — separate Y offset ensures offset > blur at rest (45 > 42)
+  // so the shadow is directional rather than an all-sides halo.
+  const shadowYOuter = useTransform(smoothCardY, [-600, 600], [28, 56]);
+  const shadowXOuter = useTransform(smoothCardX, [-600, 600], [-5, 5]);
+  const shadowBlurOuter = useTransform(smoothCardY, [-600, 600], [38, 68]);
+  // Subtle specular catch-light on top edge (leather sheen) + grounding contact shadow
+  // + directional umbra + wide penumbra that stays south of the card.
+  const cardBoxShadow = useMotionTemplate`inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.45), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.52), ${shadowXOuter}px ${shadowYOuter}px ${shadowBlurOuter}px rgba(0,0,0,0.18)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -93,6 +136,73 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Gyroscopic float: translates card left/right/up/down only when fully revealed.
+  // Does NOT apply any 3D rotation so the card never changes shape.
+  // Gracefully no-ops on desktop (no DeviceOrientationEvent support).
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return;
+
+    const CLAMP = 15;       // maximum tilt in degrees
+    const ALPHA = 0.12;     // EMA factor – lower = smoother, higher = more responsive
+    const FLOAT_SCALE = 0.25; // ±15° → ±3.75 px subtle drift (grounded, not floating)
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      // Only apply the float when the card is fully revealed (not in pocket)
+      if (step !== 'revealed') {
+        gyroTransX.set(0);
+        gyroTransY.set(0);
+        cardX.set(0);
+        cardY.set(0);
+        return;
+      }
+
+      // gamma: left–right tilt (naturally 0 when upright); beta: front–back tilt
+      // beta ranges 0°→180°; subtract 60° to centre on a typical portrait hold
+      // (phone lying flat = 0°, perfectly upright = 90°; ~60° is the natural mid-tilt)
+      const rawX = event.gamma ?? 0;
+      const rawY = (event.beta ?? 60) - 60;
+
+      // Clamp to ±CLAMP degrees
+      const cx = Math.max(-CLAMP, Math.min(CLAMP, rawX));
+      const cy = Math.max(-CLAMP, Math.min(CLAMP, rawY));
+
+      // Exponential moving average – attenuates high-frequency sensor noise
+      gyroSmoothRef.current = {
+        x: gyroSmoothRef.current.x + ALPHA * (cx - gyroSmoothRef.current.x),
+        y: gyroSmoothRef.current.y + ALPHA * (cy - gyroSmoothRef.current.y),
+      };
+
+      // Glare: ±15° → ±600 px (drives the radial-gradient centre position)
+      cardX.set(gyroSmoothRef.current.x * 40);
+      cardY.set(gyroSmoothRef.current.y * 40);
+
+      // Float translation: ±15° → ±3.75 px subtle drift (grounded feel)
+      gyroTransX.set(gyroSmoothRef.current.x * FLOAT_SCALE);
+      gyroTransY.set(gyroSmoothRef.current.y * FLOAT_SCALE);
+
+      if (!gyroDetected) setGyroDetected(true);
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    return () => window.removeEventListener('deviceorientation', handleOrientation, true);
+  }, [step, cardX, cardY, gyroTransX, gyroTransY, gyroDetected]);
+
+  // Immediately reset float translation when card leaves the revealed state
+  useEffect(() => {
+    if (step !== 'revealed') {
+      gyroTransX.set(0);
+      gyroTransY.set(0);
+      cardX.set(0);
+      cardY.set(0);
+    }
+  }, [step, gyroTransX, gyroTransY, cardX, cardY]);
+
+  // Keep the revealed gate in sync — instantly snaps the float wrapper to center when
+  // the card goes back into the pocket, so it never drifts sideways during that transition.
+  useEffect(() => {
+    revealedGate.set(step === 'revealed' ? 1 : 0);
+  }, [step, revealedGate]);
 
   useEffect(() => {
     if (step === 'revealed' && upi && qrRef.current) {
@@ -137,6 +247,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
   const handleSaveSetup = () => {
     if (name && upi.includes('@')) {
+      hapticHeavy();
       localStorage.setItem('my_card_name', name);
       localStorage.setItem('my_card_upi', upi);
       localStorage.setItem('my_card_business_type', businessType);
@@ -146,19 +257,30 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (gyroDetected) return; // gyro drives float on mobile; don't let mouse events interfere
     const rect = event.currentTarget.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    cardX.set(event.clientX - centerX);
-    cardY.set(event.clientY - centerY);
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    // Glare: full pixel offset for gradient position
+    cardX.set(dx);
+    cardY.set(dy);
+    // Float translation: ±150 px mouse offset → ±3.75 px subtle drift (grounded feel)
+    gyroTransX.set(dx * 0.025);
+    gyroTransY.set(dy * 0.025);
   };
 
   const handleMouseLeave = () => {
+    if (gyroDetected) return; // keep gyro float active on mobile
     cardX.set(0);
     cardY.set(0);
+    gyroTransX.set(0);
+    gyroTransY.set(0);
   };
 
   const copyToClipboard = () => {
+    hapticSuccess();
     navigator.clipboard.writeText(upi);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -169,11 +291,15 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
     setIsSharing(true);
     
     try {
-      // Temporarily reset 3D transforms for a clean capture
+      // Temporarily reset float transforms for a clean capture
       const currentX = cardX.get();
       const currentY = cardY.get();
+      const currentGyroX = gyroTransX.get();
+      const currentGyroY = gyroTransY.get();
       cardX.set(0);
       cardY.set(0);
+      gyroTransX.set(0);
+      gyroTransY.set(0);
       
       // Wait a tiny bit for transforms to apply
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -220,6 +346,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
       // Restore transforms
       cardX.set(currentX);
       cardY.set(currentY);
+      gyroTransX.set(currentGyroX);
+      gyroTransY.set(currentGyroY);
 
       if (navigator.share) {
         const blob = await (await fetch(dataUrl)).blob();
@@ -290,7 +418,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
               transition={{ duration: 0.4, delay: 0.8 }}
-              onClick={onClose}
+              onClick={() => { hapticMedium(); onClose(); }}
               className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/50 text-gray-900 hover:bg-white transition-colors border border-gray-200 shadow-sm"
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ 
@@ -364,7 +492,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   {(['shop', 'freelancer', 'tuition', 'custom'] as BusinessType[]).map((type) => (
                     <motion.button
                       key={type}
-                      onClick={() => setBusinessType(type)}
+                      onClick={() => { hapticLight(); setBusinessType(type); }}
                       whileHover={{ scale: 1.02, y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
                       whileTap={{ scale: 0.92, y: 0, filter: "brightness(0.9)" }}
                       className={`py-3 px-4 rounded-xl border text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
@@ -435,6 +563,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             animate="show"
             exit="exit"
             className="relative w-full max-w-sm h-full flex flex-col items-center justify-center"
+            // Perspective enables all rotateX/rotateY 3D transforms within this container
+            // (both the card tilt/glare system and the sleeve front-flap hinge effect)
+            style={{ perspective: '1200px' }}
           >
             
             {/* Top Bar (Aadhaar Style) */}
@@ -451,7 +582,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                     exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                     transition={{ duration: 0.4, delay: 0.6 }}
                     className="flex items-center gap-3 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/50 shadow-sm cursor-pointer hover:bg-white transition-colors" 
-                    onClick={() => setStep('setup')}
+                    onClick={() => { hapticMedium(); setStep('setup'); }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -469,33 +600,51 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             <motion.div 
               initial={{ y: 500, opacity: 0 }}
               animate={{ 
-                y: step === 'revealed' ? '120vh' : 0,
-                opacity: step === 'revealed' ? 0 : 1 
+                y: step === 'revealed' ? '130vh' : 0,
+                opacity: step === 'revealed' ? 0 : 1,
+                rotate: 0,
               }}
-              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-              className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
+              transition={{ type: "spring", stiffness: 160, damping: 28 }}
+              className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[1.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
-              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8)] rounded-t-[2.5rem]" />
+              {/* Gradient overlays replace CSS inset box-shadow so there is no hard "source edge"
+                  at the rounded corners — CSS box-shadow always produces a sharp line before
+                  the blur radius starts, which is especially visible at border-radius curves.
+                  Gradients have zero such artefact and produce a smooth, natural falloff. */}
+              {/* Top: gentle dark at the rim, fades to transparent well before the content */}
+              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '160px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.18) 28%, rgba(0,0,0,0.07) 58%, transparent 100%)' }} />
+              {/* Left wall depth */}
+              <div className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to right, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.05) 55%, transparent 100%)' }} />
+              {/* Right wall depth */}
+              <div className="absolute inset-y-0 right-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to left, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.05) 55%, transparent 100%)' }} />
             </motion.div>
 
             {/* The Sleeve Front Flap */}
             <motion.div 
               initial={{ y: 500, opacity: 0 }}
               animate={{ 
-                y: step === 'revealed' ? '120vh' : 0,
-                opacity: step === 'revealed' ? 0 : 1 
+                y: step === 'revealed' ? '130vh' : 0,
+                opacity: step === 'revealed' ? 0 : 1,
+                rotate: 0,
               }}
-              transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-              className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
+              transition={{ type: "spring", stiffness: 160, damping: 28 }}
+              className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Drop shadow falls upwards onto the card to simulate hollow depth
-                filter: 'drop-shadow(0 -10px 20px rgba(0,0,0,0.4)) drop-shadow(0 10px 20px rgba(0,0,0,0.2))',
-                willChange: 'transform'
+                // Four-layer drop-shadow system:
+                //   Layer 0 — upward lip shadow: casts darkness UP onto the card so the brain
+                //             reads the white sleeve as physically in front of the gold card.
+                //   Layer 1 — ambient halo (no offset): radiates equally in all directions
+                //             so the shadow wraps smoothly around the top rounded edge and
+                //             the curved notch, eliminating the hard cutoff at the rim.
+                //   Layer 2 — primary umbra: tight, downward, high contrast.
+                //   Layer 3 — soft penumbra: wider spread, lower opacity.
+                filter: 'drop-shadow(0 -8px 20px rgba(0,0,0,0.28)) drop-shadow(0 0 8px rgba(0,0,0,0.12)) drop-shadow(0 5px 16px rgba(0,0,0,0.24)) drop-shadow(0 16px 40px rgba(0,0,0,0.12))',
+                willChange: 'transform',
               }}
             >
               <div 
-                className="absolute inset-0 bg-gradient-to-b from-[#fdfbf7] to-[#f2ebe1] rounded-t-[2.5rem] overflow-hidden"
+                className="absolute inset-0 bg-gradient-to-b from-[#fdfbf7] to-[#f2ebe1] rounded-t-[1.5rem] overflow-hidden"
                 style={{ 
                   maskImage: 'radial-gradient(circle at 50% 0px, transparent 30px, black 31px)',
                   WebkitMaskImage: 'radial-gradient(circle at 50% 0px, transparent 30px, black 31px)'
@@ -504,8 +653,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 {/* Paper Texture */}
                 <div className="absolute inset-0 opacity-[0.2] mix-blend-multiply" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
                 
-                {/* Inner side shadows for 3D volume */}
-                <div className="absolute inset-0 shadow-[inset_15px_0_30px_rgba(0,0,0,0.04),inset_-15px_0_30px_rgba(0,0,0,0.04)] rounded-t-[2.5rem]" />
+                {/* Inner side shadows for 3D volume — opacity raised to a visible level so left/right walls read as real depth */}
+                <div className="absolute inset-0 shadow-[inset_20px_0_40px_rgba(0,0,0,0.16),inset_-20px_0_40px_rgba(0,0,0,0.16)] rounded-t-[1.5rem]" />
 
                 {/* Perimeter Stitching */}
                 <div className="absolute inset-3 pointer-events-none z-10" style={{ maskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)', WebkitMaskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)' }}>
@@ -598,20 +747,24 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* Export Wrapper */}
             <div ref={exportWrapperRef} className="absolute inset-0 pointer-events-none z-10 flex justify-center items-center">
+              {/* Gyro float wrapper — subtle position drift (gated to revealed step); 900px perspective for real 3D depth */}
+              <motion.div style={{ x: gatedGyroX, y: gatedGyroY, perspective: '900px', transformStyle: 'preserve-3d' }} className="pointer-events-none flex justify-center items-center">
               {/* The Card */}
               <motion.div
                 ref={cardRef}
                 data-card-element="true"
                 drag={step === 'pocket' ? "y" : false}
                 dragConstraints={{ top: -250, bottom: 0 }}
-                dragElastic={0.2}
+                dragElastic={0.25}
                 onDragEnd={(e, info) => {
                   if (info.offset.y < -150 || info.velocity.y < -500) {
+                    hapticHeavy();
                     setStep('revealed');
                   }
                 }}
                 onClick={() => {
                   if (step === 'revealed') {
+                    hapticMedium();
                     setStep('pocket');
                     setIsStealthMode(true);
                   }
@@ -623,11 +776,17 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   opacity: 1,
                   scale: step === 'revealed' ? 1.05 : 0.95
                 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.7 }}
-                style={{ y: cardDragY, rotateX, rotateY, willChange: 'transform' }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 160, 
+                  damping: 28,
+                  // Forces the card to wait until the pocket arrives first with its mouth open
+                  delay: step === 'pocket' ? 0.12 : 0 
+                }}
+                style={{ y: cardDragY, rotateX: cardRotateX, rotateY: cardRotateY, boxShadow: cardBoxShadow, willChange: 'transform' }}
                 onMouseMove={step === 'revealed' ? handleMouseMove : undefined}
                 onMouseLeave={step === 'revealed' ? handleMouseLeave : undefined}
-                className={`relative w-[300px] h-[480px] rounded-[1.5rem] transform-style-3d shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(0,0,0,0.6),0_25px_50px_rgba(0,0,0,0.6)] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
+                className={`relative w-[300px] h-[480px] rounded-[1.5rem] overflow-hidden pointer-events-auto ${step === 'revealed' ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
               >
               {/* Card Background Pattern */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#4a3018] via-[#7a5230] to-[#2a1a0a]" />
@@ -652,14 +811,10 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 </div>
               </div>
               
-              {/* Holographic Glare */}
+              {/* Dynamic Metal Glare — radial gradient centre tracks tilt; white+gold→transparent */}
               <motion.div
                 className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-40"
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 60%)',
-                  x: glareX,
-                  y: glareY,
-                }}
+                style={{ background: glareBackground }}
               />
 
               {/* Metal Glare Overlay */}
@@ -708,6 +863,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                     <motion.button 
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent card stow
+                        hapticLight();
                         setIsStealthMode(!isStealthMode);
                       }}
                       whileHover={{ scale: 1.1 }}
@@ -749,6 +905,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 </div>
               </div>
             </motion.div>
+            </motion.div>{/* end gyro float wrapper */}
             </div>
 
             {/* Hint Arrow for Pocket */}
@@ -776,7 +933,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="absolute bottom-10 z-30 w-full px-6 flex justify-center"
               >
                 <button
-                  onClick={() => setShowAmountModal(true)}
+                  onClick={() => { hapticMedium(); setShowAmountModal(true); }}
                   disabled={isSharing}
                   className="w-full max-w-[280px] py-4 rounded-xl bg-gradient-to-r from-[#e8c382] via-[#f3dca3] to-[#e8c382] text-[#1a0f05] font-bold uppercase tracking-widest disabled:opacity-50 shadow-[0_0_15px_rgba(232,195,130,0.3)] flex items-center justify-center gap-2 relative overflow-hidden active:scale-95 transition-transform"
                 >
@@ -835,7 +992,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 className="bg-[#f5f2ed] border border-[#d4c5b9] rounded-3xl p-6 w-full max-w-sm shadow-2xl relative"
               >
                 <motion.button
-                  onClick={() => setShowAmountModal(false)}
+                  onClick={() => { hapticMedium(); setShowAmountModal(false); }}
                   whileHover={{ scale: 1.1, rotate: 90, backgroundColor: "#f3f4f6" }}
                   whileTap={{ scale: 0.92 }}
                   className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors z-10"
@@ -871,6 +1028,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
+                      hapticMedium();
                       setShareAmount('');
                       setShowAmountModal(false);
                       // Small delay to allow modal to close before capturing
@@ -882,6 +1040,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   </button>
                   <button
                     onClick={() => {
+                      hapticHeavy();
                       setShowAmountModal(false);
                       // Small delay to allow modal to close before capturing
                       setTimeout(shareCard, 300);

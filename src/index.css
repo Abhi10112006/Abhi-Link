@@ -38,6 +38,15 @@ body {
   background-color: #e6e1dc;
 }
 
+/* Hide scrollbars globally while keeping scroll functionality where needed */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/WebKit */
+}
+
 @keyframes fade-in-up {
   0% {
     opacity: 0;

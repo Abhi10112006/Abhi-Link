@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, ArrowRight } from 'lucide-react';
+import { hapticMedium, hapticHeavy } from '../utils/haptics';
 
 interface ReceiptConfirmationModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export const ReceiptConfirmationModal: React.FC<ReceiptConfirmationModalProps> =
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onClose}
+                onClick={() => { hapticMedium(); onClose(); }}
                 className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
               >
                 {t.waitCheck}
@@ -47,7 +48,7 @@ export const ReceiptConfirmationModal: React.FC<ReceiptConfirmationModalProps> =
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onConfirm}
+                onClick={() => { hapticHeavy(); onConfirm(); }}
                 className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
               >
                 <Check className="w-5 h-5" />
@@ -96,7 +97,7 @@ export const PaymentCompletedModal: React.FC<PaymentCompletedModalProps> = ({
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onClose}
+                onClick={() => { hapticMedium(); onClose(); }}
                 className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
               >
                 {t.notYet}
@@ -104,7 +105,7 @@ export const PaymentCompletedModal: React.FC<PaymentCompletedModalProps> = ({
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onConfirm}
+                onClick={() => { hapticHeavy(); onConfirm(); }}
                 className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
               >
                 <Check className="w-5 h-5" />
@@ -141,6 +142,7 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && !isLoading) {
+      hapticHeavy();
       onSubmit(name);
     }
   };
@@ -159,7 +161,7 @@ export const SenderNameModal: React.FC<SenderNameModalProps> = ({
               <h3 className="text-xl font-bold text-[#2d2d2b]">
                 {t.senderNameTitle}
               </h3>
-              <button onClick={onClose} className="text-[#2d2d2b]/50 hover:text-[#2d2d2b]">
+              <button onClick={() => { hapticMedium(); onClose(); }} className="text-[#2d2d2b]/50 hover:text-[#2d2d2b]">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -274,7 +276,7 @@ export const PostPaymentModal: React.FC<PostPaymentModalProps> = ({
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onClose}
+                    onClick={() => { hapticMedium(); onClose(); }}
                     className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
                   >
                     {t.notYet}
@@ -282,7 +284,7 @@ export const PostPaymentModal: React.FC<PostPaymentModalProps> = ({
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setStep('share')}
+                    onClick={() => { hapticHeavy(); setStep('share'); }}
                     className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-[#2d2d2b] hover:bg-black transition-colors flex items-center justify-center gap-2"
                   >
                     <Check className="w-5 h-5" />
@@ -309,7 +311,7 @@ export const PostPaymentModal: React.FC<PostPaymentModalProps> = ({
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onClose}
+                    onClick={() => { hapticMedium(); onClose(); }}
                     className="flex-1 px-4 py-3 rounded-xl font-bold text-[#2d2d2b] bg-[#f5f5f0] hover:bg-[#e6e1dc] transition-colors"
                   >
                     {t.shareReceiptNo}
@@ -318,6 +320,7 @@ export const PostPaymentModal: React.FC<PostPaymentModalProps> = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
+                      hapticHeavy();
                       onClose();
                       onShareReceipt();
                     }}

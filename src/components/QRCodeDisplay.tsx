@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Download, QrCode, Share2, Loader2, ReceiptText, Palette, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from "motion/react";
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, hapticScroll } from '../utils/haptics';
 
 interface QRCodeDisplayProps {
   upiId: string;
@@ -52,6 +53,25 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   const [showStyles, setShowStyles] = useState(false);
 
   const qrCode = useRef<QRCodeStyling | null>(null);
+
+  const handleScroll = useCallback(() => {
+    hapticScroll();
+  }, []);
+
+  // Page-level scroll haptics for the QR display panel
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const SCROLL_THRESHOLD = 40;
+    const onScroll = () => {
+      const delta = Math.abs(window.scrollY - lastScrollY);
+      if (delta >= SCROLL_THRESHOLD) {
+        handleScroll();
+        lastScrollY = window.scrollY;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     qrCode.current = new QRCodeStyling({
@@ -108,24 +128,29 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   }, [upiUrl, dotType, cornerSquareType, cornerDotType]);
 
   const handleShareClick = async () => {
+    hapticMedium();
     setIsSharing(true);
     try {
       await onShare();
+      hapticSuccess();
     } finally {
       setIsSharing(false);
     }
   };
 
   const handleDownloadClick = async () => {
+    hapticMedium();
     setIsDownloading(true);
     try {
       await onDownload();
+      hapticSuccess();
     } finally {
       setIsDownloading(false);
     }
   };
 
   const handleGenerateClick = async () => {
+    hapticMedium();
     setIsGenerating(true);
     await new Promise(resolve => setTimeout(resolve, 100));
     try {
@@ -166,12 +191,14 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   };
 
   const handleCopyLink = async () => {
+    hapticMedium();
     setIsCopyingLink(true);
     try {
       const { url } = buildPaymentRequestUrl();
       const shortUrl = await shortenUrl(url);
       await navigator.clipboard.writeText(shortUrl);
       setLinkCopied(true);
+      hapticSuccess();
       setTimeout(() => setLinkCopied(false), 2500);
     } catch {
       // Silently ignore clipboard errors (e.g. permission denied)
@@ -181,6 +208,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   };
 
   const handleWhatsAppShare = async () => {
+    hapticMedium();
     setIsSharingWhatsApp(true);
     try {
       const { url: link, rawAmount } = buildPaymentRequestUrl();
@@ -217,7 +245,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           <div className="w-full mb-2">
             <div className="flex justify-center mb-2">
               <motion.button
-                onClick={() => setShowStyles(!showStyles)}
+                onClick={() => { hapticLight(); setShowStyles(!showStyles); }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${showStyles ? 'bg-[#2d2d2b] text-[#e6e1dc]' : 'bg-[#e6e1dc] text-[#2d2d2b] hover:bg-[#d9d3ce]'}`}
@@ -239,13 +267,13 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <div>
                       <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Dots</label>
                       <div className="flex gap-2">
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('square')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setDotType('square'); }} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/><div className="bg-current"/></div>
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('rounded')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setDotType('rounded'); }} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/><div className="bg-current rounded-sm"/></div>
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setDotType('dots')} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'dots' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setDotType('dots'); }} className={`p-2 rounded-lg border-2 transition-colors ${dotType === 'dots' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 grid grid-cols-2 gap-0.5"><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/><div className="bg-current rounded-full"/></div>
                         </motion.button>
                       </div>
@@ -254,13 +282,13 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <div>
                       <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Marker border</label>
                       <div className="flex gap-2">
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('square')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setCornerSquareType('square'); }} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 border-4 border-current" />
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('extra-rounded')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'extra-rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setCornerSquareType('extra-rounded'); }} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'extra-rounded' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 border-4 border-current rounded-lg" />
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerSquareType('dot')} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setCornerSquareType('dot'); }} className={`p-2 rounded-lg border-2 transition-colors ${cornerSquareType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 border-4 border-current rounded-full" />
                         </motion.button>
                       </div>
@@ -269,10 +297,10 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <div>
                       <label className="block text-xs font-bold text-[#2d2d2b]/60 uppercase tracking-wider mb-2">Marker center</label>
                       <div className="flex gap-2">
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerDotType('square')} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setCornerDotType('square'); }} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'square' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 flex items-center justify-center"><div className="w-3 h-3 bg-current" /></div>
                         </motion.button>
-                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setCornerDotType('dot')} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
+                        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { hapticLight(); setCornerDotType('dot'); }} className={`p-2 rounded-lg border-2 transition-colors ${cornerDotType === 'dot' ? 'border-[#2d2d2b] bg-[#2d2d2b] text-white' : 'border-[#d9d3ce] hover:border-[#2d2d2b]/50 text-[#2d2d2b]'}`}>
                           <div className="w-6 h-6 flex items-center justify-center"><div className="w-3 h-3 bg-current rounded-full" /></div>
                         </motion.button>
                       </div>
