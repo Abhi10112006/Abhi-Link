@@ -28,7 +28,7 @@ const modalItem = {
   show: { 
     opacity: 1, 
     scale: 1, 
-    transition: { type: "spring", stiffness: 300, damping: 25 } 
+    transition: { type: "spring", stiffness: 200, damping: 28 } 
   },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
@@ -604,7 +604,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 opacity: step === 'revealed' ? 0 : 1,
                 rotate: 0,
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              transition={{ type: "spring", stiffness: 160, damping: 28 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[1.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
@@ -612,12 +612,12 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   at the rounded corners — CSS box-shadow always produces a sharp line before
                   the blur radius starts, which is especially visible at border-radius curves.
                   Gradients have zero such artefact and produce a smooth, natural falloff. */}
-              {/* Top: deep dark at the rim, fades to transparent well before the content */}
-              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '160px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.38) 28%, rgba(0,0,0,0.14) 58%, transparent 100%)' }} />
+              {/* Top: gentle dark at the rim, fades to transparent well before the content */}
+              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '160px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.18) 28%, rgba(0,0,0,0.07) 58%, transparent 100%)' }} />
               {/* Left wall depth */}
-              <div className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to right, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 55%, transparent 100%)' }} />
+              <div className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to right, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.05) 55%, transparent 100%)' }} />
               {/* Right wall depth */}
-              <div className="absolute inset-y-0 right-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to left, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 55%, transparent 100%)' }} />
+              <div className="absolute inset-y-0 right-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to left, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.05) 55%, transparent 100%)' }} />
             </motion.div>
 
             {/* The Sleeve Front Flap */}
@@ -628,7 +628,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 opacity: step === 'revealed' ? 0 : 1,
                 rotate: 0,
               }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              transition={{ type: "spring", stiffness: 160, damping: 28 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
                 // Four-layer drop-shadow system:
@@ -639,7 +639,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 //             the curved notch, eliminating the hard cutoff at the rim.
                 //   Layer 2 — primary umbra: tight, downward, high contrast.
                 //   Layer 3 — soft penumbra: wider spread, lower opacity.
-                filter: 'drop-shadow(0 -8px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
+                filter: 'drop-shadow(0 -8px 20px rgba(0,0,0,0.28)) drop-shadow(0 0 8px rgba(0,0,0,0.12)) drop-shadow(0 5px 16px rgba(0,0,0,0.24)) drop-shadow(0 16px 40px rgba(0,0,0,0.12))',
                 willChange: 'transform',
               }}
             >
@@ -778,8 +778,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 }}
                 transition={{ 
                   type: "spring", 
-                  stiffness: 300, 
-                  damping: 22,
+                  stiffness: 160, 
+                  damping: 28,
                   // Forces the card to wait until the pocket arrives first with its mouth open
                   delay: step === 'pocket' ? 0.12 : 0 
                 }}
