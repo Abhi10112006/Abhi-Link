@@ -18,7 +18,7 @@ import { DigitalCardModal } from './components/DigitalCardModal';
 import { PremiumBackground } from './components/PremiumBackground';
 import { TransactionHistory, Transaction } from './components/TransactionHistory';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
-import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess } from './utils/haptics';
+import { hapticLight, hapticMedium, hapticHeavy, hapticSuccess, initHapticUnlock } from './utils/haptics';
 
 export default function App() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -40,6 +40,12 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('abhi-link-lang', lang);
   }, [lang]);
+
+  // Silent Unlock: register a one-time touchstart listener that fires a 1 ms
+  // vibration so the browser's haptic gate is open before scroll events start.
+  useEffect(() => {
+    initHapticUnlock();
+  }, []);
 
   const t = translations[lang] || translations['en'];
 
