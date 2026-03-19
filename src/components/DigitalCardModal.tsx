@@ -563,6 +563,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             animate="show"
             exit="exit"
             className="relative w-full max-w-sm h-full flex flex-col items-center justify-center"
+            // Perspective enables all rotateX/rotateY 3D transforms within this container
+            // (both the card tilt/glare system and the sleeve front-flap hinge effect)
+            style={{ perspective: '1200px' }}
           >
             
             {/* Top Bar (Aadhaar Style) */}
@@ -623,7 +626,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               animate={{ 
                 y: step === 'revealed' ? '130vh' : 0,
                 opacity: step === 'revealed' ? 0 : 1,
-                rotate: 0,
+                rotateX: step === 'revealed' ? -20 : 0,
               }}
               transition={{ type: "spring", stiffness: 300, damping: 22 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
@@ -635,7 +638,8 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 //   Layer 2 — primary umbra: tight, downward, high contrast.
                 //   Layer 3 — soft penumbra: wider spread, lower opacity.
                 filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
-                willChange: 'transform'
+                willChange: 'transform',
+                transformOrigin: 'bottom center',
               }}
             >
               <div 
