@@ -602,7 +602,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 rotate: step === 'revealed' ? -4 : 0,
               }}
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
-              className="absolute top-[50%] mt-[-100px] w-[340px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
+              className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[1.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
               {/* Gradient overlays replace CSS inset box-shadow so there is no hard "source edge"
@@ -626,7 +626,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 rotate: step === 'revealed' ? 4 : 0,
               }}
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
-              className="absolute top-[50%] mt-[-100px] w-[340px] h-[1200px] z-20 flex justify-center pointer-events-none"
+              className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
                 // Three-layer drop-shadow system with consistent top-left light source:
                 //   Layer 1 — ambient halo (no offset): radiates equally in all directions
@@ -639,7 +639,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               }}
             >
               <div 
-                className="absolute inset-0 bg-gradient-to-b from-[#fdfbf7] to-[#f2ebe1] rounded-t-[2.5rem] overflow-hidden"
+                className="absolute inset-0 bg-gradient-to-b from-[#fdfbf7] to-[#f2ebe1] rounded-t-[1.5rem] overflow-hidden"
                 style={{ 
                   maskImage: 'radial-gradient(circle at 50% 0px, transparent 30px, black 31px)',
                   WebkitMaskImage: 'radial-gradient(circle at 50% 0px, transparent 30px, black 31px)'
@@ -649,7 +649,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 <div className="absolute inset-0 opacity-[0.2] mix-blend-multiply" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
                 
                 {/* Inner side shadows for 3D volume — opacity raised to a visible level so left/right walls read as real depth */}
-                <div className="absolute inset-0 shadow-[inset_20px_0_40px_rgba(0,0,0,0.16),inset_-20px_0_40px_rgba(0,0,0,0.16)] rounded-t-[2.5rem]" />
+                <div className="absolute inset-0 shadow-[inset_20px_0_40px_rgba(0,0,0,0.16),inset_-20px_0_40px_rgba(0,0,0,0.16)] rounded-t-[1.5rem]" />
 
                 {/* Perimeter Stitching */}
                 <div className="absolute inset-3 pointer-events-none z-10" style={{ maskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)', WebkitMaskImage: 'radial-gradient(circle at 50% -12px, transparent 41px, black 42px)' }}>
