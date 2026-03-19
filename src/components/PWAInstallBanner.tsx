@@ -72,27 +72,45 @@ export const PWAInstallBanner: React.FC = () => {
   if (installed) return null;
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          key="pwa-banner"
-          initial={{ y: -120, scale: 0.96 }}
-          animate={{ y: 0, scale: 1 }}
-          exit={{ y: -120, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm"
-          style={{ willChange: 'transform' }}
-        >
-          {/*
-           * Backdrop layer — always at opacity 1 from the first frame so the browser creates
-           * the compositing layer for backdrop-filter immediately on mount.  When the outer
-           * motion.div had opacity:0 initially the browser skipped compositing, causing a
-           * 1-2 frame lag before the blur actually engaged behind the banner.
-           */}
-          <div
-            className="absolute inset-0 rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)]"
-            style={{ willChange: 'backdrop-filter' }}
-          />
+    <>
+      {/*
+       * Backdrop blur — rendered immediately at its final viewport position when
+       * `show` becomes true (initial opacity:1, no entry animation).  Because this
+       * element is NOT inside the sliding motion.div it is already in the viewport
+       * from frame 1, so the browser creates the compositing layer for
+       * backdrop-filter right away.  This eliminates the 1-2 frame lag where text
+       * below the banner was visible through the semi-transparent surface during
+       * the slide-in transition.
+       */}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            key="pwa-backdrop"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[199] w-[calc(100%-2rem)] max-w-sm pointer-events-none"
+          >
+            <div
+              className="absolute inset-0 rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)]"
+              style={{ willChange: 'backdrop-filter' }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Banner slides in over the already-active backdrop above */}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            key="pwa-banner"
+            initial={{ y: -120, scale: 0.96 }}
+            animate={{ y: 0, scale: 1 }}
+            exit={{ y: -120, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm"
+            style={{ willChange: 'transform' }}
+          >
 
           {/* Content fades in so it appears cleanly once the blur layer is ready */}
           <motion.div
@@ -159,5 +177,6 @@ export const PWAInstallBanner: React.FC = () => {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   );
 };

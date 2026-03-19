@@ -81,16 +81,24 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   // Dynamic drop shadow driven by real physics:
   //   smoothCardY  = beta driver  → shadow moves vertically (front-back tilt)
   //   smoothCardX  = gamma driver → shadow moves horizontally (left-right tilt)
-  // At rest the shadow sits 25px below; full tilt shifts it ±15 px on each axis.
-  const shadowY = useTransform(smoothCardY, [-600, 600], [10, 40]);
-  const shadowX = useTransform(smoothCardX, [-600, 600], [-12, 12]);
-  const shadowBlur = useTransform(smoothCardY, [-600, 600], [30, 60]);
-  // Outer penumbra: wider spread at lower opacity so the shadow fades naturally rather than cutting off sharply
-  const shadowBlurOuter = useTransform(smoothCardY, [-600, 600], [60, 100]);
-  // Real material shadow: no glassmorphic inner bevel (which was the double inset rim trick).
-  // Only a barely-visible top catch-light (leather sheen) + directional outer shadows.
-  // The small 0 2px 6px contact shadow adds physical weight and is always present.
-  const cardBoxShadow = useMotionTemplate`inset 0 1px 3px rgba(255,255,255,0.10), 0 2px 6px rgba(0,0,0,0.32), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.45), ${shadowX}px ${shadowY}px ${shadowBlurOuter}px rgba(0,0,0,0.15)`;
+  //
+  // Three-layer realistic shadow system (consistent top-left light source):
+  //   Layer 1 — umbra (tight, close, high opacity): follows tilt fully.
+  //   Layer 2 — outer penumbra (wider blur, lower opacity): offset Y is kept LARGER
+  //             than the blur radius so the shadow stays directional and does not
+  //             wrap around the top edge as a glowing halo.
+  //   Layer 3 — contact shadow (always-present, no tilt): physically grounds the card.
+  const shadowY = useTransform(smoothCardY, [-600, 600], [8, 30]);
+  const shadowX = useTransform(smoothCardX, [-600, 600], [-10, 10]);
+  const shadowBlur = useTransform(smoothCardY, [-600, 600], [18, 38]);
+  // Outer penumbra — separate Y offset ensures offset > blur at rest (45 > 42)
+  // so the shadow is directional rather than an all-sides halo.
+  const shadowYOuter = useTransform(smoothCardY, [-600, 600], [28, 56]);
+  const shadowXOuter = useTransform(smoothCardX, [-600, 600], [-5, 5]);
+  const shadowBlurOuter = useTransform(smoothCardY, [-600, 600], [38, 68]);
+  // Subtle specular catch-light on top edge (leather sheen) + grounding contact shadow
+  // + directional umbra + wide penumbra that stays south of the card.
+  const cardBoxShadow = useMotionTemplate`inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 3px rgba(0,0,0,0.45), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.52), ${shadowXOuter}px ${shadowYOuter}px ${shadowBlurOuter}px rgba(0,0,0,0.18)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -620,10 +628,13 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Real directional shadow: primary cast falls downward from a top light source.
-                // Two layers (tight umbra + wide penumbra) fade out naturally without the
-                // symmetric all-sides glow that causes a glassmorphic appearance.
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.55)) drop-shadow(0 16px 40px rgba(0,0,0,0.25))',
+                // Three-layer drop-shadow system with consistent top-left light source:
+                //   Layer 1 — ambient halo (no offset): radiates equally in all directions
+                //             so the shadow wraps smoothly around the top rounded edge and
+                //             the curved notch, eliminating the hard cutoff at the rim.
+                //   Layer 2 — primary umbra: tight, downward, high contrast.
+                //   Layer 3 — soft penumbra: wider spread, lower opacity.
+                filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
                 willChange: 'transform'
               }}
             >
