@@ -599,9 +599,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               animate={{ 
                 y: step === 'revealed' ? '130vh' : 0,
                 opacity: step === 'revealed' ? 0 : 1,
-                rotate: step === 'revealed' ? -4 : 0,
+                rotate: 0,
               }}
-              transition={{ type: "spring", stiffness: 220, damping: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 22 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[1.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
@@ -623,9 +623,9 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               animate={{ 
                 y: step === 'revealed' ? '130vh' : 0,
                 opacity: step === 'revealed' ? 0 : 1,
-                rotate: step === 'revealed' ? 4 : 0,
+                rotate: 0,
               }}
-              transition={{ type: "spring", stiffness: 220, damping: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 22 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
                 // Three-layer drop-shadow system with consistent top-left light source:
