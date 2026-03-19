@@ -622,7 +622,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* The Sleeve Front Flap */}
             <motion.div 
-              initial={{ y: 500, opacity: 0 }}
+              initial={{ y: 500, opacity: 0, rotateX: -20 }}
               animate={{ 
                 y: step === 'revealed' ? '130vh' : 0,
                 opacity: step === 'revealed' ? 0 : 1,
@@ -631,13 +631,15 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               transition={{ type: "spring", stiffness: 300, damping: 22 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
-                // Three-layer drop-shadow system with consistent top-left light source:
+                // Four-layer drop-shadow system:
+                //   Layer 0 — upward lip shadow: casts darkness UP onto the card so the brain
+                //             reads the white sleeve as physically in front of the gold card.
                 //   Layer 1 — ambient halo (no offset): radiates equally in all directions
                 //             so the shadow wraps smoothly around the top rounded edge and
                 //             the curved notch, eliminating the hard cutoff at the rim.
                 //   Layer 2 — primary umbra: tight, downward, high contrast.
                 //   Layer 3 — soft penumbra: wider spread, lower opacity.
-                filter: 'drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
+                filter: 'drop-shadow(0 -8px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
                 willChange: 'transform',
                 transformOrigin: 'bottom center',
               }}
@@ -775,7 +777,13 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                   opacity: 1,
                   scale: step === 'revealed' ? 1.05 : 0.95
                 }}
-                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 300, 
+                  damping: 22,
+                  // Forces the card to wait until the pocket arrives first with its mouth open
+                  delay: step === 'pocket' ? 0.12 : 0 
+                }}
                 style={{ y: cardDragY, rotateX: cardRotateX, rotateY: cardRotateY, boxShadow: cardBoxShadow, willChange: 'transform' }}
                 onMouseMove={step === 'revealed' ? handleMouseMove : undefined}
                 onMouseLeave={step === 'revealed' ? handleMouseLeave : undefined}
