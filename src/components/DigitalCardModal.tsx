@@ -87,7 +87,10 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
   const shadowBlur = useTransform(smoothCardY, [-600, 600], [30, 60]);
   // Outer penumbra: wider spread at lower opacity so the shadow fades naturally rather than cutting off sharply
   const shadowBlurOuter = useTransform(smoothCardY, [-600, 600], [60, 100]);
-  const cardBoxShadow = useMotionTemplate`inset 0 1px 1px rgba(255,255,255,0.4), inset 0 -1px 1px rgba(0,0,0,0.4), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.35), ${shadowX}px ${shadowY}px ${shadowBlurOuter}px rgba(0,0,0,0.12)`;
+  // Real material shadow: no glassmorphic inner bevel (which was the double inset rim trick).
+  // Only a barely-visible top catch-light (leather sheen) + directional outer shadows.
+  // The small 0 2px 6px contact shadow adds physical weight and is always present.
+  const cardBoxShadow = useMotionTemplate`inset 0 1px 3px rgba(255,255,255,0.10), 0 2px 6px rgba(0,0,0,0.32), ${shadowX}px ${shadowY}px ${shadowBlur}px rgba(0,0,0,0.45), ${shadowX}px ${shadowY}px ${shadowBlurOuter}px rgba(0,0,0,0.15)`;
 
   // Pull Interaction & Foil Glare
   const cardDragY = useMotionValue(250);
@@ -594,8 +597,16 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
               className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
-              {/* Top + left/right inset shadows give the pocket real 3-sided depth */}
-              <div className="absolute inset-0 shadow-[inset_0_40px_40px_rgba(0,0,0,0.6),inset_0_10px_10px_rgba(0,0,0,0.8),inset_24px_0_48px_rgba(0,0,0,0.28),inset_-24px_0_48px_rgba(0,0,0,0.28)] rounded-t-[2.5rem]" />
+              {/* Gradient overlays replace CSS inset box-shadow so there is no hard "source edge"
+                  at the rounded corners — CSS box-shadow always produces a sharp line before
+                  the blur radius starts, which is especially visible at border-radius curves.
+                  Gradients have zero such artefact and produce a smooth, natural falloff. */}
+              {/* Top: deep dark at the rim, fades to transparent well before the content */}
+              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '160px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.70) 0%, rgba(0,0,0,0.38) 28%, rgba(0,0,0,0.14) 58%, transparent 100%)' }} />
+              {/* Left wall depth */}
+              <div className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to right, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 55%, transparent 100%)' }} />
+              {/* Right wall depth */}
+              <div className="absolute inset-y-0 right-0 pointer-events-none" style={{ width: '72px', background: 'linear-gradient(to left, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.10) 55%, transparent 100%)' }} />
             </motion.div>
 
             {/* The Sleeve Front Flap */}

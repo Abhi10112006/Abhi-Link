@@ -76,19 +76,38 @@ export const PWAInstallBanner: React.FC = () => {
       {show && (
         <motion.div
           key="pwa-banner"
-          initial={{ y: -120, opacity: 0, scale: 0.96 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -120, opacity: 0, scale: 0.96 }}
+          initial={{ y: -120, scale: 0.96 }}
+          animate={{ y: 0, scale: 1 }}
+          exit={{ y: -120, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22 }}
           className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm"
+          style={{ willChange: 'transform' }}
         >
-          <div className="relative overflow-hidden rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)] px-5 py-4">
+          {/*
+           * Backdrop layer — always at opacity 1 from the first frame so the browser creates
+           * the compositing layer for backdrop-filter immediately on mount.  When the outer
+           * motion.div had opacity:0 initially the browser skipped compositing, causing a
+           * 1-2 frame lag before the blur actually engaged behind the banner.
+           */}
+          <div
+            className="absolute inset-0 rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)]"
+            style={{ willChange: 'backdrop-filter' }}
+          />
+
+          {/* Content fades in so it appears cleanly once the blur layer is ready */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="relative overflow-hidden rounded-3xl px-5 py-4"
+          >
             {/* Shimmer stripe */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-transparent to-transparent" />
               <motion.div
                 className="absolute top-0 -left-full h-full w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                animate={{ left: ['−100%', '200%'] }}
+                animate={{ left: ['-100%', '200%'] }}
                 transition={{ duration: 3, repeat: Infinity, repeatDelay: 6, ease: 'easeInOut' }}
               />
             </div>
@@ -136,7 +155,7 @@ export const PWAInstallBanner: React.FC = () => {
                 </motion.button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
