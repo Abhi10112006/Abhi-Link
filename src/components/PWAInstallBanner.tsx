@@ -89,10 +89,10 @@ export const PWAInstallBanner: React.FC = () => {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-[199] w-[calc(100%-2rem)] max-w-sm pointer-events-none"
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[199] w-[calc(100%-2rem)] max-w-sm h-[72px] pointer-events-none"
           >
             <div
-              className="absolute inset-0 rounded-3xl border border-[#d9d3ce] bg-white/80 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)]"
+              className="absolute inset-0 rounded-3xl backdrop-blur-xl"
               style={{ willChange: 'backdrop-filter' }}
             />
           </motion.div>
@@ -112,13 +112,15 @@ export const PWAInstallBanner: React.FC = () => {
             style={{ willChange: 'transform' }}
           >
 
-          {/* Content fades in so it appears cleanly once the blur layer is ready */}
+          {/* Content — solid white background so the banner is always legible.
+               The backdrop sibling provides bonus blur on supported browsers, but
+               the banner must look correct even when backdrop-filter is absent. */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="relative overflow-hidden rounded-3xl px-5 py-4"
+            className="relative overflow-hidden rounded-3xl px-5 py-4 bg-white border border-[#d9d3ce] shadow-[0_20px_60px_rgba(0,0,0,0.18),0_4px_8px_rgba(0,0,0,0.06)]"
           >
             {/* Shimmer stripe */}
             <div className="absolute inset-0 pointer-events-none">
