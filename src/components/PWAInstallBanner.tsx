@@ -7,6 +7,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+/** Delay in ms before the install banner slides in after the UI has settled */
+const BANNER_DELAY_MS = 1500;
+
 /**
  * PWAInstallBanner
  *
@@ -33,7 +36,7 @@ export const PWAInstallBanner: React.FC = () => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
       // Small delay so the rest of the UI settles first
-      setTimeout(() => setShow(true), 4000);
+      setTimeout(() => setShow(true), BANNER_DELAY_MS);
     };
 
     const onAppInstalled = () => {

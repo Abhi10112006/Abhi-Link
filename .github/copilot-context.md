@@ -326,7 +326,7 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 3. **`PWAInstallBanner.tsx` (new component) + `App.tsx`:**
    - Premium bottom-sheet install banner displayed once when the browser fires `beforeinstallprompt` (Chrome/Edge/Samsung Browser on Android).
    - Never shown if the app is already running in `standalone` or `fullscreen` display mode (already installed).
-   - Appears 4 seconds after page load; animated spring entry/exit.
+   - Appears 1.5 seconds after page load; animated spring entry/exit.
    - "Install" button calls `deferredPrompt.prompt()` and fires `hapticSuccess` on acceptance.
    - "Dismiss" (×) button hides the banner for the session.
    - Mounted unconditionally in `App.tsx` — the component itself manages all visibility logic.
