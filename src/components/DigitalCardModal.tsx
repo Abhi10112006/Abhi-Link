@@ -562,7 +562,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
             initial="hidden"
             animate="show"
             exit="exit"
-            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center overflow-hidden"
+            className="relative w-full max-w-sm h-full flex flex-col items-center justify-center"
           >
             
             {/* Top Bar (Aadhaar Style) */}
@@ -602,7 +602,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 rotate: step === 'revealed' ? -4 : 0,
               }}
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
-              className="absolute top-[50%] mt-[-100px] w-full h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
+              className="absolute top-[50%] mt-[-100px] w-[340px] h-[1200px] bg-gradient-to-b from-[#d4c5b9] to-[#e6e1dc] rounded-t-[2.5rem] z-0 border-t border-[#cbbca0] overflow-hidden"
               style={{ pointerEvents: step === 'revealed' ? 'none' : 'auto', willChange: 'transform' }}
             >
               {/* Gradient overlays replace CSS inset box-shadow so there is no hard "source edge"
@@ -626,7 +626,7 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 rotate: step === 'revealed' ? 4 : 0,
               }}
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
-              className="absolute top-[50%] mt-[-100px] w-full h-[1200px] z-20 flex justify-center pointer-events-none"
+              className="absolute top-[50%] mt-[-100px] w-[340px] h-[1200px] z-20 flex justify-center pointer-events-none"
               style={{ 
                 // Three-layer drop-shadow system with consistent top-left light source:
                 //   Layer 1 — ambient halo (no offset): radiates equally in all directions
