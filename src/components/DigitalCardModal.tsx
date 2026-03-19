@@ -622,11 +622,11 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
 
             {/* The Sleeve Front Flap */}
             <motion.div 
-              initial={{ y: 500, opacity: 0, rotateX: -20 }}
+              initial={{ y: 500, opacity: 0 }}
               animate={{ 
                 y: step === 'revealed' ? '130vh' : 0,
                 opacity: step === 'revealed' ? 0 : 1,
-                rotateX: step === 'revealed' ? -20 : 0,
+                rotate: 0,
               }}
               transition={{ type: "spring", stiffness: 300, damping: 22 }}
               className="absolute top-[50%] mt-[-100px] w-[348px] h-[1200px] z-20 flex justify-center pointer-events-none"
@@ -641,7 +641,6 @@ export const DigitalCardModal = React.forwardRef<HTMLDivElement, DigitalCardModa
                 //   Layer 3 — soft penumbra: wider spread, lower opacity.
                 filter: 'drop-shadow(0 -8px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 6px rgba(0,0,0,0.22)) drop-shadow(0 5px 14px rgba(0,0,0,0.48)) drop-shadow(0 14px 36px rgba(0,0,0,0.20))',
                 willChange: 'transform',
-                transformOrigin: 'bottom center',
               }}
             >
               <div 
