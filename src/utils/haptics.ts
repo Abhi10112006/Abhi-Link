@@ -26,3 +26,17 @@ export const hapticWarning = (): void => vibrate([50, 30, 50]);
 
 /** Scroll tick — very subtle, call throttled on scroll events */
 export const hapticScroll = (): void => vibrate(5);
+
+/**
+ * Silent Unlock — fires a 1 ms imperceptible vibration on the very first
+ * touchstart so the browser's vibration gate is opened before the user
+ * starts scrolling.  The listener removes itself immediately after.
+ */
+export const initHapticUnlock = (): void => {
+  if (typeof navigator === 'undefined' || !navigator.vibrate) return;
+  const unlock = (): void => {
+    navigator.vibrate(1);
+    document.removeEventListener('touchstart', unlock);
+  };
+  document.addEventListener('touchstart', unlock, { passive: true });
+};
