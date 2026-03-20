@@ -97,7 +97,7 @@
 - **Haptic imports:** `hapticLight`, `hapticMedium`, `hapticHeavy`, `hapticSuccess`, `hapticScroll`
 
 ### `src/components/TransactionHistory.tsx`
-- **Role:** Full-screen swipeable transaction list. Swipe-left to delete individual items; "Clear All" with confirmation dialog.
+- **Role:** Full-screen swipeable transaction list. Swipe-left to delete individual items. Per-item swipe-to-delete is the only bulk management option.
 - **Features:**
   - Transactions stored in `localStorage` via parent `App.tsx`
   - Swipeable cards using Framer Motion drag
@@ -349,11 +349,11 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 
 **What was added/changed:**
 - **Month grouping**: Transactions are now parsed from `DD/MM/YYYY` format and grouped by `YYYY-MM` key, sorted newest-first.
-- **Sticky header with month tabs**: Horizontal scrollable pill tabs (e.g. "Mar · 2026 · 3 txns") sit below the title bar. Active tab uses the app's dark `#2d2d2b` background. Tabs auto-scroll into view when navigated.
+- **Sticky header**: Clean title bar with close button. Month tabs removed — the monthly summary card at the top of each page already shows the current month name prominently.
 - **Direction-aware page transitions**: `AnimatePresence` with `mode="wait"` slides the month content in/out (left/right) based on navigation direction.
 - **Monthly summary card**: A dark `#2d2d2b` card with sacred-geometry pattern overlay at the top of each month's page shows: month name, transaction count, animated sent total (count-up), and animated received total (count-up), each with sub-counts.
 - **`AnimatedNumber` component**: Uses `useMotionValue` + `animate` to count up to the target value over 0.9s with a custom ease curve.
-- **Navigation arrows**: Prev/Next `ChevronLeft`/`ChevronRight` buttons above the Clear All button.
+- **Horizontal swipe navigation**: Users swipe left/right on the content area to move between months. Touch events (`onTouchStart`/`onTouchEnd`) detect swipes ≥60 px that are more horizontal than vertical. Navigation arrows removed.
 - **Page indicator dots**: Animated pill-shaped dots at the bottom using explicit `animate={{ width }}` instead of `layout` to avoid layout thrashing.
 - **Removed `layout` prop** from month tab buttons to avoid unnecessary layout calculations.
 - **Input validation**: Date parsing now validates that month and year parts are numeric before calling `parseInt`.

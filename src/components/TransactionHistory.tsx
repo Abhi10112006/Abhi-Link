@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
-import { X, History, IndianRupee, Trash2, AlertTriangle, ArrowDownLeft, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
 import { hapticMedium, hapticLight, hapticWarning, hapticScroll } from '../utils/haptics';
 
@@ -19,7 +19,7 @@ interface TransactionHistoryProps {
   isOpen: boolean;
   onClose: () => void;
   transactions: Transaction[];
-  onClearAll: () => void;
+  onClearAll?: () => void;
   onDeleteTransaction: (id: string) => void;
   t: Record<string, string>;
 }
@@ -257,15 +257,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
   onClose,
   transactions,
-  onClearAll,
   onDeleteTransaction,
   t,
 }) => {
-  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [activeMonthIndex, setActiveMonthIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
+  const swipeStartX = useRef<number | null>(null);
+  const swipeStartY = useRef<number | null>(null);
 
   const monthGroups = groupTransactionsByMonth(transactions);
 
@@ -281,12 +280,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setShowClearAllConfirm(false);
-    }
   }, [isOpen]);
 
   // Scroll haptics
@@ -306,21 +299,34 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return () => el.removeEventListener('scroll', onScroll);
   });
 
-  // Scroll active tab into view
-  useEffect(() => {
-    const tabsEl = tabsRef.current;
-    if (!tabsEl) return;
-    if (activeMonthIndex >= tabsEl.children.length) return;
-    const activeTab = tabsEl.children[activeMonthIndex] as HTMLElement;
-    activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [activeMonthIndex]);
-
   const goToMonth = (index: number) => {
     if (index === activeMonthIndex) return;
     hapticLight();
     setSlideDirection(index > activeMonthIndex ? 1 : -1);
     setActiveMonthIndex(index);
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const SWIPE_THRESHOLD = 60;
+
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    swipeStartX.current = e.touches[0].clientX;
+    swipeStartY.current = e.touches[0].clientY;
+  };
+
+  const handleSwipeEnd = (e: React.TouchEvent) => {
+    if (swipeStartX.current === null || swipeStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX.current;
+    const dy = e.changedTouches[0].clientY - swipeStartY.current;
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0 && activeMonthIndex < monthGroups.length - 1) {
+      goToMonth(activeMonthIndex + 1);
+    } else if (dx > 0 && activeMonthIndex > 0) {
+      goToMonth(activeMonthIndex - 1);
+    }
   };
 
   const currentMonth = monthGroups[activeMonthIndex];
@@ -361,40 +367,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <X className="w-4 h-4 text-[#2d2d2b]/60 group-hover:text-[#2d2d2b] transition-colors" />
           </motion.button>
         </div>
-
-        {/* Month tabs — only shown when there are transactions */}
-        {monthGroups.length > 0 && (
-          <div className="w-full px-4 sm:px-6 pb-3">
-            <div
-              ref={tabsRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {monthGroups.map((mg, i) => (
-                <motion.button
-                  key={mg.key}
-                  onClick={() => goToMonth(i)}
-                  className={`flex-shrink-0 flex flex-col items-center px-4 py-2 rounded-2xl border transition-all focus:outline-none focus-visible:outline-none text-left ${
-                    i === activeMonthIndex
-                      ? 'bg-[#2d2d2b] border-[#2d2d2b] text-[#e6e1dc]'
-                      : 'bg-white/50 border-[#d9d3ce] text-[#2d2d2b] hover:bg-white'
-                  }`}
-                  whileTap={{ scale: 0.94 }}
-                >
-                  <span className={`text-[10px] font-bold uppercase tracking-widest leading-none ${i === activeMonthIndex ? 'text-[#e6e1dc]/60' : 'text-[#2d2d2b]/50'}`}>
-                    {mg.shortLabel}
-                  </span>
-                  <span className={`text-xs font-black leading-tight ${i === activeMonthIndex ? 'text-[#e6e1dc]' : 'text-[#2d2d2b]'}`}>
-                    {mg.key.split('-')[0]}
-                  </span>
-                  <span className={`text-[9px] font-bold mt-0.5 leading-none ${i === activeMonthIndex ? 'text-[#e6e1dc]/50' : 'text-[#2d2d2b]/40'}`}>
-                    {mg.transactions.length} txn{mg.transactions.length !== 1 ? 's' : ''}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main content */}
@@ -417,45 +389,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           </motion.div>
         ) : (
           <>
-            {/* Actions row */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.08 }}
-              className="flex justify-between items-center mb-3"
-            >
-              {/* Month navigation arrows */}
-              <div className="flex items-center gap-1">
-                <motion.button
-                  onClick={() => goToMonth(activeMonthIndex - 1)}
-                  disabled={activeMonthIndex === 0}
-                  className="w-8 h-8 flex items-center justify-center rounded-full border border-[#d9d3ce] bg-white/50 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-all focus:outline-none"
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <ChevronLeft className="w-4 h-4 text-[#2d2d2b]" />
-                </motion.button>
-                <motion.button
-                  onClick={() => goToMonth(activeMonthIndex + 1)}
-                  disabled={activeMonthIndex === monthGroups.length - 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-full border border-[#d9d3ce] bg-white/50 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white transition-all focus:outline-none"
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <ChevronRight className="w-4 h-4 text-[#2d2d2b]" />
-                </motion.button>
-              </div>
-
-              <motion.button
-                onClick={() => { hapticMedium(); setShowClearAllConfirm(true); }}
-                className="flex items-center gap-1.5 text-[10px] font-bold text-[#2d2d2b] bg-white/60 hover:bg-white px-3.5 py-2 rounded-full transition-colors border border-[#d9d3ce] backdrop-blur-md shadow-sm uppercase tracking-wide"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Trash2 className="w-3 h-3" />
-                {t.clearAll || 'Clear All'}
-              </motion.button>
-            </motion.div>
-
             {/* Month summary + transaction list (animated per month) */}
+            <div
+              onTouchStart={handleSwipeStart}
+              onTouchEnd={handleSwipeEnd}
+            >
             <AnimatePresence mode="wait" custom={slideDirection}>
               {currentMonth && (
                 <motion.div
@@ -502,73 +440,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
           </>
         )}
       </div>
-
-      {/* Clear All confirmation overlay */}
-      <AnimatePresence>
-        {showClearAllConfirm && (
-          <motion.div
-            className="fixed inset-0 z-60 flex items-end justify-center p-4 sm:items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-              onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
-            />
-            <motion.div
-              className="relative w-full max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl p-6 flex flex-col gap-4"
-              initial={{ y: 40, opacity: 0, scale: 0.97 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 40, opacity: 0, scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-[#f0ece8] flex items-center justify-center border border-[#d9d3ce]">
-                  <AlertTriangle className="w-5 h-5 text-[#2d2d2b]" />
-                </div>
-              </div>
-              <div className="text-center">
-                <h3 className="text-base font-black text-[#2d2d2b] uppercase tracking-tight mb-1">
-                  Clear All Transactions?
-                </h3>
-                <p className="text-xs text-[#2d2d2b]/60 font-medium leading-relaxed">
-                  This will permanently delete all{' '}
-                  <span className="font-black text-[#2d2d2b]">{transactions.length}</span>{' '}
-                  {transactions.length === 1 ? 'transaction' : 'transactions'} from your history. This action cannot be undone.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <motion.button
-                  onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
-                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  onClick={() => {
-                    hapticWarning();
-                    onClearAll();
-                    setShowClearAllConfirm(false);
-                  }}
-                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#e6e1dc] bg-[#2d2d2b] hover:bg-[#1a1a18] border border-[#2d2d2b] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Clear All
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
