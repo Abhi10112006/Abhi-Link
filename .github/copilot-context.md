@@ -338,3 +338,24 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
      - `shadowX`: `smoothCardX` (gamma, left-right tilt) maps `[-600 → 600]` to `[-12px → 12px]` — shadow shifts laterally with phone tilt.
      - `shadowBlur`: `smoothCardY` maps `[-600 → 600]` to `[30px → 60px]` — shadow softens as card appears to lift toward viewer.
    - Combined via `useMotionTemplate` into `cardBoxShadow` applied as `style.boxShadow` on the card element; static `shadow-[...]` Tailwind class removed.
+
+---
+
+## Update Log
+
+### 2026-03-20 — Transaction History Modal: Month-wise Pagination & Animated Summary
+
+**What changed:** Fully redesigned `src/components/TransactionHistory.tsx` to match a native mobile experience with reduced scrolling.
+
+**What was added/changed:**
+- **Month grouping**: Transactions are now parsed from `DD/MM/YYYY` format and grouped by `YYYY-MM` key, sorted newest-first.
+- **Sticky header with month tabs**: Horizontal scrollable pill tabs (e.g. "Mar · 2026 · 3 txns") sit below the title bar. Active tab uses the app's dark `#2d2d2b` background. Tabs auto-scroll into view when navigated.
+- **Direction-aware page transitions**: `AnimatePresence` with `mode="wait"` slides the month content in/out (left/right) based on navigation direction.
+- **Monthly summary card**: A dark `#2d2d2b` card with sacred-geometry pattern overlay at the top of each month's page shows: month name, transaction count, animated sent total (count-up), and animated received total (count-up), each with sub-counts.
+- **`AnimatedNumber` component**: Uses `useMotionValue` + `animate` to count up to the target value over 0.9s with a custom ease curve.
+- **Navigation arrows**: Prev/Next `ChevronLeft`/`ChevronRight` buttons above the Clear All button.
+- **Page indicator dots**: Animated pill-shaped dots at the bottom using explicit `animate={{ width }}` instead of `layout` to avoid layout thrashing.
+- **Removed `layout` prop** from month tab buttons to avoid unnecessary layout calculations.
+- **Input validation**: Date parsing now validates that month and year parts are numeric before calling `parseInt`.
+
+**Files affected:** `src/components/TransactionHistory.tsx`
