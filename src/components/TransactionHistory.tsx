@@ -626,18 +626,16 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                       <MonthlySummaryCard key={currentMonth.key} month={currentMonth} />
 
                       {/* Transaction list */}
-                      <AnimatePresence>
-                        <div className="space-y-2">
-                          {currentMonth.transactions.map((tx, index) => (
-                            <SwipeableCard
-                              key={tx.id}
-                              tx={tx}
-                              index={index}
-                              onDeleteRequest={setPendingDeleteTx}
-                            />
-                          ))}
-                        </div>
-                      </AnimatePresence>
+                      <div className="space-y-2">
+                        {currentMonth.transactions.map((tx, index) => (
+                          <SwipeableCard
+                            key={tx.id}
+                            tx={tx}
+                            index={index}
+                            onDeleteRequest={setPendingDeleteTx}
+                          />
+                        ))}
+                      </div>
                     </>
                   )}
                 </motion.div>
