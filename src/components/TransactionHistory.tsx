@@ -426,7 +426,7 @@ const MonthScrubber: React.FC<{
 
       <div
         ref={containerRef}
-        className="flex items-center gap-1 overflow-x-auto px-8 pb-1"
+        className="flex items-center gap-1 overflow-x-auto px-8 py-3"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
         {months.map((month, i) => (
@@ -478,22 +478,58 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   onDeleteTransaction,
   t,
 }) => {
+    // 1. FAST PATH: Instantly grab ONLY the current calendar month for a 0ms render
+  const fastInitialMonth = React.useMemo(() => {
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonthSuffix = `${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    
+    const allTxs = [...transactions, ...MOCK_TRANSACTIONS];
+    // Lightning-fast string filter just to get today's month
+    const currentTxs = allTxs.filter(tx => tx.date.endsWith(currentMonthSuffix));
+    
+    return [{
+      key: currentMonthKey,
+      label: today.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+      shortLabel: today.toLocaleString('en-IN', { month: 'short' }),
+      transactions: currentTxs,
+      isCurrentMonth: true
+    }];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only runs once when the modal boots up
+
+  // 2. Initialize state with ONLY the fast current month
+  const [monthGroups, setMonthGroups] = useState<MonthGroup[]>(fastInitialMonth);
   const [activeMonthIndex, setActiveMonthIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const [pendingDeleteTx, setPendingDeleteTx] = useState<Transaction | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasLoadedHistory = useRef(false);
 
-  const monthGroups = groupTransactionsByMonth([
-    ...transactions,
-    // TODO: Remove mock data — temporary multi-month fixture
-    ...MOCK_TRANSACTIONS,
-  ]);
-
-  // Default to the newest month (last index) when the transaction list changes
+  // 3. BACKGROUND WORKER: Calculate the rest of the history while the modal is opening
   useEffect(() => {
-    setActiveMonthIndex(monthGroups.length - 1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions.length]);
+    if (!hasLoadedHistory.current) {
+      // Wait 350ms for the modal's slide-up animation to completely finish
+      const timer = setTimeout(() => {
+        const fullHistory = groupTransactionsByMonth([...transactions, ...MOCK_TRANSACTIONS]);
+        if (fullHistory.length > 0) {
+          setMonthGroups(fullHistory);
+          // Silently shift the index to the end of the new array.
+          // Because the active month key ("2026-03") remains exactly the same, 
+          // Framer Motion will NOT trigger a swipe animation!
+          setActiveMonthIndex(Math.max(0, fullHistory.length - 1));
+        }
+        hasLoadedHistory.current = true;
+      }, 350);
+      return () => clearTimeout(timer);
+    } else {
+      // If history is already loaded (e.g., user deletes a card), update instantly so there is no lag!
+      const fullHistory = groupTransactionsByMonth([...transactions, ...MOCK_TRANSACTIONS]);
+      setMonthGroups(fullHistory);
+      setActiveMonthIndex(prev => Math.min(prev, Math.max(0, fullHistory.length - 1)));
+    }
+  }, [transactions]);
+  
 
   useEffect(() => {
     if (isOpen) {
