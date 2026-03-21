@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
 import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
-import { hapticMedium, hapticLight, hapticWarning, hapticScroll } from '../utils/haptics';
+import { hapticMedium, hapticLight, hapticWarning } from '../utils/haptics';
 
 export interface Transaction {
   id: string;
@@ -67,6 +67,25 @@ const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'mock-3',  payeeName: '',               payeeUpiId: 'grofers@ybl',          amount: '1240', remarks: 'Groceries',         date: '12/03/2026', time: '09:08', isReceiver: false },
   { id: 'mock-4',  payeeName: 'Amit Kumar',     payeeUpiId: 'amit.k@upi',          amount: '3000', remarks: 'Freelance payment', date: '05/03/2026', time: '14:30', isReceiver: true  },
   { id: 'mock-5',  payeeName: 'Swiggy',         payeeUpiId: 'swiggy@icici',        amount: '340',  remarks: '',                  date: '02/03/2026', time: '20:05', isReceiver: false },
+    // ── Extra Scroll-Testing Data for March 2026 (No ID Collisions) ─────────
+  { id: 'mock-101', payeeName: 'Starbucks',      payeeUpiId: 'starbucks@paytm',     amount: '350',  remarks: 'Morning Coffee',    date: '30/03/2026', time: '08:15', isReceiver: false },
+  { id: 'mock-102', payeeName: 'Blinkit',        payeeUpiId: 'blinkit@upi',         amount: '890',  remarks: 'Groceries',         date: '29/03/2026', time: '19:45', isReceiver: false },
+  { id: 'mock-103', payeeName: 'Karan Singh',    payeeUpiId: 'karan.s@okicici',     amount: '5000', remarks: 'Lent money',        date: '28/03/2026', time: '14:20', isReceiver: false },
+  { id: 'mock-104', payeeName: 'Uber',           payeeUpiId: 'uber@axisbank',       amount: '450',  remarks: 'Cab to office',     date: '27/03/2026', time: '09:10', isReceiver: false },
+  { id: 'mock-105', payeeName: 'Jio Prepaid',    payeeUpiId: 'jio@upi',             amount: '749',  remarks: 'Mobile recharge',   date: '26/03/2026', time: '11:03', isReceiver: false },
+  { id: 'mock-106', payeeName: 'Ravi Kumar',     payeeUpiId: 'ravi.k@sbi',          amount: '1200', remarks: 'Split bill',        date: '25/03/2026', time: '22:30', isReceiver: true  },
+  { id: 'mock-107', payeeName: 'Netflix',        payeeUpiId: 'netflix@upi',         amount: '649',  remarks: 'Subscription',      date: '24/03/2026', time: '06:00', isReceiver: false },
+  { id: 'mock-108', payeeName: 'Sneha Patel',    payeeUpiId: 'sneha.p@ybl',         amount: '8500', remarks: 'Freelance design',  date: '23/03/2026', time: '16:45', isReceiver: true  },
+  { id: 'mock-109', payeeName: 'Zepto',          payeeUpiId: 'zepto@icici',         amount: '320',  remarks: 'Snacks',            date: '22/03/2026', time: '20:15', isReceiver: false },
+  { id: 'mock-110', payeeName: 'Gym Membership', payeeUpiId: 'fitpro@hdfc',         amount: '1500', remarks: 'Monthly fee',       date: '21/03/2026', time: '07:30', isReceiver: false },
+  { id: 'mock-111', payeeName: 'MakeMyTrip',     payeeUpiId: 'mmt@upi',             amount: '4200', remarks: 'Flight booking',    date: '20/03/2026', time: '13:20', isReceiver: false },
+  { id: 'mock-112', payeeName: 'Aditi Sharma',   payeeUpiId: 'aditi.s@paytm',       amount: '2000', remarks: 'Gift contribution', date: '19/03/2026', time: '18:10', isReceiver: true  },
+  { id: 'mock-113', payeeName: 'BookMyShow',     payeeUpiId: 'bms@axis',            amount: '880',  remarks: 'Movie tickets',     date: '17/03/2026', time: '15:05', isReceiver: false },
+  { id: 'mock-114', payeeName: 'IRCTC',          payeeUpiId: 'irctc@sbi',           amount: '1150', remarks: 'Train tickets',     date: '16/03/2026', time: '10:45', isReceiver: false },
+  { id: 'mock-115', payeeName: 'Local Pharmacy', payeeUpiId: 'medplus@ybl',         amount: '450',  remarks: 'Medicines',         date: '14/03/2026', time: '19:20', isReceiver: false },
+  // ────────────────────────────────────────────────────────────────────────
+  
+  
   // ── February 2026 ────────────────────────────────────────────────────────
   { id: 'mock-6',  payeeName: 'Neha Gupta',     payeeUpiId: 'neha.g@okicici',      amount: '1500', remarks: 'Movie + dinner',    date: '24/02/2026', time: '18:45', isReceiver: true  },
   { id: 'mock-7',  payeeName: 'Airtel',         payeeUpiId: 'airtel@upi',          amount: '499',  remarks: 'Postpaid bill',     date: '18/02/2026', time: '11:03', isReceiver: false },
@@ -435,13 +454,16 @@ const MonthScrubber: React.FC<{
               {month.shortLabel}
             </span>
 
-            {/* Gold dot for the current calendar month */}
+                      {/* Premium "Live" Radar Pulse for the current calendar month */}
             {month.isCurrentMonth && (
-              <span
-                className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-[#e6e1dc]"
-                style={{ background: '#c9a96e' }}
-              />
+              <div className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+                {/* The expanding radar ring */}
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c9a96e] opacity-75"></span>
+                {/* The solid core dot */}
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#c9a96e] border border-[#e6e1dc]"></span>
+              </div>
             )}
+            
           </motion.button>
         ))}
       </div>
@@ -481,23 +503,6 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-
-  // Scroll haptics
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let lastScrollY = el.scrollTop;
-    const SCROLL_THRESHOLD = 40;
-    const onScroll = () => {
-      const delta = Math.abs(el.scrollTop - lastScrollY);
-      if (delta >= SCROLL_THRESHOLD) {
-        hapticScroll();
-        lastScrollY = el.scrollTop;
-      }
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  });
 
   const currentMonth = monthGroups[activeMonthIndex];
 
