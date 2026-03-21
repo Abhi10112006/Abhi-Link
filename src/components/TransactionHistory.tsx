@@ -328,14 +328,12 @@ const SwipeableCard: React.FC<{
         </motion.div>
       </motion.div>
 
-      {/* Draggable card — onPointerDownCapture stops the event from reaching the
-          parent month-pager drag handler, so swiping a card left never turns the page */}
+      {/* Draggable card */}
       <motion.div
         drag="x"
         dragConstraints={{ left: DRAG_CONSTRAINT, right: 0 }}
         dragElastic={{ left: 0.08, right: 0 }}
         onDragEnd={handleDragEnd}
-        onPointerDownCapture={(e) => e.stopPropagation()}
         style={{ x }}
         className="bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-2xl p-3.5 shadow-sm cursor-grab active:cursor-grabbing touch-pan-y"
       >
