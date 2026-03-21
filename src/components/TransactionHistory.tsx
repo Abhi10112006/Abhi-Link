@@ -401,11 +401,11 @@ const MonthScrubber: React.FC<{
   }, [activeIndex]);
 
   return (
-    <div className="mt-6 relative select-none">
+    <div className="relative select-none py-3">
       {/* Left fade mask */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#e6e1dc] to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#e6e1dc]/80 to-transparent z-10 pointer-events-none" />
       {/* Right fade mask */}
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#e6e1dc] to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#e6e1dc]/80 to-transparent z-10 pointer-events-none" />
 
       <div
         ref={containerRef}
@@ -586,7 +586,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col pt-4 pb-12">
+      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col pt-4 pb-32">
 
         {monthGroups.length === 0 ? (
           <motion.div
@@ -646,17 +646,32 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* Timeline scrubber — sits outside the page clip so it stays visible during transitions */}
-            {monthGroups.length > 1 && (
-              <MonthScrubber
-                months={monthGroups}
-                activeIndex={activeMonthIndex}
-                onSelect={goToMonth}
-              />
-            )}
           </>
         )}
       </div>
+
+      {/* Fixed bottom timeline scrubber — always anchored to the viewport bottom,
+          never buried under a long transaction list */}
+      {monthGroups.length > 1 && (
+        <div className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none">
+          {/* Frosted-glass gradient fade — content melts into it */}
+          <div
+            className="absolute inset-0 backdrop-blur-xl"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+              maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 40%)',
+            }}
+          />
+          <div className="relative pointer-events-auto pb-safe-area-inset-bottom">
+            <MonthScrubber
+              months={monthGroups}
+              activeIndex={activeMonthIndex}
+              onSelect={goToMonth}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Per-transaction delete confirmation overlay */}
       <AnimatePresence>
