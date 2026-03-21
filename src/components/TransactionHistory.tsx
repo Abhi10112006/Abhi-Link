@@ -607,7 +607,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           <>
             {/* Overflow clip container so exiting pages don't bleed outside */}
             <div className="relative overflow-hidden">
-              <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+              <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
                 <motion.div
                   key={currentMonth?.key}
                   custom={slideDirection}
