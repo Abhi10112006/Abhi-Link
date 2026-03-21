@@ -47,11 +47,14 @@ function groupTransactionsByMonth(transactions: Transaction[]): MonthGroup[] {
   const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   // Oldest-to-newest so index 0 = oldest, last index = newest (current)
   const sortedEntries = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  return sortedEntries.map(([key, txs]) => {
+    return sortedEntries.map(([key, txs]) => {
     const [year, month] = key.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
     const label = date.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-    const shortLabel = date.toLocaleString('en-IN', { month: 'short' });
+    
+    // Future-proof: Formats as "Mar '26" so multiple years don't confuse the user
+    const shortLabel = `${date.toLocaleString('en-IN', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
+    
     return { key, label, shortLabel, transactions: txs, isCurrentMonth: key === currentKey };
   });
 }
@@ -411,21 +414,31 @@ const MonthScrubber: React.FC<{
   // CRITICAL: We lock external updates while the user is actively touching the wheel
   // so the parent page doesn't forcefully yank the scrollbar away from their thumb.
   const isDraggingRef = useRef(false);
+  
+    const isFirstRender = useRef(true);
 
-  // Sync external changes (e.g. swiping the main page) back to the scroll wheel
+  // Sync external changes AND initial mount position back to the scroll wheel
   useEffect(() => {
-    if (activeIndex !== localActive && !isDraggingRef.current) {
+    if (!isDraggingRef.current) {
       setLocalActive(activeIndex);
       const container = containerRef.current;
-      // +1 accounts for the massive spacer div at the start of the array
       const child = container?.children[activeIndex + 1] as HTMLElement;
+      
       if (container && child) {
-        // Mathematically calculates the exact scroll position to center the child
         const scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
-        container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        
+        container.scrollTo({ 
+          left: scrollLeft, 
+          // 'auto' teleports it instantly on mount so you don't see it spinning.
+          // 'smooth' animates it when you actually swipe pages later.
+          behavior: isFirstRender.current ? 'auto' : 'smooth' 
+        });
+        
+        isFirstRender.current = false;
       }
     }
-  }, [activeIndex, localActive]);
+  }, [activeIndex]);
+
 
   const handleScroll = () => {
     const container = containerRef.current;
@@ -740,28 +753,37 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         )}
       </div>
 
-      {/* Fixed bottom timeline scrubber — always anchored to the viewport bottom,
+            {/* Fixed bottom timeline scrubber — always anchored to the viewport bottom,
           never buried under a long transaction list */}
-      {monthGroups.length > 1 && (
-        <div className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none">
-          {/* Frosted-glass gradient fade — content melts into it */}
-          <div
-            className="absolute inset-0 backdrop-blur-xl"
-            style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
-              maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
-              background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 40%)',
-            }}
-          />
-          <div className="relative pointer-events-auto pb-safe-area-inset-bottom">
-            <MonthScrubber
-              months={monthGroups}
-              activeIndex={activeMonthIndex}
-              onSelect={goToMonth}
+      <AnimatePresence>
+        {monthGroups.length > 1 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none"
+          >
+            {/* Frosted-glass gradient fade — content melts into it */}
+            <div
+              className="absolute inset-0 backdrop-blur-xl"
+              style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+                background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 40%)',
+              }}
             />
-          </div>
-        </div>
-      )}
+            <div className="relative pointer-events-auto pb-safe-area-inset-bottom">
+              <MonthScrubber
+                months={monthGroups}
+                activeIndex={activeMonthIndex}
+                onSelect={goToMonth}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
 
       {/* Per-transaction delete confirmation overlay */}
       <AnimatePresence>
