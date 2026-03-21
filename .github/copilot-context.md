@@ -350,10 +350,10 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
 **What was added/changed:**
 - **Month grouping**: Transactions are now parsed from `DD/MM/YYYY` format and grouped by `YYYY-MM` key, sorted newest-first.
 - **Sticky header**: Clean title bar with close button. Month tabs removed — the monthly summary card at the top of each page already shows the current month name prominently.
-- **Direction-aware page transitions**: `AnimatePresence` with `mode="wait"` slides the month content in/out (left/right) based on navigation direction.
+- **Direction-aware page transitions**: Three-phase animation driven by `dragX` (`useMotionValue`): (1) ease-in exit off-screen, (2) `flushSync()` swaps React content so new month renders off-screen on the opposite side, (3) spring entrance to center. Used for both drag commits and dot-clicks.
 - **Monthly summary card**: A dark `#2d2d2b` card with sacred-geometry pattern overlay at the top of each month's page shows: month name, transaction count, animated sent total (count-up), and animated received total (count-up), each with sub-counts.
 - **`AnimatedNumber` component**: Uses `useMotionValue` + `animate` to count up to the target value over 0.9s with a custom ease curve.
-- **Horizontal swipe navigation**: Users swipe left/right on the content area to move between months. Touch events (`onTouchStart`/`onTouchEnd`) detect swipes ≥60 px that are more horizontal than vertical. Navigation arrows removed.
+- **Direct-manipulation horizontal swipe**: Framer Motion `drag="x"` on the content container with `style={{ x: dragX }}`. Content tracks the finger pixel-for-pixel (`dragElastic=0` in navigable direction, `dragElastic=0.2` rubber-band at first/last month). Commits if offset >25% viewport width or velocity >400 px/s; otherwise springs back. `isTransitioning` state disables drag during page transitions to prevent conflicts.
 - **Page indicator dots**: Animated pill-shaped dots at the bottom using explicit `animate={{ width }}` instead of `layout` to avoid layout thrashing.
 - **Removed `layout` prop** from month tab buttons to avoid unnecessary layout calculations.
 - **Input validation**: Date parsing now validates that month and year parts are numeric before calling `parseInt`.

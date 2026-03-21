@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
-import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
 import { hapticMedium, hapticLight, hapticWarning, hapticScroll } from '../utils/haptics';
 
@@ -67,7 +68,7 @@ const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
 };
 
 // Monthly summary card shown at the top of each month page
-const MonthlySummaryCard: React.FC<{ month: MonthGroup; direction: number }> = ({ month, direction }) => {
+const MonthlySummaryCard: React.FC<{ month: MonthGroup }> = ({ month }) => {
   const totalSent = month.transactions
     .filter(tx => !tx.isReceiver && tx.amount)
     .reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
@@ -80,9 +81,8 @@ const MonthlySummaryCard: React.FC<{ month: MonthGroup; direction: number }> = (
   return (
     <motion.div
       key={month.key + '-summary'}
-      initial={{ opacity: 0, x: direction * 40, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -direction * 40, scale: 0.97 }}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 26 }}
       className="w-full rounded-3xl overflow-hidden mb-4 relative"
       style={{ background: 'linear-gradient(135deg, #2d2d2b 0%, #1a1a18 100%)' }}
@@ -161,25 +161,34 @@ const MonthlySummaryCard: React.FC<{ month: MonthGroup; direction: number }> = (
   );
 };
 
-// Swipeable card sub-component — uses motion drag for swipe-to-delete
+// Page-turn animation constants
+const PAGE_EXIT_DURATION = 0.18;
+const PAGE_EXIT_EASE: [number, number, number, number] = [0.4, 0, 0.6, 1];
+const PAGE_ENTER_STIFFNESS = 320;
+const PAGE_ENTER_DAMPING = 28;
+const COMMIT_VELOCITY_THRESHOLD = 400; // px/s — flick threshold
+const COMMIT_DISTANCE_RATIO = 0.25;    // fraction of viewport width
+
+// Swipeable card constants
 const DRAG_CONSTRAINT = -240;
 const DELETE_THRESHOLD = -220;
 
 const SwipeableCard: React.FC<{
   tx: Transaction;
   index: number;
-  onDelete: (id: string) => void;
-}> = ({ tx, index, onDelete }) => {
+  onDeleteRequest: (tx: Transaction) => void;
+}> = ({ tx, index, onDeleteRequest }) => {
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [DRAG_CONSTRAINT, -100, 0], [1, 0.5, 0]);
   const deleteIconScale = useTransform(x, [DELETE_THRESHOLD, -100, 0], [1, 0.7, 0.5]);
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+    // Always spring the card back to center
+    animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
     if (info.offset.x < DELETE_THRESHOLD) {
       hapticWarning();
-      onDelete(tx.id);
-    } else {
-      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+      // Spring fully resets before modal appears (next microtask)
+      onDeleteRequest(tx);
     }
   };
 
@@ -262,11 +271,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 }) => {
   const [activeMonthIndex, setActiveMonthIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [pendingDeleteTx, setPendingDeleteTx] = useState<Transaction | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const swipeStartX = useRef<number | null>(null);
-  const swipeStartY = useRef<number | null>(null);
+  const dragX = useMotionValue(0);
 
   const monthGroups = groupTransactionsByMonth(transactions);
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 375;
 
   // Reset to first month when transactions change
   useEffect(() => {
@@ -299,33 +310,58 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return () => el.removeEventListener('scroll', onScroll);
   });
 
-  const goToMonth = (index: number) => {
-    if (index === activeMonthIndex) return;
+  const doPageTransition = (newIndex: number, direction: number) => {
+    setIsTransitioning(true);
     hapticLight();
-    setSlideDirection(index > activeMonthIndex ? 1 : -1);
-    setActiveMonthIndex(index);
-    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    // Phase 1: slide current content off-screen in the commit direction
+    animate(dragX, direction * -viewportWidth, {
+      type: 'tween',
+      duration: PAGE_EXIT_DURATION,
+      ease: PAGE_EXIT_EASE,
+      onComplete: () => {
+        // Phase 2: synchronously swap content so new month renders off-screen on the opposite side
+        flushSync(() => {
+          setSlideDirection(direction);
+          setActiveMonthIndex(newIndex);
+        });
+        dragX.set(direction * viewportWidth);
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        // Phase 3: spring new content to center
+        animate(dragX, 0, {
+          type: 'spring',
+          stiffness: PAGE_ENTER_STIFFNESS,
+          damping: PAGE_ENTER_DAMPING,
+          onComplete: () => setIsTransitioning(false),
+        });
+      },
+    });
   };
 
-  const SWIPE_THRESHOLD = 60;
-
-  const handleSwipeStart = (e: React.TouchEvent) => {
-    swipeStartX.current = e.touches[0].clientX;
-    swipeStartY.current = e.touches[0].clientY;
+  const goToMonth = (index: number) => {
+    if (index === activeMonthIndex || isTransitioning) return;
+    doPageTransition(index, index > activeMonthIndex ? 1 : -1);
   };
 
-  const handleSwipeEnd = (e: React.TouchEvent) => {
-    if (swipeStartX.current === null || swipeStartY.current === null) return;
-    const dx = e.changedTouches[0].clientX - swipeStartX.current;
-    const dy = e.changedTouches[0].clientY - swipeStartY.current;
-    swipeStartX.current = null;
-    swipeStartY.current = null;
-    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    if (dx < 0 && activeMonthIndex < monthGroups.length - 1) {
-      goToMonth(activeMonthIndex + 1);
-    } else if (dx > 0 && activeMonthIndex > 0) {
-      goToMonth(activeMonthIndex - 1);
+  const commitThreshold = viewportWidth * COMMIT_DISTANCE_RATIO;
+
+  const handleMonthDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { x: number }; velocity: { x: number } },
+  ) => {
+    if (isTransitioning) return;
+    const goNext =
+      (info.offset.x < -commitThreshold || info.velocity.x < -COMMIT_VELOCITY_THRESHOLD) &&
+      activeMonthIndex < monthGroups.length - 1;
+    const goPrev =
+      (info.offset.x > commitThreshold || info.velocity.x > COMMIT_VELOCITY_THRESHOLD) &&
+      activeMonthIndex > 0;
+
+    if (goNext) {
+      doPageTransition(activeMonthIndex + 1, 1);
+    } else if (goPrev) {
+      doPageTransition(activeMonthIndex - 1, -1);
+    } else {
+      animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 35 });
     }
   };
 
@@ -389,23 +425,26 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           </motion.div>
         ) : (
           <>
-            {/* Month summary + transaction list (animated per month) */}
-            <div
-              onTouchStart={handleSwipeStart}
-              onTouchEnd={handleSwipeEnd}
+            {/* Month summary + transaction list — drag="x" for direct-manipulation page turning */}
+            <motion.div
+              drag={monthGroups.length > 1 && !isTransitioning ? 'x' : false}
+              style={{ x: dragX }}
+              dragMomentum={false}
+              dragConstraints={{
+                left: activeMonthIndex < monthGroups.length - 1 ? -viewportWidth : 0,
+                right: activeMonthIndex > 0 ? viewportWidth : 0,
+              }}
+              dragElastic={{
+                left: activeMonthIndex < monthGroups.length - 1 ? 0 : 0.2,
+                right: activeMonthIndex > 0 ? 0 : 0.2,
+              }}
+              onDragEnd={handleMonthDragEnd}
+              className="relative"
             >
-            <AnimatePresence mode="wait" custom={slideDirection}>
               {currentMonth && (
-                <motion.div
-                  key={currentMonth.key}
-                  custom={slideDirection}
-                  initial={{ opacity: 0, x: slideDirection * 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -slideDirection * 50 }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-                >
+                <>
                   {/* Monthly summary card */}
-                  <MonthlySummaryCard month={currentMonth} direction={slideDirection} />
+                  <MonthlySummaryCard month={currentMonth} />
 
                   {/* Transaction list */}
                   <AnimatePresence>
@@ -415,7 +454,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                           key={tx.id}
                           tx={tx}
                           index={index}
-                          onDelete={onDeleteTransaction}
+                          onDeleteRequest={setPendingDeleteTx}
                         />
                       ))}
                     </div>
@@ -437,13 +476,80 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                       ))}
                     </div>
                   )}
-                </motion.div>
+                </>
               )}
-            </AnimatePresence>
-            </div>
+            </motion.div>
           </>
         )}
       </div>
+
+      {/* Per-transaction delete confirmation overlay */}
+      <AnimatePresence>
+        {pendingDeleteTx && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => { hapticMedium(); setPendingDeleteTx(null); }}
+            />
+            <motion.div
+              className="relative w-full max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl p-6 flex flex-col gap-4"
+              initial={{ y: 40, opacity: 0, scale: 0.97 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 40, opacity: 0, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center">
+                <div className="w-12 h-12 rounded-full bg-[#f0ece8] flex items-center justify-center border border-[#d9d3ce]">
+                  <AlertTriangle className="w-5 h-5 text-[#2d2d2b]" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-base font-black text-[#2d2d2b] uppercase tracking-tight mb-1">
+                  Delete Transaction?
+                </h3>
+                <p className="text-xs text-[#2d2d2b]/60 font-medium leading-relaxed">
+                  <span className="font-black text-[#2d2d2b]">
+                    {pendingDeleteTx.payeeName || pendingDeleteTx.payeeUpiId}
+                  </span>
+                  {pendingDeleteTx.amount && (
+                    <> · <span className="font-black text-[#2d2d2b]">₹{pendingDeleteTx.amount}</span></>
+                  )}{' '}
+                  will be permanently removed from your history.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={() => { hapticMedium(); setPendingDeleteTx(null); }}
+                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  onClick={() => {
+                    hapticWarning();
+                    onDeleteTransaction(pendingDeleteTx.id);
+                    setPendingDeleteTx(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#e6e1dc] bg-[#2d2d2b] hover:bg-[#1a1a18] border border-[#2d2d2b] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
