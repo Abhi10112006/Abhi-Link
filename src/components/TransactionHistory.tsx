@@ -30,6 +30,7 @@ interface MonthGroup {
   label: string;
   shortLabel: string;
   transactions: Transaction[];
+  isCurrentMonth: boolean;
 }
 
 // Parse DD/MM/YYYY → month group key YYYY-MM
@@ -43,13 +44,16 @@ function groupTransactionsByMonth(transactions: Transaction[]): MonthGroup[] {
       groups.get(monthKey)!.push(tx);
     }
   }
-  const sortedEntries = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const today = new Date();
+  const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  // Oldest-to-newest so index 0 = oldest, last index = newest (current)
+  const sortedEntries = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   return sortedEntries.map(([key, txs]) => {
     const [year, month] = key.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, 1);
     const label = date.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
     const shortLabel = date.toLocaleString('en-IN', { month: 'short' });
-    return { key, label, shortLabel, transactions: txs };
+    return { key, label, shortLabel, transactions: txs, isCurrentMonth: key === currentKey };
   });
 }
 
@@ -333,12 +337,14 @@ const SwipeableCard: React.FC<{
         </motion.div>
       </motion.div>
 
-      {/* Draggable card */}
+      {/* Draggable card — onPointerDownCapture stops the event from reaching the
+          parent month-pager drag handler, so swiping a card left never turns the page */}
       <motion.div
         drag="x"
         dragConstraints={{ left: DRAG_CONSTRAINT, right: 0 }}
         dragElastic={{ left: 0.08, right: 0 }}
         onDragEnd={handleDragEnd}
+        onPointerDownCapture={(e) => e.stopPropagation()}
         style={{ x }}
         className="bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-2xl p-3.5 shadow-sm cursor-grab active:cursor-grabbing touch-pan-y"
       >
@@ -383,6 +389,77 @@ const SwipeableCard: React.FC<{
   );
 };
 
+// Premium horizontal timeline scrubber — replaces the pagination dots
+// Shows all months as short-label pills. Active month has an animated sliding
+// background (layoutId). A gold dot marks the current calendar month.
+// Auto-scrolls to keep the active pill centred when the user swipes months.
+const MonthScrubber: React.FC<{
+  months: MonthGroup[];
+  activeIndex: number;
+  onSelect: (index: number) => void;
+}> = ({ months, activeIndex, onSelect }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Scroll the active pill into view whenever activeIndex changes
+  useEffect(() => {
+    const el = buttonRefs.current[activeIndex];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [activeIndex]);
+
+  return (
+    <div className="mt-6 relative select-none">
+      {/* Left fade mask */}
+      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#e6e1dc] to-transparent z-10 pointer-events-none" />
+      {/* Right fade mask */}
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#e6e1dc] to-transparent z-10 pointer-events-none" />
+
+      <div
+        ref={containerRef}
+        className="flex items-center gap-1 overflow-x-auto px-8 pb-1"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+      >
+        {months.map((month, i) => (
+          <motion.button
+            key={month.key}
+            ref={(el) => { buttonRefs.current[i] = el; }}
+            onClick={() => { onSelect(i); hapticLight(); }}
+            className="relative flex-shrink-0 px-3 py-1.5 rounded-full focus:outline-none"
+            whileTap={{ scale: 0.88 }}
+          >
+            {/* Animated sliding pill background */}
+            {i === activeIndex && (
+              <motion.div
+                layoutId="scrubber-active-pill"
+                className="absolute inset-0 rounded-full bg-[#2d2d2b]"
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              />
+            )}
+
+            <span
+              className={`relative z-10 text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${
+                i === activeIndex ? 'text-[#e6e1dc]' : 'text-[#2d2d2b]/40 hover:text-[#2d2d2b]/70'
+              }`}
+            >
+              {month.shortLabel}
+            </span>
+
+            {/* Gold dot for the current calendar month */}
+            {month.isCurrentMonth && (
+              <span
+                className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-[#e6e1dc]"
+                style={{ background: '#c9a96e' }}
+              />
+            )}
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
   onClose,
@@ -404,9 +481,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   ]);
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 375;
 
-  // Reset to first month when transactions change
+  // Default to the newest month (last index) when the transaction list changes
   useEffect(() => {
-    setActiveMonthIndex(0);
+    setActiveMonthIndex(monthGroups.length - 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions.length]);
 
   useEffect(() => {
@@ -585,21 +663,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     </div>
                   </AnimatePresence>
 
-                  {/* Page indicator dots */}
+                  {/* Timeline scrubber — replaces pagination dots */}
                   {monthGroups.length > 1 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-6">
-                      {monthGroups.map((_, i) => (
-                        <motion.button
-                          key={i}
-                          onClick={() => goToMonth(i)}
-                          className="rounded-full focus:outline-none"
-                          style={{ background: i === activeMonthIndex ? '#2d2d2b' : 'rgba(45,45,43,0.2)', height: 6 }}
-                          animate={{ width: i === activeMonthIndex ? 20 : 6 }}
-                          whileTap={{ scale: 0.8 }}
-                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                        />
-                      ))}
-                    </div>
+                    <MonthScrubber
+                      months={monthGroups}
+                      activeIndex={activeMonthIndex}
+                      onSelect={goToMonth}
+                    />
                   )}
                 </>
               )}
