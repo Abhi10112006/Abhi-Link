@@ -53,6 +53,35 @@ function groupTransactionsByMonth(transactions: Transaction[]): MonthGroup[] {
   });
 }
 
+// ─── TODO: Remove mock data ────────────────────────────────────────────────
+// Temporary multi-month fixture so the month-paging animations can be tested
+// end-to-end before real transaction data fills enough months.
+// Delete the MOCK_TRANSACTIONS constant and the allTransactions merge below.
+const MOCK_TRANSACTIONS: Transaction[] = [
+  // ── March 2026 ───────────────────────────────────────────────────────────
+  { id: 'mock-1',  payeeName: 'Rahul Sharma',   payeeUpiId: 'rahul@oksbi',         amount: '2500', remarks: 'Rent share',        date: '18/03/2026', time: '10:22', isReceiver: false },
+  { id: 'mock-2',  payeeName: 'Priya Singh',    payeeUpiId: 'priya.s@paytm',       amount: '800',  remarks: 'Dinner',            date: '15/03/2026', time: '21:14', isReceiver: true  },
+  { id: 'mock-3',  payeeName: '',               payeeUpiId: 'grofers@ybl',          amount: '1240', remarks: 'Groceries',         date: '12/03/2026', time: '09:08', isReceiver: false },
+  { id: 'mock-4',  payeeName: 'Amit Kumar',     payeeUpiId: 'amit.k@upi',          amount: '3000', remarks: 'Freelance payment', date: '05/03/2026', time: '14:30', isReceiver: true  },
+  { id: 'mock-5',  payeeName: 'Swiggy',         payeeUpiId: 'swiggy@icici',        amount: '340',  remarks: '',                  date: '02/03/2026', time: '20:05', isReceiver: false },
+  // ── February 2026 ────────────────────────────────────────────────────────
+  { id: 'mock-6',  payeeName: 'Neha Gupta',     payeeUpiId: 'neha.g@okicici',      amount: '1500', remarks: 'Movie + dinner',    date: '24/02/2026', time: '18:45', isReceiver: true  },
+  { id: 'mock-7',  payeeName: 'Airtel',         payeeUpiId: 'airtel@upi',          amount: '499',  remarks: 'Postpaid bill',     date: '18/02/2026', time: '11:03', isReceiver: false },
+  { id: 'mock-8',  payeeName: 'Suresh Patel',   payeeUpiId: 'suresh.p@ybl',        amount: '4200', remarks: 'Project advance',   date: '10/02/2026', time: '09:30', isReceiver: true  },
+  { id: 'mock-9',  payeeName: 'Amazon Pay',     payeeUpiId: 'amazon@apl',          amount: '2199', remarks: 'Headphones',        date: '03/02/2026', time: '16:22', isReceiver: false },
+  // ── January 2026 ─────────────────────────────────────────────────────────
+  { id: 'mock-10', payeeName: 'Deepika Rao',    payeeUpiId: 'deepika.r@oksbi',     amount: '1000', remarks: 'Gift',              date: '28/01/2026', time: '12:00', isReceiver: true  },
+  { id: 'mock-11', payeeName: 'Zomato',         payeeUpiId: 'zomato@hdfcbank',     amount: '620',  remarks: 'Lunch order',       date: '20/01/2026', time: '13:17', isReceiver: false },
+  { id: 'mock-12', payeeName: 'Vikram Nair',    payeeUpiId: 'vikram.n@paytm',      amount: '8000', remarks: 'Consulting fee',    date: '14/01/2026', time: '10:00', isReceiver: true  },
+  { id: 'mock-13', payeeName: 'BSNL Fiber',     payeeUpiId: 'bsnl@upi',            amount: '699',  remarks: 'Internet bill',     date: '07/01/2026', time: '15:45', isReceiver: false },
+  { id: 'mock-14', payeeName: 'Kavya Menon',    payeeUpiId: 'kavya.m@upi',         amount: '2200', remarks: 'Rent contribution', date: '01/01/2026', time: '11:30', isReceiver: false },
+  // ── December 2025 ────────────────────────────────────────────────────────
+  { id: 'mock-15', payeeName: 'Ananya Joshi',   payeeUpiId: 'ananya.j@okaxis',     amount: '5500', remarks: 'Year-end bonus',    date: '25/12/2025', time: '09:00', isReceiver: true  },
+  { id: 'mock-16', payeeName: 'Flipkart',       payeeUpiId: 'flipkart@axisbank',   amount: '3499', remarks: 'Big Billion sale',  date: '15/12/2025', time: '14:18', isReceiver: false },
+  { id: 'mock-17', payeeName: 'Rohan Desai',    payeeUpiId: 'rohan.d@oksbi',       amount: '1750', remarks: 'Shared trip costs', date: '08/12/2025', time: '20:30', isReceiver: true  },
+];
+// ─── End mock data ─────────────────────────────────────────────────────────
+
 // Animated count-up number
 const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
   const mv = useMotionValue(0);
@@ -65,6 +94,104 @@ const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
     return () => { controls.stop(); unsub(); };
   }, [value, mv]);
   return <span>{display}</span>;
+};
+
+// Dual-arc SVG ring: outer arc = received (gold), inner arc = sent (warm white)
+// Both arcs animate in from zero on mount/remount.
+const OUTER_R = 30;
+const INNER_R = 21;
+const RING_SW = 4.5;
+const OUTER_CIRC = 2 * Math.PI * OUTER_R;
+const INNER_CIRC = 2 * Math.PI * INNER_R;
+
+const FlowRing: React.FC<{
+  totalSent: number;
+  totalReceived: number;
+  totalTx: number;
+}> = ({ totalSent, totalReceived, totalTx }) => {
+  const SIZE = 76;
+  const C = SIZE / 2; // 38
+
+  const total = totalSent + totalReceived;
+  const receivedPct = total > 0 ? totalReceived / total : 0;
+  const sentPct = total > 0 ? totalSent / total : 0;
+
+  const outerOffset = useMotionValue(OUTER_CIRC); // start fully hidden
+  const innerOffset = useMotionValue(INNER_CIRC);
+
+  useEffect(() => {
+    animate(outerOffset, OUTER_CIRC * (1 - receivedPct), {
+      duration: 1.2,
+      ease: [0.16, 1, 0.3, 1],
+    });
+    animate(innerOffset, INNER_CIRC * (1 - sentPct), {
+      duration: 1.0,
+      ease: [0.16, 1, 0.3, 1],
+      delay: 0.15,
+    });
+  }, [receivedPct, sentPct, outerOffset, innerOffset]);
+
+  return (
+    <svg
+      width={SIZE}
+      height={SIZE}
+      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      className="flex-shrink-0 overflow-visible"
+      aria-hidden={true}
+    >
+      {/* Dim track rings */}
+      <circle cx={C} cy={C} r={OUTER_R} fill="none" stroke="rgba(230,225,220,0.09)" strokeWidth={RING_SW} />
+      <circle cx={C} cy={C} r={INNER_R} fill="none" stroke="rgba(230,225,220,0.09)" strokeWidth={RING_SW} />
+
+      {/* Rotate from 12 o'clock */}
+      <g transform={`rotate(-90, ${C}, ${C})`}>
+        {/* Outer arc — Received (warm gold glow) */}
+        <motion.circle
+          cx={C} cy={C} r={OUTER_R}
+          fill="none"
+          stroke="#c9a96e"
+          strokeWidth={RING_SW}
+          strokeLinecap="round"
+          strokeDasharray={OUTER_CIRC}
+          style={{
+            strokeDashoffset: outerOffset,
+            filter: 'drop-shadow(0 0 5px rgba(201,169,110,0.85))',
+          }}
+        />
+        {/* Inner arc — Sent (warm silver glow) */}
+        <motion.circle
+          cx={C} cy={C} r={INNER_R}
+          fill="none"
+          stroke="rgba(230,225,220,0.85)"
+          strokeWidth={RING_SW}
+          strokeLinecap="round"
+          strokeDasharray={INNER_CIRC}
+          style={{
+            strokeDashoffset: innerOffset,
+            filter: 'drop-shadow(0 0 4px rgba(230,225,220,0.65))',
+          }}
+        />
+      </g>
+
+      {/* Centre: transaction count */}
+      <text
+        x={C} y={C - 2}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        style={{ fill: '#e6e1dc', fontSize: '14px', fontWeight: 900 }}
+      >
+        {totalTx}
+      </text>
+      <text
+        x={C} y={C + 11}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        style={{ fill: 'rgba(230,225,220,0.40)', fontSize: '7px', fontWeight: 700, letterSpacing: '0.12em' }}
+      >
+        TX
+      </text>
+    </svg>
+  );
 };
 
 // Monthly summary card shown at the top of each month page
@@ -106,14 +233,8 @@ const MonthlySummaryCard: React.FC<{ month: MonthGroup }> = ({ month }) => {
               {month.label}
             </h2>
           </div>
-          <div className="bg-[#e6e1dc]/10 border border-[#e6e1dc]/20 rounded-2xl px-3 py-1.5 text-right">
-            <p className="text-[#e6e1dc] text-lg font-black leading-none">
-              <AnimatedNumber value={month.transactions.length} />
-            </p>
-            <p className="text-[#e6e1dc]/50 text-[9px] font-bold uppercase tracking-widest mt-0.5">
-              {month.transactions.length === 1 ? 'Transaction' : 'Transactions'}
-            </p>
-          </div>
+          {/* Animated dual-arc ring: outer = received %, inner = sent % */}
+          <FlowRing totalSent={totalSent} totalReceived={totalReceived} totalTx={month.transactions.length} />
         </div>
 
         {/* Stats grid */}
@@ -276,7 +397,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragX = useMotionValue(0);
 
-  const monthGroups = groupTransactionsByMonth(transactions);
+  const monthGroups = groupTransactionsByMonth([
+    ...transactions,
+    // TODO: Remove mock data — temporary multi-month fixture
+    ...MOCK_TRANSACTIONS,
+  ]);
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 375;
 
   // Reset to first month when transactions change
@@ -408,7 +533,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       {/* Main content */}
       <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col pt-4 pb-12">
 
-        {transactions.length === 0 ? (
+        {monthGroups.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -443,8 +568,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             >
               {currentMonth && (
                 <>
-                  {/* Monthly summary card */}
-                  <MonthlySummaryCard month={currentMonth} />
+                  {/* Monthly summary card — key forces remount on month change so FlowRing re-animates */}
+                  <MonthlySummaryCard key={currentMonth.key} month={currentMonth} />
 
                   {/* Transaction list */}
                   <AnimatePresence>
