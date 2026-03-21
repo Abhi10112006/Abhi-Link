@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { flushSync } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
 import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
@@ -286,14 +285,6 @@ const MonthlySummaryCard: React.FC<{ month: MonthGroup }> = ({ month }) => {
   );
 };
 
-// Page-turn animation constants
-const PAGE_EXIT_DURATION = 0.18;
-const PAGE_EXIT_EASE: [number, number, number, number] = [0.4, 0, 0.6, 1];
-const PAGE_ENTER_STIFFNESS = 320;
-const PAGE_ENTER_DAMPING = 28;
-const COMMIT_VELOCITY_THRESHOLD = 400; // px/s — flick threshold
-const COMMIT_DISTANCE_RATIO = 0.25;    // fraction of viewport width
-
 // Swipeable card constants
 const DRAG_CONSTRAINT = -240;
 const DELETE_THRESHOLD = -220;
@@ -339,15 +330,15 @@ const SwipeableCard: React.FC<{
 
       {/* Draggable card — onPointerDownCapture stops the event from reaching the
           parent month-pager drag handler, so swiping a card left never turns the page */}
-            <motion.div
+      <motion.div
         drag="x"
         dragConstraints={{ left: DRAG_CONSTRAINT, right: 0 }}
         dragElastic={{ left: 0.08, right: 0 }}
         onDragEnd={handleDragEnd}
+        onPointerDownCapture={(e) => e.stopPropagation()}
         style={{ x }}
         className="bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-2xl p-3.5 shadow-sm cursor-grab active:cursor-grabbing touch-pan-y"
       >
-              
         <div className="flex items-center gap-3">
           {/* Direction icon */}
           <div className="flex-shrink-0">
@@ -469,17 +460,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 }) => {
   const [activeMonthIndex, setActiveMonthIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [pendingDeleteTx, setPendingDeleteTx] = useState<Transaction | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dragX = useMotionValue(0);
 
   const monthGroups = groupTransactionsByMonth([
     ...transactions,
     // TODO: Remove mock data — temporary multi-month fixture
     ...MOCK_TRANSACTIONS,
   ]);
-  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 375;
 
   // Default to the newest month (last index) when the transaction list changes
   useEffect(() => {
@@ -513,62 +501,51 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     return () => el.removeEventListener('scroll', onScroll);
   });
 
-  const doPageTransition = (newIndex: number, direction: number) => {
-    setIsTransitioning(true);
-    hapticLight();
-    // Phase 1: slide current content off-screen in the commit direction
-    animate(dragX, direction * -viewportWidth, {
-      type: 'tween',
-      duration: PAGE_EXIT_DURATION,
-      ease: PAGE_EXIT_EASE,
-      onComplete: () => {
-        // Phase 2: synchronously swap content so new month renders off-screen on the opposite side
-        flushSync(() => {
-          setSlideDirection(direction);
-          setActiveMonthIndex(newIndex);
-        });
-        dragX.set(direction * viewportWidth);
-        scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-        // Phase 3: spring new content to center
-        animate(dragX, 0, {
-          type: 'spring',
-          stiffness: PAGE_ENTER_STIFFNESS,
-          damping: PAGE_ENTER_DAMPING,
-          onComplete: () => setIsTransitioning(false),
-        });
-      },
-    });
+  const currentMonth = monthGroups[activeMonthIndex];
+
+  const pageVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.95,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.95,
+    }),
   };
 
-  const goToMonth = (index: number) => {
-    if (index === activeMonthIndex || isTransitioning) return;
-    doPageTransition(index, index > activeMonthIndex ? 1 : -1);
-  };
-
-  const commitThreshold = viewportWidth * COMMIT_DISTANCE_RATIO;
-
-  const handleMonthDragEnd = (
+  const handleMonthSwipe = (
     _: MouseEvent | TouchEvent | PointerEvent,
     info: { offset: { x: number }; velocity: { x: number } },
   ) => {
-    if (isTransitioning) return;
-    const goNext =
-      (info.offset.x < -commitThreshold || info.velocity.x < -COMMIT_VELOCITY_THRESHOLD) &&
-      activeMonthIndex < monthGroups.length - 1;
-    const goPrev =
-      (info.offset.x > commitThreshold || info.velocity.x > COMMIT_VELOCITY_THRESHOLD) &&
-      activeMonthIndex > 0;
+    const swipeThreshold = 50;
+    const isSwipeLeft = info.offset.x < -swipeThreshold || info.velocity.x < -500;
+    const isSwipeRight = info.offset.x > swipeThreshold || info.velocity.x > 500;
 
-    if (goNext) {
-      doPageTransition(activeMonthIndex + 1, 1);
-    } else if (goPrev) {
-      doPageTransition(activeMonthIndex - 1, -1);
-    } else {
-      animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 35 });
+    if (isSwipeLeft && activeMonthIndex < monthGroups.length - 1) {
+      hapticMedium();
+      setSlideDirection(1);
+      setActiveMonthIndex((prev) => prev + 1);
+    } else if (isSwipeRight && activeMonthIndex > 0) {
+      hapticMedium();
+      setSlideDirection(-1);
+      setActiveMonthIndex((prev) => prev - 1);
     }
   };
 
-  const currentMonth = monthGroups[activeMonthIndex];
+  const goToMonth = (index: number) => {
+    if (index === activeMonthIndex) return;
+    hapticLight();
+    setSlideDirection(index > activeMonthIndex ? 1 : -1);
+    setActiveMonthIndex(index);
+  };
 
   return (
     <motion.div
@@ -628,52 +605,55 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           </motion.div>
         ) : (
           <>
-            {/* Month summary + transaction list — drag="x" for direct-manipulation page turning */}
-            <motion.div
-              drag={monthGroups.length > 1 && !isTransitioning ? 'x' : false}
-              style={{ x: dragX }}
-              dragMomentum={false}
-              dragConstraints={{
-                left: activeMonthIndex < monthGroups.length - 1 ? -viewportWidth : 0,
-                right: activeMonthIndex > 0 ? viewportWidth : 0,
-              }}
-              dragElastic={{
-                left: activeMonthIndex < monthGroups.length - 1 ? 0 : 0.2,
-                right: activeMonthIndex > 0 ? 0 : 0.2,
-              }}
-              onDragEnd={handleMonthDragEnd}
-              className="relative"
-            >
-              {currentMonth && (
-                <>
-                  {/* Monthly summary card — key forces remount on month change so FlowRing re-animates */}
-                  <MonthlySummaryCard key={currentMonth.key} month={currentMonth} />
+            {/* Overflow clip container so exiting pages don't bleed outside */}
+            <div className="relative overflow-hidden">
+              <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                <motion.div
+                  key={currentMonth?.key}
+                  custom={slideDirection}
+                  variants={pageVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                  drag={monthGroups.length > 1 ? 'x' : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.15}
+                  onDragEnd={handleMonthSwipe}
+                  onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                >
+                  {currentMonth && (
+                    <>
+                      {/* Monthly summary card — key forces remount on month change so FlowRing re-animates */}
+                      <MonthlySummaryCard key={currentMonth.key} month={currentMonth} />
 
-                  {/* Transaction list */}
-                  <AnimatePresence>
-                    <div className="space-y-2">
-                      {currentMonth.transactions.map((tx, index) => (
-                        <SwipeableCard
-                          key={tx.id}
-                          tx={tx}
-                          index={index}
-                          onDeleteRequest={setPendingDeleteTx}
-                        />
-                      ))}
-                    </div>
-                  </AnimatePresence>
-
-                  {/* Timeline scrubber — replaces pagination dots */}
-                  {monthGroups.length > 1 && (
-                    <MonthScrubber
-                      months={monthGroups}
-                      activeIndex={activeMonthIndex}
-                      onSelect={goToMonth}
-                    />
+                      {/* Transaction list */}
+                      <AnimatePresence>
+                        <div className="space-y-2">
+                          {currentMonth.transactions.map((tx, index) => (
+                            <SwipeableCard
+                              key={tx.id}
+                              tx={tx}
+                              index={index}
+                              onDeleteRequest={setPendingDeleteTx}
+                            />
+                          ))}
+                        </div>
+                      </AnimatePresence>
+                    </>
                   )}
-                </>
-              )}
-            </motion.div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Timeline scrubber — sits outside the page clip so it stays visible during transitions */}
+            {monthGroups.length > 1 && (
+              <MonthScrubber
+                months={monthGroups}
+                activeIndex={activeMonthIndex}
+                onSelect={goToMonth}
+              />
+            )}
           </>
         )}
       </div>
