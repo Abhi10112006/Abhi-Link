@@ -713,7 +713,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             {/* Overflow clip container so exiting pages don't bleed outside */}
             <div className="relative overflow-hidden">
               <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
-                <motion.div
+
+                                <motion.div
                   key={currentMonth?.key}
                   custom={slideDirection}
                   variants={pageVariants}
@@ -721,12 +722,18 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   animate="center"
                   exit="exit"
                   transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                  drag={monthGroups.length > 1 ? 'x' : false}
+                  // 1. Always keep the engine on so Framer Motion doesn't delete it
+                  drag="x"
+                  // 2. Safely disable touch detection instead of destroying the physics
+                  dragListener={monthGroups.length > 1}
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.15}
                   onDragEnd={handleMonthSwipe}
                   onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                  // 3. Prevent the mobile browser from fighting your thumb
+                  className="w-full flex flex-col touch-pan-y"
                 >
+                                  
                   {currentMonth && (
                     <>
                       {/* Monthly summary card — key forces remount on month change so FlowRing re-animates */}
@@ -753,26 +760,29 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         )}
       </div>
 
-            {/* Fixed bottom timeline scrubber — always anchored to the viewport bottom,
-          never buried under a long transaction list */}
+                  {/* 1. STATIC BACKGROUND: Renders instantly with GPU acceleration to prevent blur lag */}
+      <div className="fixed bottom-0 left-0 right-0 h-32 z-[54] pointer-events-none">
+        <div
+          className="absolute inset-0 backdrop-blur-xl"
+          style={{
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)',
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 50%)',
+            transform: 'translateZ(0)', // Forces the phone's GPU to render the blur perfectly
+          }}
+        />
+      </div>
+
+      {/* 2. ANIMATED CONTENT: Only the pills fade and slide in */}
       <AnimatePresence>
         {monthGroups.length > 1 && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 15 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none"
           >
-            {/* Frosted-glass gradient fade — content melts into it */}
-            <div
-              className="absolute inset-0 backdrop-blur-xl"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
-                background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 40%)',
-              }}
-            />
             <div className="relative pointer-events-auto pb-safe-area-inset-bottom">
               <MonthScrubber
                 months={monthGroups}
@@ -795,7 +805,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             exit={{ opacity: 0 }}
           >
             <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40"
               onClick={() => { hapticMedium(); setPendingDeleteTx(null); }}
             />
             <motion.div
