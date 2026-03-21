@@ -397,79 +397,132 @@ const SwipeableCard: React.FC<{
   );
 };
 
-// Premium horizontal timeline scrubber — replaces the pagination dots
 // Shows all months as short-label pills. Active month has an animated sliding
-// background (layoutId). A gold dot marks the current calendar month.
-// Auto-scrolls to keep the active pill centred when the user swipes months.
+// Premium horizontal timeline scrubber (Slice/CRED Style Scroll Wheel)
+// Uses native CSS snap physics and mathematical center-detection to trigger haptics and page changes.
 const MonthScrubber: React.FC<{
   months: MonthGroup[];
   activeIndex: number;
   onSelect: (index: number) => void;
 }> = ({ months, activeIndex, onSelect }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [localActive, setLocalActive] = useState(activeIndex);
+  
+  // CRITICAL: We lock external updates while the user is actively touching the wheel
+  // so the parent page doesn't forcefully yank the scrollbar away from their thumb.
+  const isDraggingRef = useRef(false);
 
-  // Scroll the active pill into view whenever activeIndex changes
+  // Sync external changes (e.g. swiping the main page) back to the scroll wheel
   useEffect(() => {
-    const el = buttonRefs.current[activeIndex];
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (activeIndex !== localActive && !isDraggingRef.current) {
+      setLocalActive(activeIndex);
+      const container = containerRef.current;
+      // +1 accounts for the massive spacer div at the start of the array
+      const child = container?.children[activeIndex + 1] as HTMLElement;
+      if (container && child) {
+        // Mathematically calculates the exact scroll position to center the child
+        const scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+        container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+      }
     }
-  }, [activeIndex]);
+  }, [activeIndex, localActive]);
+
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Find the exact mathematical dead-center of the user's screen
+    const center = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = localActive;
+    let minDistance = Infinity;
+
+    // Loop through the buttons (skipping the first and last spacer divs)
+    for (let i = 0; i < months.length; i++) {
+      const child = container.children[i + 1] as HTMLElement;
+      if (!child) continue;
+      
+      const childCenter = child.offsetLeft + child.clientWidth / 2;
+      const distance = Math.abs(childCenter - center);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    // If a new month crosses into the dead-center crosshair:
+    if (closestIndex !== localActive) {
+      hapticLight(); // Premium mechanical tick!
+      setLocalActive(closestIndex);
+      onSelect(closestIndex); // Instantly updates the main page behind it
+    }
+  };
 
   return (
     <div className="relative select-none py-3">
-      {/* Left fade mask */}
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#e6e1dc]/80 to-transparent z-10 pointer-events-none" />
-      {/* Right fade mask */}
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#e6e1dc]/80 to-transparent z-10 pointer-events-none" />
+      {/* Heavy fade masks to draw the user's eye exclusively to the center */}
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
+
+      {/* The Center Targeting Reticle (A subtle glass pill locked in the center) */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[76px] h-[36px] bg-[#2d2d2b]/[0.04] border border-[#2d2d2b]/[0.08] rounded-full z-0 pointer-events-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]" />
 
       <div
         ref={containerRef}
-        className="flex items-center gap-1 overflow-x-auto px-8 py-3"
+        onScroll={handleScroll}
+        onTouchStart={() => { isDraggingRef.current = true; }}
+        onTouchEnd={() => { 
+          // Small delay ensures the native momentum scroll completely finishes before unlocking
+          setTimeout(() => { isDraggingRef.current = false; }, 800); 
+        }}
+        // snap-x and snap-mandatory invoke the phone's native momentum physics engine
+        className="flex items-center overflow-x-auto snap-x snap-mandatory relative z-10"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
-        {months.map((month, i) => (
-          <motion.button
-            key={month.key}
-            ref={(el) => { buttonRefs.current[i] = el; }}
-            onClick={() => { onSelect(i); hapticLight(); }}
-            className="relative flex-shrink-0 px-3 py-1.5 rounded-full focus:outline-none"
-            whileTap={{ scale: 0.88 }}
-          >
-            {/* Animated sliding pill background */}
-            {i === activeIndex && (
-              <motion.div
-                layoutId="scrubber-active-pill"
-                className="absolute inset-0 rounded-full bg-[#2d2d2b]"
-                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-              />
-            )}
+        {/* Massive spacer perfectly calculated to push the first item to the center of the screen */}
+        <div className="flex-shrink-0 w-[calc(50vw-36px)]" />
 
-            <span
-              className={`relative z-10 text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${
-                i === activeIndex ? 'text-[#e6e1dc]' : 'text-[#2d2d2b]/40 hover:text-[#2d2d2b]/70'
-              }`}
+        {months.map((month, i) => {
+          const isActive = i === localActive;
+          return (
+            <button
+              key={month.key}
+              onClick={() => {
+                const container = containerRef.current;
+                const child = container?.children[i + 1] as HTMLElement;
+                if (container && child) {
+                  const scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+                  container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                }
+              }}
+              // snap-center forces the wheel to lock this item into the exact middle when you let go
+              className="snap-center relative flex-shrink-0 w-[72px] py-2 flex flex-col items-center justify-center focus:outline-none transition-all duration-300"
             >
-              {month.shortLabel}
-            </span>
+              <span
+                className={`relative z-10 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
+                  isActive ? 'text-[#2d2d2b] scale-110' : 'text-[#2d2d2b]/30 scale-95'
+                }`}
+              >
+                {month.shortLabel}
+              </span>
 
-                      {/* Premium "Live" Radar Pulse for the current calendar month */}
-            {month.isCurrentMonth && (
-              <div className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                {/* The expanding radar ring */}
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c9a96e] opacity-75"></span>
-                {/* The solid core dot */}
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#c9a96e] border border-[#e6e1dc]"></span>
-              </div>
-            )}
-            
-          </motion.button>
-        ))}
+              {month.isCurrentMonth && (
+                <div className={`absolute top-0 right-2 flex h-2 w-2 transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c9a96e] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c9a96e] border border-[#e6e1dc]"></span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Massive spacer perfectly calculated to push the last item to the center of the screen */}
+        <div className="flex-shrink-0 w-[calc(50vw-36px)]" />
       </div>
     </div>
   );
 };
+
 
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
