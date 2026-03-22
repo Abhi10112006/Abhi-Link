@@ -519,32 +519,30 @@ const MonthScrubber: React.FC<{
   };
   
   
-
-  return (
-    <div className="relative select-none py-3">
-      {/* Heavy fade masks to draw the user's eye exclusively to the center */}
+    return (
+    // 1. Changed py-3 to py-1 here: Tightens the entire scrubber to the bottom of the screen
+    <div className="relative select-none py-1">
+      {/* Heavy fade masks */}
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
 
-      {/* The Center Targeting Reticle (A subtle glass pill locked in the center) */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[76px] h-[36px] bg-[#2d2d2b]/[0.04] border border-[#2d2d2b]/[0.08] rounded-full z-0 pointer-events-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]" />
+      {/* The Center Targeting Reticle (Sized perfectly for the larger text) */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[86px] h-[40px] bg-[#2d2d2b]/[0.04] border border-[#2d2d2b]/[0.08] 
+rounded-full z-0 pointer-events-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]" />
 
       <div
         ref={containerRef}
         onScroll={handleScroll}
         onTouchStart={() => { isDraggingRef.current = true; }}
         onTouchEnd={() => { 
-          // Small delay ensures the native momentum scroll completely finishes before unlocking
           setTimeout(() => { isDraggingRef.current = false; }, 800); 
         }}
-        
-        // snap-proximity allows for effortless free-gliding instead of aggressive snapping
+        // 2. Kept py-3 ONLY here: This acts as the invisible ceiling so the dot can expand without clipping
         className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10 py-3"
-        
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
-        {/* Massive spacer perfectly calculated to push the first item to the center of the screen */}
-        <div className="flex-shrink-0 w-[calc(50vw-36px)]" />
+        {/* Adjusted spacer for the new 82px button width */}
+        <div className="flex-shrink-0 w-[calc(50vw-41px)]" />
 
         {months.map((month, i) => {
           const isActive = i === localActive;
@@ -559,19 +557,19 @@ const MonthScrubber: React.FC<{
                   container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
                 }
               }}
-              // snap-center forces the wheel to lock this item into the exact middle when you let go
-              className="snap-center relative flex-shrink-0 w-[72px] py-2 flex flex-col items-center justify-center focus:outline-none transition-all duration-300"
+              className="snap-center relative flex-shrink-0 w-[82px] py-2 flex flex-col items-center justify-center focus:outline-none transition-all duration-300"
             >
               <span
-                className={`relative z-10 text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
-                  isActive ? 'text-[#2d2d2b] scale-110' : 'text-[#2d2d2b]/30 scale-95'
+                className={`relative z-10 text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  isActive ? 'text-[#2d2d2b] scale-110' : 'text-[#2d2d2b]/40 scale-95'
                 }`}
               >
                 {month.shortLabel}
               </span>
 
               {month.isCurrentMonth && (
-                <div className={`absolute top-0 right-2 flex h-2 w-2 transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                // 3. Pushed the dot back OUT (top-0 right-1) so it has that premium, airy breathing room!
+                <div className={`absolute top-0 right-1 flex h-2 w-2 transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c9a96e] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c9a96e] border border-[#e6e1dc]"></span>
                 </div>
@@ -580,13 +578,12 @@ const MonthScrubber: React.FC<{
           );
         })}
 
-        {/* Massive spacer perfectly calculated to push the last item to the center of the screen */}
-        <div className="flex-shrink-0 w-[calc(50vw-36px)]" />
+        {/* Adjusted spacer for the new 82px button width */}
+        <div className="flex-shrink-0 w-[calc(50vw-41px)]" />
       </div>
     </div>
   );
-};
-
+  
 
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
