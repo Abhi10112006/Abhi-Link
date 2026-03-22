@@ -417,6 +417,9 @@ const MonthScrubber: React.FC<{
   
     const isFirstRender = useRef(true);
 
+   // Holds our debounce timer
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Sync external changes AND initial mount position back to the scroll wheel
   useEffect(() => {
     if (!isDraggingRef.current) {
@@ -463,13 +466,22 @@ const MonthScrubber: React.FC<{
       }
     }
 
-    // If a new month crosses into the dead-center crosshair:
+     // If a new month crosses into the dead-center crosshair:
     if (closestIndex !== localActive) {
       hapticLight(); // Premium mechanical tick!
-      setLocalActive(closestIndex);
-      onSelect(closestIndex); // Instantly updates the main page behind it
+      setLocalActive(closestIndex); // Updates the local text scale instantly
+      
+      // Clear any pending heavy page renders
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      
+      // Wait 120ms before telling the massive page behind it to change.
+      // If the user is flicking super fast, this ignores the middle pages!
+      scrollTimeoutRef.current = setTimeout(() => {
+        onSelect(closestIndex); 
+      }, 120);
     }
   };
+  
 
   return (
     <div className="relative select-none py-3">
@@ -725,7 +737,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                  // 1. Always keep the gesture engine permanently attached
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.15}
+                  dragElastic={1}
                   onDragEnd={handleMonthSwipe}
                   onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                   // 2. Prevent the mobile browser from fighting your thumb
