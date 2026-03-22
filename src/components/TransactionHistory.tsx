@@ -59,54 +59,6 @@ function groupTransactionsByMonth(transactions: Transaction[]): MonthGroup[] {
   });
 }
 
-// ─── TODO: Remove mock data ────────────────────────────────────────────────
-// Temporary multi-month fixture so the month-paging animations can be tested
-// end-to-end before real transaction data fills enough months.
-// Delete the MOCK_TRANSACTIONS constant and the allTransactions merge below.
-const MOCK_TRANSACTIONS: Transaction[] = [
-  // ── March 2026 ───────────────────────────────────────────────────────────
-  { id: 'mock-1',  payeeName: 'Rahul Sharma',   payeeUpiId: 'rahul@oksbi',         amount: '2500', remarks: 'Rent share',        date: '18/03/2026', time: '10:22', isReceiver: false },
-  { id: 'mock-2',  payeeName: 'Priya Singh',    payeeUpiId: 'priya.s@paytm',       amount: '800',  remarks: 'Dinner',            date: '15/03/2026', time: '21:14', isReceiver: true  },
-  { id: 'mock-3',  payeeName: '',               payeeUpiId: 'grofers@ybl',          amount: '1240', remarks: 'Groceries',         date: '12/03/2026', time: '09:08', isReceiver: false },
-  { id: 'mock-4',  payeeName: 'Amit Kumar',     payeeUpiId: 'amit.k@upi',          amount: '3000', remarks: 'Freelance payment', date: '05/03/2026', time: '14:30', isReceiver: true  },
-  { id: 'mock-5',  payeeName: 'Swiggy',         payeeUpiId: 'swiggy@icici',        amount: '340',  remarks: '',                  date: '02/03/2026', time: '20:05', isReceiver: false },
-    // ── Extra Scroll-Testing Data for March 2026 (No ID Collisions) ─────────
-  { id: 'mock-101', payeeName: 'Starbucks',      payeeUpiId: 'starbucks@paytm',     amount: '350',  remarks: 'Morning Coffee',    date: '30/03/2026', time: '08:15', isReceiver: false },
-  { id: 'mock-102', payeeName: 'Blinkit',        payeeUpiId: 'blinkit@upi',         amount: '890',  remarks: 'Groceries',         date: '29/03/2026', time: '19:45', isReceiver: false },
-  { id: 'mock-103', payeeName: 'Karan Singh',    payeeUpiId: 'karan.s@okicici',     amount: '5000', remarks: 'Lent money',        date: '28/03/2026', time: '14:20', isReceiver: false },
-  { id: 'mock-104', payeeName: 'Uber',           payeeUpiId: 'uber@axisbank',       amount: '450',  remarks: 'Cab to office',     date: '27/03/2026', time: '09:10', isReceiver: false },
-  { id: 'mock-105', payeeName: 'Jio Prepaid',    payeeUpiId: 'jio@upi',             amount: '749',  remarks: 'Mobile recharge',   date: '26/03/2026', time: '11:03', isReceiver: false },
-  { id: 'mock-106', payeeName: 'Ravi Kumar',     payeeUpiId: 'ravi.k@sbi',          amount: '1200', remarks: 'Split bill',        date: '25/03/2026', time: '22:30', isReceiver: true  },
-  { id: 'mock-107', payeeName: 'Netflix',        payeeUpiId: 'netflix@upi',         amount: '649',  remarks: 'Subscription',      date: '24/03/2026', time: '06:00', isReceiver: false },
-  { id: 'mock-108', payeeName: 'Sneha Patel',    payeeUpiId: 'sneha.p@ybl',         amount: '8500', remarks: 'Freelance design',  date: '23/03/2026', time: '16:45', isReceiver: true  },
-  { id: 'mock-109', payeeName: 'Zepto',          payeeUpiId: 'zepto@icici',         amount: '320',  remarks: 'Snacks',            date: '22/03/2026', time: '20:15', isReceiver: false },
-  { id: 'mock-110', payeeName: 'Gym Membership', payeeUpiId: 'fitpro@hdfc',         amount: '1500', remarks: 'Monthly fee',       date: '21/03/2026', time: '07:30', isReceiver: false },
-  { id: 'mock-111', payeeName: 'MakeMyTrip',     payeeUpiId: 'mmt@upi',             amount: '4200', remarks: 'Flight booking',    date: '20/03/2026', time: '13:20', isReceiver: false },
-  { id: 'mock-112', payeeName: 'Aditi Sharma',   payeeUpiId: 'aditi.s@paytm',       amount: '2000', remarks: 'Gift contribution', date: '19/03/2026', time: '18:10', isReceiver: true  },
-  { id: 'mock-113', payeeName: 'BookMyShow',     payeeUpiId: 'bms@axis',            amount: '880',  remarks: 'Movie tickets',     date: '17/03/2026', time: '15:05', isReceiver: false },
-  { id: 'mock-114', payeeName: 'IRCTC',          payeeUpiId: 'irctc@sbi',           amount: '1150', remarks: 'Train tickets',     date: '16/03/2026', time: '10:45', isReceiver: false },
-  { id: 'mock-115', payeeName: 'Local Pharmacy', payeeUpiId: 'medplus@ybl',         amount: '450',  remarks: 'Medicines',         date: '14/03/2026', time: '19:20', isReceiver: false },
-  // ────────────────────────────────────────────────────────────────────────
-  
-  
-  // ── February 2026 ────────────────────────────────────────────────────────
-  { id: 'mock-6',  payeeName: 'Neha Gupta',     payeeUpiId: 'neha.g@okicici',      amount: '1500', remarks: 'Movie + dinner',    date: '24/02/2026', time: '18:45', isReceiver: true  },
-  { id: 'mock-7',  payeeName: 'Airtel',         payeeUpiId: 'airtel@upi',          amount: '499',  remarks: 'Postpaid bill',     date: '18/02/2026', time: '11:03', isReceiver: false },
-  { id: 'mock-8',  payeeName: 'Suresh Patel',   payeeUpiId: 'suresh.p@ybl',        amount: '4200', remarks: 'Project advance',   date: '10/02/2026', time: '09:30', isReceiver: true  },
-  { id: 'mock-9',  payeeName: 'Amazon Pay',     payeeUpiId: 'amazon@apl',          amount: '2199', remarks: 'Headphones',        date: '03/02/2026', time: '16:22', isReceiver: false },
-  // ── January 2026 ─────────────────────────────────────────────────────────
-  { id: 'mock-10', payeeName: 'Deepika Rao',    payeeUpiId: 'deepika.r@oksbi',     amount: '1000', remarks: 'Gift',              date: '28/01/2026', time: '12:00', isReceiver: true  },
-  { id: 'mock-11', payeeName: 'Zomato',         payeeUpiId: 'zomato@hdfcbank',     amount: '620',  remarks: 'Lunch order',       date: '20/01/2026', time: '13:17', isReceiver: false },
-  { id: 'mock-12', payeeName: 'Vikram Nair',    payeeUpiId: 'vikram.n@paytm',      amount: '8000', remarks: 'Consulting fee',    date: '14/01/2026', time: '10:00', isReceiver: true  },
-  { id: 'mock-13', payeeName: 'BSNL Fiber',     payeeUpiId: 'bsnl@upi',            amount: '699',  remarks: 'Internet bill',     date: '07/01/2026', time: '15:45', isReceiver: false },
-  { id: 'mock-14', payeeName: 'Kavya Menon',    payeeUpiId: 'kavya.m@upi',         amount: '2200', remarks: 'Rent contribution', date: '01/01/2026', time: '11:30', isReceiver: false },
-  // ── December 2025 ────────────────────────────────────────────────────────
-  { id: 'mock-15', payeeName: 'Ananya Joshi',   payeeUpiId: 'ananya.j@okaxis',     amount: '5500', remarks: 'Year-end bonus',    date: '25/12/2025', time: '09:00', isReceiver: true  },
-  { id: 'mock-16', payeeName: 'Flipkart',       payeeUpiId: 'flipkart@axisbank',   amount: '3499', remarks: 'Big Billion sale',  date: '15/12/2025', time: '14:18', isReceiver: false },
-  { id: 'mock-17', payeeName: 'Rohan Desai',    payeeUpiId: 'rohan.d@oksbi',       amount: '1750', remarks: 'Shared trip costs', date: '08/12/2025', time: '20:30', isReceiver: true  },
-];
-// ─── End mock data ─────────────────────────────────────────────────────────
-
 // Animated count-up number
 const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
   const mv = useMotionValue(0);
@@ -593,14 +545,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   t,
 }) => {
     // 1. FAST PATH: Instantly grab ONLY the current calendar month for a 0ms render
-  const fastInitialMonth = React.useMemo(() => {
+    const fastInitialMonth = React.useMemo(() => {
     const today = new Date();
     const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
     const currentMonthSuffix = `${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
     
-    const allTxs = [...transactions, ...MOCK_TRANSACTIONS];
-    // Lightning-fast string filter just to get today's month
-    const currentTxs = allTxs.filter(tx => tx.date.endsWith(currentMonthSuffix));
+    // Lightning-fast string filter just to get today's real transactions
+    const currentTxs = transactions.filter(tx => tx.date.endsWith(currentMonthSuffix));
+      
     
     return [{
       key: currentMonthKey,
@@ -625,12 +577,11 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     if (!hasLoadedHistory.current) {
       // Wait 350ms for the modal's slide-up animation to completely finish
       const timer = setTimeout(() => {
-        const fullHistory = groupTransactionsByMonth([...transactions, ...MOCK_TRANSACTIONS]);
+        // Only grouping the REAL transactions now
+        const fullHistory = groupTransactionsByMonth(transactions);
         if (fullHistory.length > 0) {
           setMonthGroups(fullHistory);
           // Silently shift the index to the end of the new array.
-          // Because the active month key ("2026-03") remains exactly the same, 
-          // Framer Motion will NOT trigger a swipe animation!
           setActiveMonthIndex(Math.max(0, fullHistory.length - 1));
         }
         hasLoadedHistory.current = true;
@@ -638,13 +589,12 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       return () => clearTimeout(timer);
     } else {
       // If history is already loaded (e.g., user deletes a card), update instantly so there is no lag!
-      const fullHistory = groupTransactionsByMonth([...transactions, ...MOCK_TRANSACTIONS]);
+      const fullHistory = groupTransactionsByMonth(transactions);
       setMonthGroups(fullHistory);
       setActiveMonthIndex(prev => Math.min(prev, Math.max(0, fullHistory.length - 1)));
     }
   }, [transactions]);
   
-
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
