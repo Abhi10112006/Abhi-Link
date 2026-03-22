@@ -320,7 +320,7 @@ const SwipeableCard: React.FC<{
   const deleteOpacity = useTransform(x, [DRAG_CONSTRAINT, -100, 0], [1, 0.5, 0]);
   const deleteIconScale = useTransform(x, [DELETE_THRESHOLD, -100, 0], [1, 0.7, 0.5]);
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+    const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
     // Always spring the card back to center
     animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
     if (info.offset.x < DELETE_THRESHOLD) {
@@ -329,6 +329,25 @@ const SwipeableCard: React.FC<{
       onDeleteRequest(tx);
     }
   };
+
+  // NEW: The "Tutorial Peek" Animation
+  useEffect(() => {
+    // We ONLY animate the very first card (index 0) so it doesn't look chaotic
+    if (index === 0) {
+      // Wait 800ms for the modal to fully open and settle
+      const timer = setTimeout(() => {
+        // Slide left 45px to reveal the edge of the dark delete background
+        animate(x, -45, { type: 'spring', stiffness: 300, damping: 20 });
+        
+        // Snap back to 0 after 400ms
+        setTimeout(() => {
+          animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+        }, 400);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [index, x]);
 
   return (
     <motion.div
@@ -514,7 +533,7 @@ const MonthScrubber: React.FC<{
         }}
         
         // snap-proximity allows for effortless free-gliding instead of aggressive snapping
-        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10"
+        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10 py-4"
         
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
