@@ -512,8 +512,10 @@ const MonthScrubber: React.FC<{
           // Small delay ensures the native momentum scroll completely finishes before unlocking
           setTimeout(() => { isDraggingRef.current = false; }, 800); 
         }}
-        // snap-x and snap-mandatory invoke the phone's native momentum physics engine
-        className="flex items-center overflow-x-auto snap-x snap-mandatory relative z-10"
+        
+        // snap-proximity allows for effortless free-gliding instead of aggressive snapping
+        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10"
+        
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
         {/* Massive spacer perfectly calculated to push the first item to the center of the screen */}
@@ -738,18 +740,19 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <div className="relative overflow-hidden">
               <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
 
-                                <motion.div
+                                       <motion.div
                   key={currentMonth?.key}
                   custom={slideDirection}
                   variants={pageVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                 // 1. Always keep the gesture engine permanently attached
+                  // Swapped stiff spring for a silky-smooth iOS Bezier glide
+                  transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.4 }}
+                  // 1. Always keep the gesture engine permanently attached
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={1}
+                  dragElastic={1}                 
                   onDragEnd={handleMonthSwipe}
                   onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
                   // 2. Prevent the mobile browser from fighting your thumb
