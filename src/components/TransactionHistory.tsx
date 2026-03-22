@@ -413,12 +413,12 @@ const MonthScrubber: React.FC<{
   
   // CRITICAL: We lock external updates while the user is actively touching the wheel
   // so the parent page doesn't forcefully yank the scrollbar away from their thumb.
-  const isDraggingRef = useRef(false);
+    const isDraggingRef = useRef(false);
+  const isFirstRender = useRef(true);
   
-    const isFirstRender = useRef(true);
-
-   // Holds our debounce timer
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Holds our magnetic snap timer
+  const scrollEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
 
   // Sync external changes AND initial mount position back to the scroll wheel
   useEffect(() => {
@@ -443,7 +443,7 @@ const MonthScrubber: React.FC<{
   }, [activeIndex]);
 
 
-  const handleScroll = () => {
+    const handleScroll = () => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -452,7 +452,7 @@ const MonthScrubber: React.FC<{
     let closestIndex = localActive;
     let minDistance = Infinity;
 
-    // Loop through the buttons (skipping the first and last spacer divs)
+    // Loop through the buttons
     for (let i = 0; i < months.length; i++) {
       const child = container.children[i + 1] as HTMLElement;
       if (!child) continue;
@@ -466,21 +466,33 @@ const MonthScrubber: React.FC<{
       }
     }
 
-     // If a new month crosses into the dead-center crosshair:
+    // Instantly update local wheel UI and trigger haptic when crossing a line
     if (closestIndex !== localActive) {
       hapticLight(); // Premium mechanical tick!
-      setLocalActive(closestIndex); // Updates the local text scale instantly
-      
-      // Clear any pending heavy page renders
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-      
-      // Wait 120ms before telling the massive page behind it to change.
-      // If the user is flicking super fast, this ignores the middle pages!
-      scrollTimeoutRef.current = setTimeout(() => {
-        onSelect(closestIndex); 
-      }, 120);
+      setLocalActive(closestIndex); 
     }
+
+    // CLEAR THE TIMER ON EVERY SINGLE FRAME OF SCROLLING
+    if (scrollEndTimeoutRef.current) clearTimeout(scrollEndTimeoutRef.current);
+    
+    // SET A NEW TIMER: This only fires when the wheel COMPLETELY STOPS for 150ms
+    scrollEndTimeoutRef.current = setTimeout(() => {
+      // 1. Tell the heavy background page to swap smoothly
+      onSelect(closestIndex);
+      
+      // 2. Programmatic Magnetic Snap: 
+      // If the mobile browser got lazy and stopped "between" two months, physically force it to center.
+      const child = container.children[closestIndex + 1] as HTMLElement;
+      if (child) {
+        const perfectScrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+        // If it is off-center by more than 2 pixels, snap it!
+        if (Math.abs(container.scrollLeft - perfectScrollLeft) > 2) {
+          container.scrollTo({ left: perfectScrollLeft, behavior: 'smooth' });
+        }
+      }
+    }, 150);
   };
+  
   
 
   return (
