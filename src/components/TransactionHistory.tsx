@@ -311,6 +311,9 @@ const MonthlySummaryCard: React.FC<{ month: MonthGroup }> = ({ month }) => {
 const DRAG_CONSTRAINT = -240;
 const DELETE_THRESHOLD = -220;
 
+// Global flag to ensure the tutorial only plays ONCE per app load
+let hasShownSwipeTutorial = false;
+
 const SwipeableCard: React.FC<{
   tx: Transaction;
   index: number;
@@ -330,10 +333,12 @@ const SwipeableCard: React.FC<{
     }
   };
 
-  // NEW: The "Tutorial Peek" Animation
+    // NEW: The "Tutorial Peek" Animation
   useEffect(() => {
-    // We ONLY animate the very first card (index 0) so it doesn't look chaotic
-    if (index === 0) {
+    // We ONLY animate the very first card, and ONLY once per session so it isn't annoying
+    if (index === 0 && !hasShownSwipeTutorial) {
+      hasShownSwipeTutorial = true; // Instantly lock it so it never runs again
+      
       // Wait 800ms for the modal to fully open and settle
       const timer = setTimeout(() => {
         // Slide left 45px to reveal the edge of the dark delete background
@@ -348,6 +353,7 @@ const SwipeableCard: React.FC<{
       return () => clearTimeout(timer);
     }
   }, [index, x]);
+  
 
   return (
     <motion.div
@@ -533,7 +539,7 @@ const MonthScrubber: React.FC<{
         }}
         
         // snap-proximity allows for effortless free-gliding instead of aggressive snapping
-        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10 py-4"
+        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10 py-3"
         
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
