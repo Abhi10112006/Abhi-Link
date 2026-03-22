@@ -722,16 +722,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   animate="center"
                   exit="exit"
                   transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                  // 1. Always keep the engine on so Framer Motion doesn't delete it
+                 // 1. Always keep the gesture engine permanently attached
                   drag="x"
-                  // 2. Safely disable touch detection instead of destroying the physics
-                  dragListener={monthGroups.length > 1}
                   dragConstraints={{ left: 0, right: 0 }}
                   dragElastic={0.15}
                   onDragEnd={handleMonthSwipe}
                   onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-                  // 3. Prevent the mobile browser from fighting your thumb
+                  // 2. Prevent the mobile browser from fighting your thumb
                   className="w-full flex flex-col touch-pan-y"
+                                  
                 >
                                   
                   {currentMonth && (
@@ -760,18 +759,19 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         )}
       </div>
 
-                  {/* 1. STATIC BACKGROUND: Renders instantly with GPU acceleration to prevent blur lag */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 z-[54] pointer-events-none">
+      {/* 1. STATIC BACKGROUND: Renders instantly with GPU acceleration to prevent blur lag */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 z-[54] pointer-events-none">
         <div
-          className="absolute inset-0 backdrop-blur-xl"
+          className="absolute inset-0 backdrop-blur-md"
           style={{
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 50%)',
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.85) 50%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 80%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 80%)',
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.6) 100%)',
             transform: 'translateZ(0)', // Forces the phone's GPU to render the blur perfectly
           }}
         />
       </div>
+      
 
       {/* 2. ANIMATED CONTENT: Only the pills fade and slide in */}
       <AnimatePresence>
