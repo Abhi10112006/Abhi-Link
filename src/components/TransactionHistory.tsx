@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'motion/react';
-import { X, History, IndianRupee, Trash2, AlertTriangle, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { X, History, IndianRupee, Trash2, ArrowDownLeft, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { PremiumBackground } from './PremiumBackground';
-import { hapticMedium, hapticHeavy, hapticWarning, hapticScroll } from '../utils/haptics';
+import { hapticMedium, hapticLight, hapticWarning } from '../utils/haptics';
 
 export interface Transaction {
   id: string;
@@ -19,64 +19,303 @@ interface TransactionHistoryProps {
   isOpen: boolean;
   onClose: () => void;
   transactions: Transaction[];
-  onClearAll: () => void;
+  onClearAll?: () => void;
   onDeleteTransaction: (id: string) => void;
   t: Record<string, string>;
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12, delayChildren: 0.15 }
-  },
-  exit: { opacity: 0, transition: { duration: 0.35, ease: 'easeInOut' } }
-};
+interface MonthGroup {
+  key: string;
+  label: string;
+  shortLabel: string;
+  transactions: Transaction[];
+  isCurrentMonth: boolean;
+}
 
-const item = {
-  hidden: { opacity: 0, y: 40, filter: 'blur(10px)' },
-  show: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
-    transition: { type: 'spring', stiffness: 200, damping: 20 }
+// Parse DD/MM/YYYY → month group key YYYY-MM
+function groupTransactionsByMonth(transactions: Transaction[]): MonthGroup[] {
+  const groups = new Map<string, Transaction[]>();
+  for (const tx of transactions) {
+    const parts = tx.date.split('/');
+    if (parts.length === 3 && /^\d+$/.test(parts[1]) && /^\d+$/.test(parts[2])) {
+      const monthKey = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+      if (!groups.has(monthKey)) groups.set(monthKey, []);
+      groups.get(monthKey)!.push(tx);
+    }
   }
+  const today = new Date();
+  const currentKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  // Oldest-to-newest so index 0 = oldest, last index = newest (current)
+  const sortedEntries = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    return sortedEntries.map(([key, txs]) => {
+    const [year, month] = key.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const label = date.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    
+    // Future-proof: Formats as "Mar '26" so multiple years don't confuse the user
+    const shortLabel = `${date.toLocaleString('en-IN', { month: 'short' })} '${date.getFullYear().toString().slice(-2)}`;
+    
+    return { key, label, shortLabel, transactions: txs, isCurrentMonth: key === currentKey };
+  });
+}
+
+// Animated count-up number
+const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
+  const mv = useMotionValue(0);
+  const [display, setDisplay] = useState('0');
+  useEffect(() => {
+    const controls = animate(mv, value, { duration: 0.9, ease: [0.16, 1, 0.3, 1] });
+    const unsub = mv.on('change', v => {
+      setDisplay(Math.round(v).toLocaleString('en-IN'));
+    });
+    return () => { controls.stop(); unsub(); };
+  }, [value, mv]);
+  return <span>{display}</span>;
 };
 
-// Swipeable card sub-component — uses motion drag for swipe-to-delete
-const DRAG_CONSTRAINT = -240; // max drag distance in px
-const DELETE_THRESHOLD = -220; // must swipe nearly to the end to confirm delete
+// Dual-arc SVG ring: outer arc = received (gold), inner arc = sent (warm white)
+// Both arcs animate in from zero on mount/remount.
+const OUTER_R = 30;
+const INNER_R = 21;
+const RING_SW = 4.5;
+const OUTER_CIRC = 2 * Math.PI * OUTER_R;
+const INNER_CIRC = 2 * Math.PI * INNER_R;
+
+const FlowRing: React.FC<{
+  totalSent: number;
+  totalReceived: number;
+  totalTx: number;
+}> = ({ totalSent, totalReceived, totalTx }) => {
+  const SIZE = 76;
+  const C = SIZE / 2; // 38
+
+  const total = totalSent + totalReceived;
+  const receivedPct = total > 0 ? totalReceived / total : 0;
+  const sentPct = total > 0 ? totalSent / total : 0;
+
+  const outerOffset = useMotionValue(OUTER_CIRC); // start fully hidden
+  const innerOffset = useMotionValue(INNER_CIRC);
+
+  useEffect(() => {
+    animate(outerOffset, OUTER_CIRC * (1 - receivedPct), {
+      duration: 1.2,
+      ease: [0.16, 1, 0.3, 1],
+    });
+    animate(innerOffset, INNER_CIRC * (1 - sentPct), {
+      duration: 1.0,
+      ease: [0.16, 1, 0.3, 1],
+      delay: 0.15,
+    });
+  }, [receivedPct, sentPct, outerOffset, innerOffset]);
+
+  return (
+    <svg
+      width={SIZE}
+      height={SIZE}
+      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      className="flex-shrink-0 overflow-visible"
+      aria-hidden={true}
+    >
+      {/* Dim track rings */}
+      <circle cx={C} cy={C} r={OUTER_R} fill="none" stroke="rgba(230,225,220,0.09)" strokeWidth={RING_SW} />
+      <circle cx={C} cy={C} r={INNER_R} fill="none" stroke="rgba(230,225,220,0.09)" strokeWidth={RING_SW} />
+
+      {/* Rotate from 12 o'clock */}
+      <g transform={`rotate(-90, ${C}, ${C})`}>
+        {/* Outer arc — Received (warm gold glow) */}
+        <motion.circle
+          cx={C} cy={C} r={OUTER_R}
+          fill="none"
+          stroke="#c9a96e"
+          strokeWidth={RING_SW}
+          strokeLinecap="round"
+          strokeDasharray={OUTER_CIRC}
+          style={{
+            strokeDashoffset: outerOffset,
+            filter: 'drop-shadow(0 0 5px rgba(201,169,110,0.85))',
+          }}
+        />
+        {/* Inner arc — Sent (warm silver glow) */}
+        <motion.circle
+          cx={C} cy={C} r={INNER_R}
+          fill="none"
+          stroke="rgba(230,225,220,0.85)"
+          strokeWidth={RING_SW}
+          strokeLinecap="round"
+          strokeDasharray={INNER_CIRC}
+          style={{
+            strokeDashoffset: innerOffset,
+            filter: 'drop-shadow(0 0 4px rgba(230,225,220,0.65))',
+          }}
+        />
+      </g>
+
+      {/* Centre: transaction count */}
+      <text
+        x={C} y={C - 2}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        style={{ fill: '#e6e1dc', fontSize: '14px', fontWeight: 900 }}
+      >
+        {totalTx}
+      </text>
+      <text
+        x={C} y={C + 11}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        style={{ fill: 'rgba(230,225,220,0.40)', fontSize: '7px', fontWeight: 700, letterSpacing: '0.12em' }}
+      >
+        TX
+      </text>
+    </svg>
+  );
+};
+
+// Monthly summary card shown at the top of each month page
+const MonthlySummaryCard: React.FC<{ month: MonthGroup }> = ({ month }) => {
+  const totalSent = month.transactions
+    .filter(tx => !tx.isReceiver && tx.amount)
+    .reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+  const totalReceived = month.transactions
+    .filter(tx => tx.isReceiver && tx.amount)
+    .reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+  const sentCount = month.transactions.filter(tx => !tx.isReceiver).length;
+  const receivedCount = month.transactions.filter(tx => tx.isReceiver).length;
+
+  return (
+    <motion.div
+      key={month.key + '-summary'}
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+      className="w-full rounded-3xl overflow-hidden mb-4 relative"
+      style={{ background: 'linear-gradient(135deg, #2d2d2b 0%, #1a1a18 100%)' }}
+    >
+      {/* Sacred geometry overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg stroke='%23e6e1dc' stroke-width='0.8' fill='none'%3E%3Ccircle cx='40' cy='40' r='28'/%3E%3Ccircle cx='40' cy='40' r='18'/%3E%3Cpath d='M40 12 L40 68 M12 40 L68 40'/%3E%3Cpath d='M20 20 L60 60 M20 60 L60 20'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '80px 80px',
+        }}
+      />
+      <div className="relative z-10 p-5">
+        {/* Month label */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[#e6e1dc]/50 text-[10px] font-bold uppercase tracking-[0.2em] mb-0.5">
+              Monthly Summary
+            </p>
+            <h2 className="text-[#e6e1dc] text-xl font-black tracking-tight leading-none">
+              {month.label}
+            </h2>
+          </div>
+          {/* Animated dual-arc ring: outer = received %, inner = sent % */}
+          <FlowRing totalSent={totalSent} totalReceived={totalReceived} totalTx={month.transactions.length} />
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Sent */}
+          <div className="bg-[#e6e1dc]/[0.08] border border-[#e6e1dc]/10 rounded-2xl p-3.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded-full bg-[#e6e1dc]/10 flex items-center justify-center">
+                <ArrowUpRight className="w-3 h-3 text-[#e6e1dc]/60" />
+              </div>
+              <span className="text-[#e6e1dc]/60 text-[10px] font-bold uppercase tracking-widest">Sent</span>
+            </div>
+            <div className="flex items-start gap-0.5">
+              <IndianRupee className="w-3.5 h-3.5 text-[#e6e1dc] mt-0.5 flex-shrink-0" />
+              <span className="text-[#e6e1dc] text-lg font-black leading-none">
+                <AnimatedNumber value={totalSent} />
+              </span>
+            </div>
+            <p className="text-[#e6e1dc]/40 text-[10px] font-medium mt-1">
+              {sentCount} {sentCount === 1 ? 'payment' : 'payments'}
+            </p>
+          </div>
+
+          {/* Received */}
+          <div className="bg-[#e6e1dc]/[0.08] border border-[#e6e1dc]/10 rounded-2xl p-3.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-5 h-5 rounded-full bg-[#e6e1dc]/10 flex items-center justify-center">
+                <ArrowDownLeft className="w-3 h-3 text-[#e6e1dc]/60" />
+              </div>
+              <span className="text-[#e6e1dc]/60 text-[10px] font-bold uppercase tracking-widest">Received</span>
+            </div>
+            <div className="flex items-start gap-0.5">
+              <IndianRupee className="w-3.5 h-3.5 text-[#e6e1dc] mt-0.5 flex-shrink-0" />
+              <span className="text-[#e6e1dc] text-lg font-black leading-none">
+                <AnimatedNumber value={totalReceived} />
+              </span>
+            </div>
+            <p className="text-[#e6e1dc]/40 text-[10px] font-medium mt-1">
+              {receivedCount} {receivedCount === 1 ? 'receipt' : 'receipts'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Swipeable card constants
+const DRAG_CONSTRAINT = -240;
+const DELETE_THRESHOLD = -220;
+
+// Global flag to ensure the tutorial only plays ONCE per app load
+let hasShownSwipeTutorial = false;
 
 const SwipeableCard: React.FC<{
   tx: Transaction;
   index: number;
-  onDelete: (id: string) => void;
-}> = ({ tx, index, onDelete }) => {
+  onDeleteRequest: (tx: Transaction) => void;
+}> = ({ tx, index, onDeleteRequest }) => {
   const x = useMotionValue(0);
-  // Reveal the premium delete background only as the card nears the full swipe end
   const deleteOpacity = useTransform(x, [DRAG_CONSTRAINT, -100, 0], [1, 0.5, 0]);
   const deleteIconScale = useTransform(x, [DELETE_THRESHOLD, -100, 0], [1, 0.7, 0.5]);
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+    const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
+    // Always spring the card back to center
+    animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
     if (info.offset.x < DELETE_THRESHOLD) {
-      // Swiped to the end — delete immediately, no confirmation needed
       hapticWarning();
-      onDelete(tx.id);
-    } else {
-      // Not far enough — spring back to original position
-      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+      // Spring fully resets before modal appears (next microtask)
+      onDeleteRequest(tx);
     }
   };
+
+    // NEW: The "Tutorial Peek" Animation
+  useEffect(() => {
+    // We ONLY animate the very first card, and ONLY once per session so it isn't annoying
+    if (index === 0 && !hasShownSwipeTutorial) {
+      hasShownSwipeTutorial = true; // Instantly lock it so it never runs again
+      
+      // Wait 800ms for the modal to fully open and settle
+      const timer = setTimeout(() => {
+        // Slide left 45px to reveal the edge of the dark delete background
+        animate(x, -45, { type: 'spring', stiffness: 300, damping: 20 });
+        
+        // Snap back to 0 after 400ms
+        setTimeout(() => {
+          animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+        }, 400);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [index, x]);
+  
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ delay: index * 0.04, type: 'spring', stiffness: 260, damping: 22 }}
+      transition={{ delay: index * 0.035, type: 'spring', stiffness: 260, damping: 22 }}
       className="relative overflow-hidden rounded-2xl"
     >
-      {/* Delete background revealed on swipe */}
+      {/* Delete background */}
       <motion.div
         style={{ opacity: deleteOpacity }}
         className="absolute inset-0 bg-[#2d2d2b] flex items-center justify-end pr-5 rounded-2xl pointer-events-none"
@@ -88,18 +327,17 @@ const SwipeableCard: React.FC<{
         </motion.div>
       </motion.div>
 
-      {/* The draggable card itself */}
+      {/* Draggable card */}
       <motion.div
         drag="x"
         dragConstraints={{ left: DRAG_CONSTRAINT, right: 0 }}
         dragElastic={{ left: 0.08, right: 0 }}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-4 shadow-sm cursor-grab active:cursor-grabbing touch-pan-y"
+        className="bg-white/70 backdrop-blur-md border border-gray-200/80 rounded-2xl p-3.5 shadow-sm cursor-grab active:cursor-grabbing touch-pan-y"
       >
-        {/* Strict 3-column flexbox layout */}
         <div className="flex items-center gap-3">
-          {/* Column 1: Direction indicator */}
+          {/* Direction icon */}
           <div className="flex-shrink-0">
             <div className={`w-9 h-9 rounded-full flex items-center justify-center ${tx.isReceiver ? 'bg-[#f0ece8] border border-[#d9d3ce]' : 'bg-[#2d2d2b]'}`}>
               {tx.isReceiver
@@ -108,31 +346,30 @@ const SwipeableCard: React.FC<{
             </div>
           </div>
 
-          {/* Column 2: Payee name, UPI ID, remarks */}
+          {/* Name + UPI + remarks */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-gray-900 truncate">
+            <p className="text-sm font-black text-[#2d2d2b] truncate leading-tight">
               {tx.payeeName || tx.payeeUpiId}
             </p>
             {tx.payeeName && (
-              <p className="text-xs text-gray-400 font-medium truncate">{tx.payeeUpiId}</p>
+              <p className="text-[10px] text-gray-400 font-medium truncate leading-tight">{tx.payeeUpiId}</p>
             )}
             {tx.remarks && (
-              <p className="text-xs text-gray-400 italic truncate">"{tx.remarks}"</p>
+              <p className="text-[10px] text-gray-400 italic truncate leading-tight">"{tx.remarks}"</p>
             )}
           </div>
 
-          {/* Column 3: Amount, date, time — all right-aligned */}
+          {/* Amount + time */}
           <div className="flex-shrink-0 text-right">
             {tx.amount ? (
               <div className="flex items-center justify-end gap-0.5">
-                <IndianRupee className="w-3.5 h-3.5 text-gray-900" />
-                <span className="text-sm font-black text-gray-900">{tx.amount}</span>
+                <IndianRupee className="w-3.5 h-3.5 text-[#2d2d2b]" />
+                <span className="text-sm font-black text-[#2d2d2b]">{tx.amount}</span>
               </div>
             ) : (
               <span className="text-xs text-gray-400 font-medium">—</span>
             )}
-            <p className="text-[10px] text-gray-400 font-medium mt-0.5">{tx.date}</p>
-            <p className="text-[10px] text-gray-400 font-medium">{tx.time}</p>
+            <p className="text-[10px] text-gray-400 font-medium mt-0.5">{tx.time}</p>
           </div>
         </div>
       </motion.div>
@@ -140,17 +377,224 @@ const SwipeableCard: React.FC<{
   );
 };
 
+// Shows all months as short-label pills. Active month has an animated sliding
+// Premium horizontal timeline scrubber (Slice/CRED Style Scroll Wheel)
+// Uses native CSS snap physics and mathematical center-detection to trigger haptics and page changes.
+const MonthScrubber: React.FC<{
+  months: MonthGroup[];
+  activeIndex: number;
+  onSelect: (index: number) => void;
+}> = ({ months, activeIndex, onSelect }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [localActive, setLocalActive] = useState(activeIndex);
+  
+  // CRITICAL: We lock external updates while the user is actively touching the wheel
+  // so the parent page doesn't forcefully yank the scrollbar away from their thumb.
+    const isDraggingRef = useRef(false);
+  const isFirstRender = useRef(true);
+  
+  // Holds our magnetic snap timer
+  const scrollEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+
+  // Sync external changes AND initial mount position back to the scroll wheel
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalActive(activeIndex);
+      const container = containerRef.current;
+      const child = container?.children[activeIndex + 1] as HTMLElement;
+      
+      if (container && child) {
+        const scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+        
+        container.scrollTo({ 
+          left: scrollLeft, 
+          // 'auto' teleports it instantly on mount so you don't see it spinning.
+          // 'smooth' animates it when you actually swipe pages later.
+          behavior: isFirstRender.current ? 'auto' : 'smooth' 
+        });
+        
+        isFirstRender.current = false;
+      }
+    }
+  }, [activeIndex]);
+
+
+    const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Find the exact mathematical dead-center of the user's screen
+    const center = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = localActive;
+    let minDistance = Infinity;
+
+    // Loop through the buttons
+    for (let i = 0; i < months.length; i++) {
+      const child = container.children[i + 1] as HTMLElement;
+      if (!child) continue;
+      
+      const childCenter = child.offsetLeft + child.clientWidth / 2;
+      const distance = Math.abs(childCenter - center);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    // Instantly update local wheel UI and trigger haptic when crossing a line
+    if (closestIndex !== localActive) {
+      hapticLight(); // Premium mechanical tick!
+      setLocalActive(closestIndex); 
+    }
+
+    // CLEAR THE TIMER ON EVERY SINGLE FRAME OF SCROLLING
+    if (scrollEndTimeoutRef.current) clearTimeout(scrollEndTimeoutRef.current);
+    
+    // SET A NEW TIMER: This only fires when the wheel COMPLETELY STOPS for 150ms
+    scrollEndTimeoutRef.current = setTimeout(() => {
+      // 1. Tell the heavy background page to swap smoothly
+      onSelect(closestIndex);
+      
+      // 2. Programmatic Magnetic Snap: 
+      // If the mobile browser got lazy and stopped "between" two months, physically force it to center.
+      const child = container.children[closestIndex + 1] as HTMLElement;
+      if (child) {
+        const perfectScrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+        // If it is off-center by more than 2 pixels, snap it!
+        if (Math.abs(container.scrollLeft - perfectScrollLeft) > 2) {
+          container.scrollTo({ left: perfectScrollLeft, behavior: 'smooth' });
+        }
+      }
+    }, 150);
+  };
+  
+  
+    return (
+    // 1. Changed py-3 to py-1 here: Tightens the entire scrubber to the bottom of the screen
+    <div className="relative select-none py-1">
+      {/* Heavy fade masks */}
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#e6e1dc] via-[#e6e1dc]/80 to-transparent z-20 pointer-events-none" />
+
+      {/* The Center Targeting Reticle (Sized perfectly for the larger text) */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[86px] h-[40px] bg-[#2d2d2b]/[0.04] border border-[#2d2d2b]/[0.08] 
+rounded-full z-0 pointer-events-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]" />
+
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        onTouchStart={() => { isDraggingRef.current = true; }}
+        onTouchEnd={() => { 
+          setTimeout(() => { isDraggingRef.current = false; }, 800); 
+        }}
+        // 2. Kept py-3 ONLY here: This acts as the invisible ceiling so the dot can expand without clipping
+        className="flex items-center overflow-x-auto snap-x snap-proximity relative z-10 py-3"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+      >
+        {/* Adjusted spacer for the new 82px button width */}
+        <div className="flex-shrink-0 w-[calc(50vw-41px)]" />
+
+        {months.map((month, i) => {
+          const isActive = i === localActive;
+          return (
+            <button
+              key={month.key}
+              onClick={() => {
+                const container = containerRef.current;
+                const child = container?.children[i + 1] as HTMLElement;
+                if (container && child) {
+                  const scrollLeft = child.offsetLeft - container.clientWidth / 2 + child.clientWidth / 2;
+                  container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                }
+              }}
+              className="snap-center relative flex-shrink-0 w-[82px] py-2 flex flex-col items-center justify-center focus:outline-none transition-all duration-300"
+            >
+              <span
+                className={`relative z-10 text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+                  isActive ? 'text-[#2d2d2b] scale-110' : 'text-[#2d2d2b]/40 scale-95'
+                }`}
+              >
+                {month.shortLabel}
+              </span>
+
+              {month.isCurrentMonth && (
+                // 3. Pushed the dot back OUT (top-0 right-1) so it has that premium, airy breathing room!
+                <div className={`absolute top-0 right-1 flex h-2 w-2 transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c9a96e] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c9a96e] border border-[#e6e1dc]"></span>
+                </div>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Adjusted spacer for the new 82px button width */}
+        <div className="flex-shrink-0 w-[calc(50vw-41px)]" />
+      </div>
+    </div>
+  );
+  };
+
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
   onClose,
   transactions,
-  onClearAll,
   onDeleteTransaction,
   t,
 }) => {
-  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
+    // 1. FAST PATH: Instantly grab ONLY the current calendar month for a 0ms render
+    const fastInitialMonth = React.useMemo(() => {
+    const today = new Date();
+    const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    const currentMonthSuffix = `${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    
+    // Lightning-fast string filter just to get today's real transactions
+    const currentTxs = transactions.filter(tx => tx.date.endsWith(currentMonthSuffix));
+      
+    
+    return [{
+      key: currentMonthKey,
+      label: today.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+      shortLabel: today.toLocaleString('en-IN', { month: 'short' }),
+      transactions: currentTxs,
+      isCurrentMonth: true
+    }];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only runs once when the modal boots up
 
+  // 2. Initialize state with ONLY the fast current month
+  const [monthGroups, setMonthGroups] = useState<MonthGroup[]>(fastInitialMonth);
+  const [activeMonthIndex, setActiveMonthIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState(1);
+  const [pendingDeleteTx, setPendingDeleteTx] = useState<Transaction | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const hasLoadedHistory = useRef(false);
+
+  // 3. BACKGROUND WORKER: Calculate the rest of the history while the modal is opening
+  useEffect(() => {
+    if (!hasLoadedHistory.current) {
+      // Wait 350ms for the modal's slide-up animation to completely finish
+      const timer = setTimeout(() => {
+        // Only grouping the REAL transactions now
+        const fullHistory = groupTransactionsByMonth(transactions);
+        if (fullHistory.length > 0) {
+          setMonthGroups(fullHistory);
+          // Silently shift the index to the end of the new array.
+          setActiveMonthIndex(Math.max(0, fullHistory.length - 1));
+        }
+        hasLoadedHistory.current = true;
+      }, 350);
+      return () => clearTimeout(timer);
+    } else {
+      // If history is already loaded (e.g., user deletes a card), update instantly so there is no lag!
+      const fullHistory = groupTransactionsByMonth(transactions);
+      setMonthGroups(fullHistory);
+      setActiveMonthIndex(prev => Math.min(prev, Math.max(0, fullHistory.length - 1)));
+    }
+  }, [transactions]);
+  
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -160,121 +604,208 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     };
   }, [isOpen]);
 
-  // Close confirmation if modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setShowClearAllConfirm(false);
-    }
-  }, [isOpen]);
+  const currentMonth = monthGroups[activeMonthIndex];
 
-  // Scroll haptic feedback
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let lastScrollY = el.scrollTop;
-    const SCROLL_THRESHOLD = 40;
-    const onScroll = () => {
-      const delta = Math.abs(el.scrollTop - lastScrollY);
-      if (delta >= SCROLL_THRESHOLD) {
-        hapticScroll();
-        lastScrollY = el.scrollTop;
-      }
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  });
+  const pageVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.95,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 0,
+      scale: 0.95,
+    }),
+  };
+
+  const handleMonthSwipe = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { x: number }; velocity: { x: number } },
+  ) => {
+    const swipeThreshold = 50;
+    const isSwipeLeft = info.offset.x < -swipeThreshold || info.velocity.x < -500;
+    const isSwipeRight = info.offset.x > swipeThreshold || info.velocity.x > 500;
+
+    if (isSwipeLeft && activeMonthIndex < monthGroups.length - 1) {
+      hapticMedium();
+      setSlideDirection(1);
+      setActiveMonthIndex((prev) => prev + 1);
+    } else if (isSwipeRight && activeMonthIndex > 0) {
+      hapticMedium();
+      setSlideDirection(-1);
+      setActiveMonthIndex((prev) => prev - 1);
+    }
+  };
+
+  const goToMonth = (index: number) => {
+    if (index === activeMonthIndex) return;
+    hapticLight();
+    setSlideDirection(index > activeMonthIndex ? 1 : -1);
+    setActiveMonthIndex(index);
+  };
 
   return (
     <motion.div
       ref={scrollRef}
       className="fixed inset-0 z-50 flex flex-col items-center justify-start text-gray-900 overflow-y-auto"
-      initial="hidden"
-      animate="show"
-      exit="exit"
-      variants={container}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.25 } }}
+      transition={{ duration: 0.2 }}
     >
       <PremiumBackground />
 
-      {/* Top bar: title + close button animate together as one unit */}
-      <motion.div
-        variants={item}
-        className="sticky top-0 left-0 right-0 z-50 w-full h-16 sm:h-20 flex items-center px-6 sm:px-10 relative"
-      >
-        {/* Title: absolutely centered relative to the full bar width */}
-        <h1 className="absolute left-1/2 -translate-x-1/2 text-4xl sm:text-6xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-500 flex items-center gap-3 whitespace-nowrap">
-          <History className="w-9 h-9 sm:w-12 sm:h-12 text-gray-700 flex-shrink-0" />
-          History
-        </h1>
-        {/* Close button: pushed to the right */}
-        <motion.button
-          onClick={() => { hapticMedium(); onClose(); }}
-          className="ml-auto w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 flex items-center justify-center rounded-full border border-gray-200 bg-white/50 hover:bg-white text-gray-900 shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <X className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
-        </motion.button>
-      </motion.div>
-
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col mt-6 sm:mt-10 pb-12">
-
-        {/* Actions row */}
-        {transactions.length > 0 && (
-          <motion.div variants={item} className="flex justify-end mb-4 flex-shrink-0">
-            <motion.button
-              onClick={() => { hapticMedium(); setShowClearAllConfirm(true); }}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#2d2d2b] bg-white/60 hover:bg-white px-4 py-2 rounded-full transition-colors border border-gray-200 backdrop-blur-md shadow-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Trash2 className="w-3 h-3" />
-              {t.clearAll || 'Clear All'}
-            </motion.button>
-          </motion.div>
-        )}
-
-        {/* Transaction list */}
-        <motion.div variants={item} className="w-full">
-          {transactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-              <History className="w-14 h-14 mb-4" />
-              <p className="text-sm font-bold uppercase tracking-widest">
-                {t.noTransactions || 'No transactions yet'}
-              </p>
-              <p className="text-xs mt-2 font-medium text-gray-400">
-                {t.transactionsAppearHere || 'Your receipts will appear here'}
-              </p>
-            </div>
-          ) : (
-            <AnimatePresence>
-              <div className="space-y-2 pb-6">
-                {transactions.map((tx, index) => (
-                  <SwipeableCard
-                    key={tx.id}
-                    tx={tx}
-                    index={index}
-                    onDelete={onDeleteTransaction}
-                  />
-                ))}
-              </div>
-            </AnimatePresence>
-          )}
-        </motion.div>
+      {/* Sticky header */}
+      <div className="sticky top-0 left-0 right-0 z-50 w-full bg-[#e6e1dc]/80 backdrop-blur-xl border-b border-[#d9d3ce]/60">
+        {/* Title row */}
+        <div className="w-full flex items-center px-4 sm:px-6 h-14 sm:h-16 relative">
+          <motion.h1
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            className="absolute left-1/2 -translate-x-1/2 text-2xl sm:text-3xl font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-b from-[#2d2d2b] to-[#8b7355] flex items-center gap-2 whitespace-nowrap"
+          >
+            <History className="w-6 h-6 sm:w-7 sm:h-7 text-[#8b7355] flex-shrink-0" />
+            History
+          </motion.h1>
+          <motion.button
+            onClick={() => { hapticMedium(); onClose(); }}
+            className="ml-auto w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-full border border-[#d9d3ce] bg-white/50 hover:bg-white text-[#2d2d2b] shadow-sm backdrop-blur-sm transition-all group focus:outline-none focus-visible:outline-none"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.05 }}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <X className="w-4 h-4 text-[#2d2d2b]/60 group-hover:text-[#2d2d2b] transition-colors" />
+          </motion.button>
+        </div>
       </div>
 
-      {/* Clear All confirmation overlay */}
-      <AnimatePresence>
-        {showClearAllConfirm && (
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-2xl px-4 sm:px-6 flex flex-col pt-4 pb-32">
+
+        {monthGroups.length === 0 ? (
           <motion.div
-            className="fixed inset-0 z-60 flex items-end justify-center p-4 sm:items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 0.1 }}
+            className="flex flex-col items-center justify-center py-24 text-[#2d2d2b]/40"
+          >
+            <History className="w-14 h-14 mb-4 text-[#8b7355]/40" />
+            <p className="text-sm font-black uppercase tracking-widest text-[#2d2d2b]/50">
+              {t.noTransactions || 'No transactions yet'}
+            </p>
+            <p className="text-xs mt-2 font-medium text-[#2d2d2b]/30">
+              {t.transactionsAppearHere || 'Your receipts will appear here'}
+            </p>
+          </motion.div>
+        ) : (
+          <>
+            {/* Overflow clip container so exiting pages don't bleed outside */}
+            <div className="relative overflow-hidden">
+              <AnimatePresence initial={false} custom={slideDirection} mode="popLayout">
+
+                                       <motion.div
+                  key={currentMonth?.key}
+                  custom={slideDirection}
+                  variants={pageVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  // Swapped stiff spring for a silky-smooth iOS Bezier glide
+                  transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.4 }}
+                  // 1. Always keep the gesture engine permanently attached
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={1}                 
+                  onDragEnd={handleMonthSwipe}
+                  onAnimationComplete={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+                  // 2. Prevent the mobile browser from fighting your thumb
+                  className="w-full flex flex-col touch-pan-y"
+                                  
+                >
+                                  
+                  {currentMonth && (
+                    <>
+                      {/* Monthly summary card — key forces remount on month change so FlowRing re-animates */}
+                      <MonthlySummaryCard key={currentMonth.key} month={currentMonth} />
+
+                      {/* Transaction list */}
+                      <div className="space-y-2">
+                        {currentMonth.transactions.map((tx, index) => (
+                          <SwipeableCard
+                            key={tx.id}
+                            tx={tx}
+                            index={index}
+                            onDeleteRequest={setPendingDeleteTx}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+          </>
+        )}
+      </div>
+
+      {/* 1. STATIC BACKGROUND: Renders instantly with GPU acceleration to prevent blur lag */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 z-[54] pointer-events-none">
+        <div
+          className="absolute inset-0 backdrop-blur-md"
+          style={{
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 80%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 80%)',
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(230,225,220,0.6) 100%)',
+            transform: 'translateZ(0)', // Forces the phone's GPU to render the blur perfectly
+          }}
+        />
+      </div>
+      
+
+      {/* 2. ANIMATED CONTENT: Only the pills fade and slide in */}
+      <AnimatePresence>
+        {monthGroups.length > 1 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 15 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed bottom-0 left-0 right-0 z-[55] pointer-events-none"
+          >
+            <div className="relative pointer-events-auto pb-safe-area-inset-bottom">
+              <MonthScrubber
+                months={monthGroups}
+                activeIndex={activeMonthIndex}
+                onSelect={goToMonth}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+
+      {/* Per-transaction delete confirmation overlay */}
+      <AnimatePresence>
+        {pendingDeleteTx && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <div
-              className="absolute inset-0 bg-black/30"
-              onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
+              className="absolute inset-0 bg-black/40"
+              onClick={() => { hapticMedium(); setPendingDeleteTx(null); }}
             />
             <motion.div
               className="relative w-full max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl p-6 flex flex-col gap-4"
@@ -291,17 +822,21 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               </div>
               <div className="text-center">
                 <h3 className="text-base font-black text-[#2d2d2b] uppercase tracking-tight mb-1">
-                  Clear All Transactions?
+                  Delete Transaction?
                 </h3>
                 <p className="text-xs text-[#2d2d2b]/60 font-medium leading-relaxed">
-                  This will permanently delete all{' '}
-                  <span className="font-black text-[#2d2d2b]">{transactions.length}</span>{' '}
-                  {transactions.length === 1 ? 'transaction' : 'transactions'} from your history. This action cannot be undone.
+                  <span className="font-black text-[#2d2d2b]">
+                    {pendingDeleteTx.payeeName || pendingDeleteTx.payeeUpiId}
+                  </span>
+                  {pendingDeleteTx.amount && (
+                    <> · <span className="font-black text-[#2d2d2b]">₹{pendingDeleteTx.amount}</span></>
+                  )}{' '}
+                  will be permanently removed from your history.
                 </p>
               </div>
               <div className="flex gap-2">
                 <motion.button
-                  onClick={() => { hapticMedium(); setShowClearAllConfirm(false); }}
+                  onClick={() => { hapticMedium(); setPendingDeleteTx(null); }}
                   className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#2d2d2b] bg-[#f0ece8] hover:bg-[#d9d3ce] border border-[#d9d3ce] hover:border-[#2d2d2b] transition-colors uppercase tracking-wide"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
@@ -311,15 +846,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 <motion.button
                   onClick={() => {
                     hapticWarning();
-                    onClearAll();
-                    setShowClearAllConfirm(false);
+                    onDeleteTransaction(pendingDeleteTx.id);
+                    setPendingDeleteTx(null);
                   }}
                   className="flex-1 py-2.5 rounded-2xl text-sm font-bold text-[#e6e1dc] bg-[#2d2d2b] hover:bg-[#1a1a18] border border-[#2d2d2b] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Clear All
+                  Delete
                 </motion.button>
               </div>
             </motion.div>

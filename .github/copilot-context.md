@@ -97,7 +97,7 @@
 - **Haptic imports:** `hapticLight`, `hapticMedium`, `hapticHeavy`, `hapticSuccess`, `hapticScroll`
 
 ### `src/components/TransactionHistory.tsx`
-- **Role:** Full-screen swipeable transaction list. Swipe-left to delete individual items; "Clear All" with confirmation dialog.
+- **Role:** Full-screen swipeable transaction list. Swipe-left to delete individual items. Per-item swipe-to-delete is the only bulk management option.
 - **Features:**
   - Transactions stored in `localStorage` via parent `App.tsx`
   - Swipeable cards using Framer Motion drag
@@ -338,3 +338,24 @@ The haptic feedback commit (0af748b) introduced multiple types of JSX structural
      - `shadowX`: `smoothCardX` (gamma, left-right tilt) maps `[-600 → 600]` to `[-12px → 12px]` — shadow shifts laterally with phone tilt.
      - `shadowBlur`: `smoothCardY` maps `[-600 → 600]` to `[30px → 60px]` — shadow softens as card appears to lift toward viewer.
    - Combined via `useMotionTemplate` into `cardBoxShadow` applied as `style.boxShadow` on the card element; static `shadow-[...]` Tailwind class removed.
+
+---
+
+## Update Log
+
+### 2026-03-20 — Transaction History Modal: Month-wise Pagination & Animated Summary
+
+**What changed:** Fully redesigned `src/components/TransactionHistory.tsx` to match a native mobile experience with reduced scrolling.
+
+**What was added/changed:**
+- **Month grouping**: Transactions are now parsed from `DD/MM/YYYY` format and grouped by `YYYY-MM` key, sorted newest-first.
+- **Sticky header**: Clean title bar with close button. Month tabs removed — the monthly summary card at the top of each page already shows the current month name prominently.
+- **Direction-aware page transitions**: Three-phase animation driven by `dragX` (`useMotionValue`): (1) ease-in exit off-screen, (2) `flushSync()` swaps React content so new month renders off-screen on the opposite side, (3) spring entrance to center. Used for both drag commits and dot-clicks.
+- **Monthly summary card**: A dark `#2d2d2b` card with sacred-geometry pattern overlay at the top of each month's page shows: month name, transaction count, animated sent total (count-up), and animated received total (count-up), each with sub-counts.
+- **`AnimatedNumber` component**: Uses `useMotionValue` + `animate` to count up to the target value over 0.9s with a custom ease curve.
+- **Direct-manipulation horizontal swipe**: Framer Motion `drag="x"` on the content container with `style={{ x: dragX }}`. Content tracks the finger pixel-for-pixel (`dragElastic=0` in navigable direction, `dragElastic=0.2` rubber-band at first/last month). Commits if offset >25% viewport width or velocity >400 px/s; otherwise springs back. `isTransitioning` state disables drag during page transitions to prevent conflicts.
+- **Page indicator dots**: Animated pill-shaped dots at the bottom using explicit `animate={{ width }}` instead of `layout` to avoid layout thrashing.
+- **Removed `layout` prop** from month tab buttons to avoid unnecessary layout calculations.
+- **Input validation**: Date parsing now validates that month and year parts are numeric before calling `parseInt`.
+
+**Files affected:** `src/components/TransactionHistory.tsx`
