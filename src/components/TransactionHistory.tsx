@@ -583,7 +583,7 @@ rounded-full z-0 pointer-events-none shadow-[inset_0_1px_3px_rgba(0,0,0,0.03)]" 
       </div>
     </div>
   );
-  
+  };
 
 export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   isOpen,
