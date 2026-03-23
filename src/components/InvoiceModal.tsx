@@ -20,7 +20,7 @@ const COMMON_UPI_HANDLES = [
   '@okaxis', '@apl', '@ibl', '@axl', '@icici', '@sbi',
   '@hdfcbank', '@kotak', '@axisbank', '@yesbank', '@idfcbank',
   '@waaxis', '@wahdfcbank', '@waicici', '@wasbi',
-  '@upi', '@freecharge', '@mobikwik', '@slice', '@cred',
+  '@upi', '@freecharge', '@mobikwik', '@slc', '@cred',
   '@fampay', '@amazonpay', '@airtel', '@airtelpaymentsbank',
   '@bajaj', '@payzapp', '@wealth', '@jupiter', '@fi', '@niyo',
   '@dbs', '@rbl', '@federal', '@indus', '@hsbc', '@citi',
@@ -469,19 +469,20 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         className="relative w-full sm:max-w-[440px] bg-[#f5f5f0] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
         style={{ height: '92dvh', maxHeight: '92dvh' }}
       >
-        {/* iOS Drag Handle — makes the 8dvh top gap look intentional as a native bottom sheet */}
-        <div className="flex justify-center pt-2.5 pb-1 shrink-0 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-[#2d2d2b]/20" />
-        </div>
-
         {/* Honeypot inputs */}
         <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
           <input type="text" name="fakeusernameremembered" tabIndex={-1} />
           <input type="password" name="fakepasswordremembered" tabIndex={-1} />
         </div>
 
+        {/* iOS Drag Handle (Visual only, makes the 8vh top gap look completely intentional on mobile) */}
+        <div className="w-full flex justify-center pt-3 pb-1 bg-[#f5f5f0] sm:hidden shrink-0">
+          <div className="w-10 h-1.5 bg-[#d9d3ce] rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#d9d3ce]/60 shrink-0 bg-[#f5f5f0]">
+        <div className="flex items-center justify-between px-4 pt-1 sm:pt-4 pb-3 border-b border-[#d9d3ce]/60 shrink-0 bg-[#f5f5f0]">
+          
           {/* Back / Close */}
           <motion.button
             onClick={() => { hapticMedium(); step === 1 ? onClose() : prevStep(); }}
@@ -964,15 +965,16 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                             >
                               <ul className="max-h-48 overflow-y-auto py-2 px-1">
                                 {getFilteredHandles().map((handle, index) => (
-                                  <motion.li key={handle} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03 }}>
-                                    <button
+                                <motion.li key={handle} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03 }}>
+                                    <motion.button
                                       type="button"
-                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-all rounded-lg flex items-center gap-1 group"
+                                      whileTap={{ scale: 0.96, backgroundColor: '#f3f4f6' }}
+                                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-900 transition-all rounded-lg flex items-center gap-1 group"
                                       onMouseDown={(e) => { e.preventDefault(); selectHandle(handle); }}
                                     >
                                       <span className="opacity-40 group-hover:opacity-60 transition-opacity truncate max-w-[50%]">{upiId.split('@')[0]}</span>
                                       <span className="font-bold text-base">{handle}</span>
-                                    </button>
+                                    </motion.button>
                                   </motion.li>
                                 ))}
                               </ul>
