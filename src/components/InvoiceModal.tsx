@@ -5,7 +5,7 @@ import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code
 import { BusinessType, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
 import { PremiumBackground } from './PremiumBackground';
-import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticSuccess, hapticScroll } from '../utils/haptics';
+import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticSuccess } from '../utils/haptics';
 
 interface InvoiceItem {
   id: string;
@@ -123,9 +123,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const handleTypewriterRef = useRef<number | null>(null);
-
-  const scrollLastYRef = React.useRef(0);
-  const SCROLL_HAPTIC_THRESHOLD = 40;
 
   const totalAmount = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
 
@@ -447,7 +444,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const NextButton = ({ label = 'Next \u2192' }: { label?: string }) => (
     <motion.button
       type="button"
-      onClick={nextStep}
+      onClick={() => { hapticLight(); nextStep(); }}
       className="w-full bg-[#2d2d2b] text-[#e6e1dc] py-4 rounded-2xl font-bold uppercase tracking-widest text-sm shadow-lg mt-2"
       whileHover={{ scale: 1.02, boxShadow: '0 12px 28px -6px rgba(0,0,0,0.35)' }}
       whileTap={{ scale: 0.97 }}
@@ -472,6 +469,11 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
         className="relative w-full sm:max-w-[440px] bg-[#f5f5f0] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
         style={{ height: '92dvh', maxHeight: '92dvh' }}
       >
+        {/* iOS Drag Handle — makes the 8dvh top gap look intentional as a native bottom sheet */}
+        <div className="flex justify-center pt-2.5 pb-1 shrink-0 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-[#2d2d2b]/20" />
+        </div>
+
         {/* Honeypot inputs */}
         <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
           <input type="text" name="fakeusernameremembered" tabIndex={-1} />
@@ -539,13 +541,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
               exit="exit"
               transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.38 }}
               className="absolute inset-0 overflow-y-auto"
-              onScroll={(e) => {
-                const delta = Math.abs(e.currentTarget.scrollTop - scrollLastYRef.current);
-                if (delta >= SCROLL_HAPTIC_THRESHOLD) {
-                  hapticScroll();
-                  scrollLastYRef.current = e.currentTarget.scrollTop;
-                }
-              }}
             >
 
               {/* STEP 1 — The Details */}
