@@ -461,10 +461,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     >
       <PremiumBackground />
 
-      <motion.div
+            <motion.div
         variants={cardAnim}
-        className="relative w-full sm:max-w-[440px] bg-[#f5f5f0] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ height: '92dvh', maxHeight: '92dvh' }}
+        // Removed 'rounded-t-3xl' so the top edge is flat on mobile
+        className="relative w-full sm:max-w-[440px] bg-[#f5f5f0] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        // Changed to 100dvh to fill the screen completely
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
       >
         {/* Honeypot */}
         <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
@@ -472,12 +474,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
           <input type="password" name="fakepasswordremembered" tabIndex={-1} />
         </div>
 
-        {/* Drag handle */}
-        <div className="w-full flex justify-center pt-3 pb-1 bg-[#f5f5f0] sm:hidden shrink-0">
-          <div className="w-10 h-1.5 bg-[#d9d3ce] rounded-full" />
-        </div>
-
-        {/* Header */}
+        {/* Header (Drag handle completely removed) */}
+              
         <div className="flex items-center justify-between px-4 pt-1 sm:pt-4 pb-3 border-b border-[#d9d3ce]/60 shrink-0 bg-[#f5f5f0]">
           <motion.button
             onClick={() => { hapticMedium(); step === 1 ? onClose() : prevStep(); }}
