@@ -286,9 +286,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
 
   const handleClear = () => {
     if (handleTypewriterRef.current) window.clearInterval(handleTypewriterRef.current);
-    let iterations = Math.max(businessName.length, customerName.length, upiId.length, payeeName.length, remarks.length, classesName.length, flatAmount.length);
-    setItems([{ id: Date.now().toString(), name: '', quantity: '', price: '', unit: 'Unit' }]);
+    // flatAmount is a numeric field — clear it instantly, not via typewriter
     setFlatAmount('');
+    setItems([{ id: Date.now().toString(), name: '', quantity: '', price: '', unit: 'Unit' }]);
+    let iterations = Math.max(businessName.length, customerName.length, upiId.length, payeeName.length, remarks.length, classesName.length);
     if (iterations === 0) return;
     handleTypewriterRef.current = window.setInterval(() => {
       setBusinessName(prev => prev.length > 0 ? prev.slice(0, -1) : prev);
