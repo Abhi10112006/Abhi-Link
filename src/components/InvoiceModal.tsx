@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { X, Plus, Trash2, Download, Share2, Briefcase, GraduationCap, ShoppingBag, User, IndianRupee, Info, Eraser, Clipboard, Loader2, Palette, ChevronLeft, GripVertical } from 'lucide-react';
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import { BusinessType, InvoiceTheme, CustomField, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
@@ -363,23 +363,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     localStorage.setItem('invoice_custom_fields', JSON.stringify(updated));
   };
 
-  // Drag-and-drop for custom fields
-  const onFieldDragStart = (id: string) => { dragItemId.current = id; };
-  const onFieldDragOver  = (e: React.DragEvent, id: string) => { e.preventDefault(); setDragOverFieldId(id); };
-  const onFieldDrop      = (targetId: string) => {
-    const fromId = dragItemId.current;
-    if (!fromId || fromId === targetId) { setDragOverFieldId(null); return; }
-    const arr = [...customFields];
-    const fromIdx = arr.findIndex(f => f.id === fromId);
-    const toIdx   = arr.findIndex(f => f.id === targetId);
-    const [removed] = arr.splice(fromIdx, 1);
-    arr.splice(toIdx, 0, removed);
-    setCustomFields(arr);
-    localStorage.setItem('invoice_custom_fields', JSON.stringify(arr));
-    setDragOverFieldId(null);
-    dragItemId.current = null;
+  // Framer Motion Reorder handler for custom fields
+  const handleReorderCustomFields = (newOrder: CustomField[]) => {
+    setCustomFields(newOrder);
+    localStorage.setItem('invoice_custom_fields', JSON.stringify(newOrder));
   };
-  const onFieldDragEnd = () => { setDragOverFieldId(null); dragItemId.current = null; };
+  
 
   // ─── Build invoice data ───────────────────────────────────────────────────────
   const getInvoiceData = async (): Promise<InvoiceData> => {
@@ -757,54 +746,55 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           </p>
                         )}
 
-                        <div className="flex flex-col gap-2">
-                          <AnimatePresence>
-                            {customFields.map((field) => (
-                              <motion.div
-                                key={field.id}
-                                initial={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden' }}
-                                animate={{ opacity: 1, height: 'auto', scale: 1, overflow: 'visible' }}
-                                exit={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden' }}
-                                transition={{ duration: 0.25, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                draggable
-                                onDragStart={() => onFieldDragStart(field.id)}
-                                onDragOver={(e) => onFieldDragOver(e, field.id)}
-                                onDrop={() => onFieldDrop(field.id)}
-                                onDragEnd={onFieldDragEnd}
-                                className={`flex items-center gap-2 bg-white px-3 py-2.5 rounded-xl border-2 transition-all shadow-sm cursor-default ${
-                                  dragOverFieldId === field.id ? 'border-[#2d2d2b] shadow-lg scale-[1.01]' : 'border-gray-200'
-                                }`}
-                              >
-                                {/* Drag handle */}
-                                <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 flex-shrink-0" title="Drag to reorder">
-                                  <GripVertical className="w-4 h-4" />
-                                </div>
-                                <input
-                                  type="text"
-                                  placeholder="Label (e.g. Tax ID)"
-                                  value={field.label}
-                                  onChange={(e) => handleCustomFieldChange(field.id, 'label', e.target.value)}
-                                  className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:border-gray-900 focus:outline-none transition-all"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Value"
-                                  value={field.value}
-                                  onChange={(e) => handleCustomFieldChange(field.id, 'value', e.target.value)}
-                                  className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 focus:border-gray-900 focus:outline-none transition-all"
-                                />
-                                <motion.button
-                                  type="button"
-                                  whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                                  onClick={() => { hapticWarning(); handleRemoveCustomField(field.id); }}
-                                  className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
+                          <div className="flex flex-col gap-2">
+                          <Reorder.Group axis="y" values={customFields} onReorder={handleReorderCustomFields} className="flex flex-col gap-2">
+                            <AnimatePresence>
+                              {customFields.map((field) => (
+                                <Reorder.Item
+                                  key={field.id}
+                                  value={field}
+                                  initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                                  transition={{ duration: 0.25, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                  className="flex items-center gap-2 bg-white px-3 py-2.5 rounded-xl border-2 border-gray-200 transition-shadow shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </motion.button>
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
+                                  {/* Drag handle */}
+                                  <div className="text-gray-300 hover:text-gray-500 flex-shrink-0" title="Drag to reorder">
+                                    <GripVertical className="w-4 h-4 pointer-events-none" />
+                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder="Label (e.g. Tax ID)"
+                                    value={field.label}
+                                    onChange={(e) => handleCustomFieldChange(field.id, 'label', e.target.value)}
+                                    // Prevent dragging when trying to type
+                                    onPointerDown={(e) => e.stopPropagation()} 
+                                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:border-gray-900 focus:outline-none transition-all"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Value"
+                                    value={field.value}
+                                    onChange={(e) => handleCustomFieldChange(field.id, 'value', e.target.value)}
+                                    onPointerDown={(e) => e.stopPropagation()} 
+                                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 focus:border-gray-900 focus:outline-none transition-all"
+                                  />
+                                  <motion.button
+                                    type="button"
+                                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                                    onClick={() => { hapticWarning(); handleRemoveCustomField(field.id); }}
+                                    onPointerDown={(e) => e.stopPropagation()} 
+                                    className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </motion.button>
+                                </Reorder.Item>
+                              ))}
+                            </AnimatePresence>
+                          </Reorder.Group>
                         </div>
+                        
                       </motion.div>
                     )}
                   </AnimatePresence>
