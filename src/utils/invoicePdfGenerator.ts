@@ -52,6 +52,12 @@ const LIGHT_GRAY:[number, number, number] = [245, 245, 245];
 const BORDER:    [number, number, number] = [220, 220, 220];
 const MARGIN = 20;
 
+/** Returns the primary display name for the invoicing entity (all-caps ready). */
+const getDisplayBusinessName = (data: InvoiceData): string => {
+  if (data.businessType === 'tuition' && data.classesName) return data.classesName;
+  return data.businessName || data.payeeName || 'Business';
+};
+
 const addFooter = (doc: jsPDF, _pageNumber: number, _totalPages: number) => {
   const pageWidth  = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
@@ -207,7 +213,7 @@ const renderRetailTheme = async (data: InvoiceData, qrDataUrl: string | null): P
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(26);
     doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
-    doc.text((data.businessName || data.payeeName || 'Business').toUpperCase(), MARGIN, 33);
+    doc.text(getDisplayBusinessName(data).toUpperCase(), MARGIN, 33);
   }
 
   // Header — Document title (right)
@@ -382,10 +388,8 @@ const renderServiceTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(24);
   doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
-  const bizName = (data.businessType === 'tuition' && data.classesName ? data.classesName : data.businessName || data.payeeName || 'Business').toUpperCase();
+  const bizName = getDisplayBusinessName(data).toUpperCase();
   doc.text(bizName, MARGIN, 30);
-
-  // Subtitle: project title or teacher name
   if (data.projectTitle || (data.businessType === 'tuition' && data.businessName)) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -554,7 +558,7 @@ const renderMinimalTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   const pageHeight = doc.internal.pageSize.height;
 
   // Business name — all caps, small
-  const bizName = (data.businessType === 'tuition' && data.classesName ? data.classesName : data.businessName || data.payeeName || 'Business').toUpperCase();
+  const bizName = getDisplayBusinessName(data).toUpperCase();
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
