@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { X, Plus, Trash2, Download, Share2, Briefcase, GraduationCap, ShoppingBag, User, IndianRupee, Info, Eraser, Clipboard, Loader2, Palette, ChevronLeft, GripVertical } from 'lucide-react';
+import { X, Plus, Trash2, Download, Share2, Briefcase, IndianRupee, Info, Eraser, Clipboard, Loader2, Palette, ChevronLeft, GripVertical, ShoppingBag } from 'lucide-react';
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import { BusinessType, InvoiceTheme, CustomField, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
@@ -85,7 +85,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const [flatAmount, setFlatAmount] = useState('');
   const [upiId, setUpiId] = useState(() => localStorage.getItem('my_card_upi') || '');
   const [payeeName, setPayeeName] = useState(() => localStorage.getItem('my_card_name') || '');
-  const [qrCenterText, setQrCenterText] = useState('A');
+  const [qrCenterText, setQrCenterText] = useState<string>(() => {
+    const saved = (localStorage.getItem('my_card_business_type') as BusinessType) || 'shop';
+    if (saved === 'tuition') return 'T';
+    if (saved === 'freelancer') return 'F';
+    return 'A';
+  });
   const [remarks, setRemarks] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [month, setMonth] = useState('');
@@ -324,13 +329,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     setUpiId(payee.upiId); setPayeeName(payee.payeeName); setTouchedUpiId(true);
   };
 
-  const handleBusinessTypeChange = (type: BusinessType) => {
-    setBusinessType(type);
-    if (type === 'tuition') setQrCenterText('T');
-    else if (type === 'freelancer') setQrCenterText('F');
-    else setQrCenterText('A');
-  };
-
   const handleAddItem = () => setItems([...items, { id: Date.now().toString(), name: '', quantity: '', price: '', unit: 'Unit' }]);
   const handleRemoveItem = (id: string) => { if (items.length > 1) setItems(items.filter(item => item.id !== id)); };
   const handleItemChange = (id: string, field: keyof InvoiceItem, value: string | number) => {
@@ -524,30 +522,27 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                     <h2 className="text-2xl font-bold text-[#2d2d2b] tracking-tight">{t.invoiceGenerator}</h2>
                   </div>
 
-                  {/* Business Type */}
-                  <div>
-                    <label className={labelCls}>{t.businessType || 'Business Type'}</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {([
-                        { type: 'shop'       as BusinessType, icon: <ShoppingBag className="w-4 h-4" />, label: t.shop || 'Shop' },
-                        { type: 'tuition'    as BusinessType, icon: <GraduationCap className="w-4 h-4" />, label: t.tuition || 'Tuition' },
-                        { type: 'freelancer' as BusinessType, icon: <Briefcase className="w-4 h-4" />, label: t.freelancer || 'Freelancer' },
-                        { type: 'custom'     as BusinessType, icon: <User className="w-4 h-4" />, label: t.custom || 'Custom' },
-                      ]).map(({ type, icon, label }) => (
-                        <motion.button
-                          key={type} type="button"
-                          onClick={() => { hapticLight(); handleBusinessTypeChange(type); }}
-                          whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}
-                          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all text-[11px] font-bold ${
-                            businessType === type ? 'bg-[#2d2d2b] border-[#2d2d2b] text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'
-                          }`}
-                        >
-                          {icon}
-                          <span className="truncate w-full text-center leading-none">{label}</span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Business Type — read-only, set from My Card (Setup Identity) */}
+                  {(() => {
+                    const typeLabels: Record<string, string> = {
+                      shop: t.shop || 'Shop',
+                      tuition: t.tuition || 'Tuition',
+                      freelancer: t.freelancer || 'Freelancer',
+                      custom: t.custom || 'Custom',
+                    };
+                    return (
+                      <div className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+                        <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Business Type</p>
+                          <p className="text-sm font-bold text-[#2d2d2b] capitalize">{typeLabels[businessType] ?? businessType}</p>
+                          <p className="text-[10px] text-gray-400 mt-1 leading-tight">
+                            To change, open <span className="font-bold text-[#2d2d2b]">My Card</span> → Setup Identity
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* ─── Feature 1: Itemized Billing Toggle ─────────────────── */}
                   <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -764,20 +759,37 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                                     <GripVertical className="w-4 h-4 pointer-events-none" />
                                   </div>
                                   <input
-                                    type="text"
+                                    type="search"
+                                    id={`${field.id}_label`}
+                                    name={`${field.id}_label`}
                                     placeholder="Label (e.g. Tax ID)"
                                     value={field.label}
                                     onChange={(e) => handleCustomFieldChange(field.id, 'label', e.target.value)}
-                                    // Prevent dragging when trying to type
-                                    onPointerDown={(e) => e.stopPropagation()} 
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    autoComplete={`nope-${field.id}-label`}
+                                    aria-autocomplete="none"
+                                    spellCheck={false}
+                                    autoCorrect="off"
+                                    autoCapitalize="words"
+                                    data-lpignore="true"
+                                    data-form-type="other"
                                     className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:border-gray-900 focus:outline-none transition-all"
                                   />
                                   <input
-                                    type="text"
+                                    type="search"
+                                    id={`${field.id}_value`}
+                                    name={`${field.id}_value`}
                                     placeholder="Value"
                                     value={field.value}
                                     onChange={(e) => handleCustomFieldChange(field.id, 'value', e.target.value)}
-                                    onPointerDown={(e) => e.stopPropagation()} 
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    autoComplete={`nope-${field.id}-value`}
+                                    aria-autocomplete="none"
+                                    spellCheck={false}
+                                    autoCorrect="off"
+                                    autoCapitalize="off"
+                                    data-lpignore="true"
+                                    data-form-type="other"
                                     className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 focus:border-gray-900 focus:outline-none transition-all"
                                   />
                                   <motion.button
