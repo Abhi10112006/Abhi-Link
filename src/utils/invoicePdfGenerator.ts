@@ -113,6 +113,40 @@ const generateQrCodeImage = async (data: InvoiceData): Promise<string | null> =>
   }
 };
 
+/**
+ * Render a compact "FROM" issuer line (payee name + UPI ID) below the main
+ * header separator.  Returns the updated Y cursor after the block.
+ */
+const renderIssuerRow = (doc: jsPDF, data: InvoiceData, y: number): number => {
+  const fromName = data.payeeName || data.businessName || '';
+  if (!fromName && !data.upiId) return y;
+
+  // "FROM" label
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
+  doc.text('FROM', MARGIN, y);
+  const labelW = doc.getTextWidth('FROM') + 4;
+
+  // Payee / business name
+  if (fromName) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
+    doc.text(fromName, MARGIN + labelW, y);
+  }
+
+  // UPI ID on a second line under the name
+  if (data.upiId) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
+    doc.text(`UPI  ${data.upiId}`, MARGIN + labelW, y + 6);
+  }
+
+  return y + (data.upiId ? 13 : 8);
+};
+
 /** Render custom fields below BILLED TO in a 2-column layout */
 const renderCustomFields = (doc: jsPDF, fields: CustomField[], startY: number): number => {
   const filtered = fields.filter(f => f.label && f.value);
@@ -194,8 +228,16 @@ const renderRetailTheme = async (data: InvoiceData, qrDataUrl: string | null): P
   doc.setLineWidth(0.5);
   doc.line(MARGIN, 47, pageWidth - MARGIN, 47);
 
+  // Issuer (FROM) row
+  const issuerEndY = renderIssuerRow(doc, data, 52);
+  if (issuerEndY > 52) {
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.line(MARGIN, issuerEndY + 1, pageWidth - MARGIN, issuerEndY + 1);
+  }
+
   // BILLED TO + Meta
-  let startY = 62;
+  let startY = issuerEndY > 52 ? issuerEndY + 9 : 62;
   const billedLabel = data.businessType === 'tuition' ? 'STUDENT' : data.businessType === 'freelancer' ? 'CLIENT' : 'BILLED TO';
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
@@ -368,8 +410,16 @@ const renderServiceTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   doc.setLineWidth(0.4);
   doc.line(MARGIN, 44, pageWidth - MARGIN, 44);
 
+  // Issuer (FROM) row
+  const issuerEndYSvc = renderIssuerRow(doc, data, 49);
+  if (issuerEndYSvc > 49) {
+    doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
+    doc.setLineWidth(0.15);
+    doc.line(MARGIN, issuerEndYSvc + 1, pageWidth - MARGIN, issuerEndYSvc + 1);
+  }
+
   // BILLED TO + Meta
-  let startY = 58;
+  let startY = issuerEndYSvc > 49 ? issuerEndYSvc + 9 : 58;
   const billedLabel = data.businessType === 'tuition' ? 'STUDENT' : data.businessType === 'freelancer' ? 'CLIENT' : 'BILLED TO';
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
   doc.text(billedLabel, MARGIN, startY);
@@ -510,9 +560,23 @@ const renderMinimalTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
   doc.text(bizName, MARGIN, 28);
 
+  let lastMinLeftY = 28;
   if (data.businessType === 'tuition' && data.businessName) {
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
     doc.text(data.businessName, MARGIN, 34);
+    lastMinLeftY = 34;
+  }
+
+  // Compact issuer line: payeeName (if distinct) · upiId
+  const minFromParts: string[] = [];
+  if (data.payeeName && data.payeeName !== data.businessName) minFromParts.push(data.payeeName);
+  if (data.upiId) minFromParts.push(data.upiId);
+  if (minFromParts.length > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
+    doc.text(minFromParts.join('  ·  '), MARGIN, lastMinLeftY + 7);
+    lastMinLeftY += 7;
   }
 
   // Doc title + number right
@@ -521,12 +585,13 @@ const renderMinimalTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   doc.text(`${docTitle}  •  ${data.invoiceNumber}`, pageWidth - MARGIN, 28, { align: 'right' });
   doc.text(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), pageWidth - MARGIN, 35, { align: 'right' });
 
-  // Hairline
+  // Hairline — positioned just below the lowest left-column text
+  const hairlineYMin = Math.max(lastMinLeftY + 5, 40);
   doc.setDrawColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]); doc.setLineWidth(0.3);
-  doc.line(MARGIN, 40, pageWidth - MARGIN, 40);
+  doc.line(MARGIN, hairlineYMin, pageWidth - MARGIN, hairlineYMin);
 
   // BILLED TO + date meta
-  let startY = 52;
+  let startY = hairlineYMin + 12;
   const billedLabel = data.businessType === 'tuition' ? 'STUDENT' : data.businessType === 'freelancer' ? 'CLIENT' : 'BILLED TO';
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
   doc.text(billedLabel, MARGIN, startY);

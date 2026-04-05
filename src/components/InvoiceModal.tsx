@@ -553,7 +553,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                   <div className="flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm">
                     <div>
                       <p className="text-sm font-bold text-gray-900">Itemized Billing</p>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">List items with individual prices</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">{itemsEnabled ? 'List items with individual prices' : 'Enter a single flat fee amount'}</p>
                     </div>
                     <motion.button
                       type="button"
@@ -680,10 +680,10 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                           <label className={labelCls}>{t.dueDate}</label>
                           <motion.div animate={{ scale: focusedField === 'dueDate' ? 1.02 : 1 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
                             <input
-                              type="search" id={rDueDate} name={rDueDate}
+                              type="date" id={rDueDate} name={rDueDate}
                               value={dueDate} onChange={(e) => setDueDate(e.target.value)}
                               onFocus={() => setFocusedField('dueDate')} onBlur={() => setFocusedField(null)}
-                              autoComplete={`nope-${rDueDate}`} aria-autocomplete="none"
+                              min={new Date().toISOString().split('T')[0]}
                               data-lpignore="true" data-form-type="other"
                               className={inputSmCls}
                             />
@@ -935,6 +935,30 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                   <div>
                     <p className={labelCls} style={{ marginBottom: 2 }}>Step {totalSteps} of {totalSteps}</p>
                     <h2 className="text-2xl font-bold text-[#2d2d2b] tracking-tight">{t.invoicePayment || 'The Payment'}</h2>
+                  </div>
+
+                  {/* Invoice Summary Card */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                    <div>
+                      <p className={labelCls} style={{ marginBottom: 2 }}>{businessType === 'tuition' ? (t.receiptNumber || 'Receipt No.') : (t.invoiceNumber || 'Invoice No.')}</p>
+                      <p className="text-[13px] font-bold text-gray-900 truncate">{invoiceNumber}</p>
+                    </div>
+                    <div>
+                      <p className={labelCls} style={{ marginBottom: 2 }}>{labels.customerName}</p>
+                      <p className="text-[13px] font-bold text-gray-900 truncate">{customerName || <span className="text-gray-400 font-medium">Not set</span>}</p>
+                    </div>
+                    <div>
+                      <p className={labelCls} style={{ marginBottom: 2 }}>Date</p>
+                      <p className="text-[13px] font-medium text-gray-700">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                    </div>
+                    <div>
+                      <p className={labelCls} style={{ marginBottom: 2 }}>{t.totalAmount}</p>
+                      <p className="text-[13px] font-bold text-gray-900">
+                        {effectiveTotalAmount > 0
+                          ? `\u20B9\u2009${effectiveTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                          : <span className="text-gray-400 font-medium">—</span>}
+                      </p>
+                    </div>
                   </div>
 
                   {/* ─── Feature 1: Flat Amount (when items disabled) ─── */}
