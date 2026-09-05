@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, Reorder } from 'motion/react';
-import { X, Plus, Trash2, Download, Share2, Briefcase, IndianRupee, Info, Eraser, Clipboard, Loader2, Palette, ChevronLeft, GripVertical, ShoppingBag } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Plus, Trash2, Download, Share2, Briefcase, IndianRupee, Info, Eraser, Clipboard, Loader2, Palette, ChevronLeft, ShoppingBag } from 'lucide-react';
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
-import { BusinessType, InvoiceTheme, CustomField, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
+import { BusinessType, InvoiceTheme, InvoiceData, downloadInvoicePdf, shareInvoicePdf } from '../utils/invoicePdfGenerator';
 import { LanguageSelector } from './LanguageSelector';
 import { PremiumBackground } from './PremiumBackground';
 import { hapticLight, hapticMedium, hapticHeavy, hapticWarning, hapticSuccess } from '../utils/haptics';
@@ -95,15 +95,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
   const [dueDate, setDueDate] = useState('');
   const [month, setMonth] = useState('');
   const [projectTitle, setProjectTitle] = useState('');
-
-  // ─── Custom fields (feature 2 + 3) ──────────────────────────────────────────
-  const [customFields, setCustomFields] = useState<CustomField[]>(() => {
-    const saved = localStorage.getItem('invoice_custom_fields');
-    if (saved) { try { return JSON.parse(saved); } catch { return []; } }
-    return [];
-  });
-  const dragItemId   = useRef<string | null>(null);
-  const [dragOverFieldId, setDragOverFieldId] = useState<string | null>(null);
 
   // ─── PDF Theme (feature 4) ───────────────────────────────────────────────────
   const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>(() => (localStorage.getItem('invoice_theme') as InvoiceTheme) || 'retail');
@@ -341,33 +332,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
     }));
   };
 
-  // ─── Custom fields handlers (feature 2 + 3) ──────────────────────────────────
-  const handleAddCustomField = () => {
-    if (customFields.length >= 6) return;
-    const updated = [...customFields, { id: Date.now().toString(), label: '', value: '' }];
-    setCustomFields(updated);
-    localStorage.setItem('invoice_custom_fields', JSON.stringify(updated));
-  };
-
-  const handleCustomFieldChange = (id: string, key: 'label' | 'value', val: string) => {
-    const updated = customFields.map(f => f.id === id ? { ...f, [key]: val } : f);
-    setCustomFields(updated);
-    localStorage.setItem('invoice_custom_fields', JSON.stringify(updated));
-  };
-
-  const handleRemoveCustomField = (id: string) => {
-    const updated = customFields.filter(f => f.id !== id);
-    setCustomFields(updated);
-    localStorage.setItem('invoice_custom_fields', JSON.stringify(updated));
-  };
-
-  // Framer Motion Reorder handler for custom fields
-  const handleReorderCustomFields = (newOrder: CustomField[]) => {
-    setCustomFields(newOrder);
-    localStorage.setItem('invoice_custom_fields', JSON.stringify(newOrder));
-  };
-  
-
   // ─── Build invoice data ───────────────────────────────────────────────────────
   const getInvoiceData = async (): Promise<InvoiceData> => {
     const effectiveItems = itemsEnabled
@@ -381,7 +345,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
       qrStyle: { dotType, cornerSquareType, cornerDotType },
       remarks, businessType, dueDate, month, projectTitle,
       theme: invoiceTheme,
-      customFields: businessType === 'custom' ? customFields.filter(f => f.label && f.value) : undefined,
     };
   };
 
@@ -709,104 +672,6 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ onClose, t, lang, on
                             className={inputCls}
                           />
                         </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* ─── Feature 2 + 3: Custom Fields (custom mode only) ─── */}
-                  <AnimatePresence>
-                    {businessType === 'custom' && (
-                      <motion.div key="custom-fields-section"
-                        initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                        animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
-                        exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                        transition={{ duration: 0.35, ease: [0.04, 0.62, 0.23, 0.98] }}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <label className={labelCls}>Custom Fields</label>
-                          <motion.button
-                            type="button"
-                            onClick={() => { hapticLight(); handleAddCustomField(); }}
-                            disabled={customFields.length >= 6}
-                            whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.97, y: 1 }}
-                            className="text-xs font-bold text-gray-900 bg-white px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-900 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            <Plus className="w-3.5 h-3.5" /> Add Field
-                          </motion.button>
-                        </div>
-
-                        {customFields.length === 0 && (
-                          <p className="text-xs text-gray-400 text-center py-3 bg-white rounded-xl border border-dashed border-gray-200">
-                            Add custom fields like "Vehicle Plate", "Tax ID", etc.
-                          </p>
-                        )}
-
-                          <div className="flex flex-col gap-2">
-                          <Reorder.Group axis="y" values={customFields} onReorder={handleReorderCustomFields} className="flex flex-col gap-2">
-                            <AnimatePresence>
-                              {customFields.map((field) => (
-                                <Reorder.Item
-                                  key={field.id}
-                                  value={field}
-                                  initial={{ opacity: 0, height: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, height: 'auto', scale: 1 }}
-                                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                                  transition={{ duration: 0.25, ease: [0.04, 0.62, 0.23, 0.98] }}
-                                  className="flex items-center gap-2 bg-white px-3 py-2.5 rounded-xl border-2 border-gray-200 transition-shadow shadow-sm cursor-grab active:cursor-grabbing hover:border-gray-300"
-                                >
-                                  {/* Drag handle */}
-                                  <div className="text-gray-300 hover:text-gray-500 flex-shrink-0" title="Drag to reorder">
-                                    <GripVertical className="w-4 h-4 pointer-events-none" />
-                                  </div>
-                                  <input
-                                    type="search"
-                                    id={`${field.id}_label`}
-                                    name={`${field.id}_label`}
-                                    placeholder="Label (e.g. Tax ID)"
-                                    value={field.label}
-                                    onChange={(e) => handleCustomFieldChange(field.id, 'label', e.target.value)}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    autoComplete={`nope-${field.id}-label`}
-                                    aria-autocomplete="none"
-                                    spellCheck={false}
-                                    autoCorrect="off"
-                                    autoCapitalize="words"
-                                    data-lpignore="true"
-                                    data-form-type="other"
-                                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 focus:border-gray-900 focus:outline-none transition-all"
-                                  />
-                                  <input
-                                    type="search"
-                                    id={`${field.id}_value`}
-                                    name={`${field.id}_value`}
-                                    placeholder="Value"
-                                    value={field.value}
-                                    onChange={(e) => handleCustomFieldChange(field.id, 'value', e.target.value)}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    autoComplete={`nope-${field.id}-value`}
-                                    aria-autocomplete="none"
-                                    spellCheck={false}
-                                    autoCorrect="off"
-                                    autoCapitalize="off"
-                                    data-lpignore="true"
-                                    data-form-type="other"
-                                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700 focus:border-gray-900 focus:outline-none transition-all"
-                                  />
-                                  <motion.button
-                                    type="button"
-                                    whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                                    onClick={() => { hapticWarning(); handleRemoveCustomField(field.id); }}
-                                    onPointerDown={(e) => e.stopPropagation()} 
-                                    className="flex-shrink-0 text-gray-300 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </motion.button>
-                                </Reorder.Item>
-                              ))}
-                            </AnimatePresence>
-                          </Reorder.Group>
-                        </div>
-                        
                       </motion.div>
                     )}
                   </AnimatePresence>

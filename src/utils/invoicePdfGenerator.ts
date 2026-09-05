@@ -5,12 +5,6 @@ import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code
 export type BusinessType = 'shop' | 'freelancer' | 'tuition' | 'custom';
 export type InvoiceTheme = 'retail' | 'service' | 'minimal';
 
-export interface CustomField {
-  id: string;
-  label: string;
-  value: string;
-}
-
 export interface InvoiceItem {
   id: string;
   name: string;
@@ -41,7 +35,6 @@ export interface InvoiceData {
   month?: string;
   projectTitle?: string;
   theme?: InvoiceTheme;
-  customFields?: CustomField[];
 }
 
 // ─── Shared helpers ────────────────────────────────────────────────────────────
@@ -153,41 +146,6 @@ const renderIssuerRow = (doc: jsPDF, data: InvoiceData, y: number): number => {
   return y + (data.upiId ? 13 : 8);
 };
 
-/** Render custom fields below BILLED TO in a 2-column layout */
-const renderCustomFields = (doc: jsPDF, fields: CustomField[], startY: number): number => {
-  const filtered = fields.filter(f => f.label && f.value);
-  if (filtered.length === 0) return startY;
-
-  const pageWidth = doc.internal.pageSize.width;
-  const colW = (pageWidth - 2 * MARGIN) / 2;
-  const rows = Math.ceil(filtered.length / 2);
-  const boxH = rows * 14 + 10;
-
-  doc.setFillColor(LIGHT_GRAY[0], LIGHT_GRAY[1], LIGHT_GRAY[2]);
-  doc.roundedRect(MARGIN, startY, pageWidth - 2 * MARGIN, boxH, 3, 3, 'F');
-
-  let y = startY + 8;
-  for (let i = 0; i < filtered.length; i += 2) {
-    const f1 = filtered[i];
-    const f2 = filtered[i + 1];
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
-    doc.text(f1.label.toUpperCase(), MARGIN + 5, y);
-    if (f2) doc.text(f2.label.toUpperCase(), MARGIN + colW + 5, y);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
-    doc.text(f1.value, MARGIN + 5, y + 5);
-    if (f2) doc.text(f2.value, MARGIN + colW + 5, y + 5);
-
-    y += 14;
-  }
-  return startY + boxH + 5;
-};
-
 // ─── Theme: RETAIL ─────────────────────────────────────────────────────────────
 
 const renderRetailTheme = async (data: InvoiceData, qrDataUrl: string | null): Promise<jsPDF> => {
@@ -283,11 +241,6 @@ const renderRetailTheme = async (data: InvoiceData, qrDataUrl: string | null): P
   doc.text(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), metaX, startY + 7, { align: 'right' });
 
   startY += 18;
-
-  // Custom fields
-  if (data.customFields && data.customFields.length > 0) {
-    startY = renderCustomFields(doc, data.customFields, startY);
-  }
 
   // Items Table
   const tableCols = [
@@ -451,11 +404,6 @@ const renderServiceTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   doc.text(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), metaX, startY + 7, { align: 'right' });
 
   startY += 18;
-
-  // Custom fields
-  if (data.customFields && data.customFields.length > 0) {
-    startY = renderCustomFields(doc, data.customFields, startY);
-  }
 
   // Section header: Services / Items
   doc.setDrawColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
@@ -621,19 +569,6 @@ const renderMinimalTheme = async (data: InvoiceData, qrDataUrl: string | null): 
   }
 
   startY += 15;
-
-  // Custom fields (inline style for minimal)
-  if (data.customFields && data.customFields.length > 0) {
-    const filtered = data.customFields.filter(f => f.label && f.value);
-    filtered.forEach((field) => {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(SECONDARY[0], SECONDARY[1], SECONDARY[2]);
-      doc.text(field.label.toUpperCase(), MARGIN, startY);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(PRIMARY[0], PRIMARY[1], PRIMARY[2]);
-      doc.text(field.value, MARGIN + 40, startY);
-      startY += 7;
-    });
-    startY += 4;
-  }
 
   // Hairline before items
   doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]); doc.setLineWidth(0.2);
